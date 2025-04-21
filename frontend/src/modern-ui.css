@@ -1,0 +1,170 @@
+/* Modern, beautiful, responsive UI for the Girr Remake app */
+:root {
+  --primary: #4F8CFF;
+  --primary-dark: #315ca8;
+  --accent: #FFD166;
+  --bg: #f6f8fa;
+  --white: #fff;
+  --grey: #e0e4ea;
+  --text: #222;
+  --radius: 14px;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+}
+body.dark {
+  --bg: #181e2a;
+  --white: #232b3b;
+  --grey: #2a3242;
+  --text: #f6f8fa;
+  --primary: #7bb2ff;
+  --primary-dark: #4F8CFF;
+  --accent: #FFD166;
+  --icon-color: #FFD166;
+  background: var(--bg);
+  color: var(--text);
+}
+#root {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem 1rem;
+  margin-left: 230px;
+  transition: margin 0.3s;
+}
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 230px;
+  height: 100vh;
+  background: var(--primary);
+  color: var(--white);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 2.2rem 1.1rem 1.1rem 1.1rem;
+  box-shadow: 2px 0 16px rgba(79,140,255,0.10);
+  z-index: 100;
+  transition: background 0.3s;
+}
+.sidebar .brand {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 2.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  transition: background 0.2s, color 0.2s;
+}
+nav button:hover, nav a:hover {
+  background: var(--primary-dark);
+  color: var(--white);
+}
+section.card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+  padding: 2.2rem 2rem 2rem 2rem;
+  margin-bottom: 2rem;
+  text-align: left;
+}
+section.card h2 {
+  color: var(--primary-dark);
+  margin-top: 0;
+}
+button, input[type="submit"] {
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.7em 1.4em;
+  cursor: pointer;
+  margin: 0.3em 0.3em 0.3em 0;
+  transition: background 0.2s;
+}
+button:hover, input[type="submit"]:hover {
+  background: var(--primary-dark);
+}
+input, textarea, select {
+  border: 1px solid var(--grey);
+  border-radius: var(--radius);
+  padding: 0.7em 1em;
+  font-size: 1rem;
+  margin-bottom: 1em;
+  width: 100%;
+  box-sizing: border-box;
+  background: #fafdff;
+}
+body.dark input, body.dark textarea, body.dark select {
+  background: #232b3b;
+  color: #f6f8fa;
+  border: 1px solid #2a3242;
+}
+body.dark input::placeholder, body.dark textarea::placeholder {
+  color: #b5b8c2;
+}
+input:focus, textarea:focus, select:focus {
+  outline: 2px solid var(--primary);
+  border-color: var(--primary);
+}
+ul, ol {
+  padding-left: 1.3em;
+}
+/* Custom scroll for lists */
+ul::-webkit-scrollbar, textarea::-webkit-scrollbar {
+  width: 8px;
+  background: var(--grey);
+}
+ul::-webkit-scrollbar-thumb, textarea::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 8px;
+}
+/* DND visual feedback */
+.dnd-draggable {
+  background: #eaf1ff !important;
+  border: 1.5px solid var(--primary-dark) !important;
+  box-shadow: 0 2px 10px rgba(79,140,255,0.09) !important;
+}
+.media-card {
+  border: 1px solid var(--grey);
+  border-radius: var(--radius);
+  background: #fafdff;
+  padding: 1.2rem 1rem 1rem 1rem;
+  margin-bottom: 1.2rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+.media-card strong {
+  color: var(--primary-dark);
+}
+.media-card img, .media-card iframe {
+  border-radius: 10px;
+  margin-top: 7px;
+  max-width: 100%;
+}
+.media-card button {
+  margin-top: 0.7em;
+}
+@media (max-width: 700px) {
+  #root {
+    padding: 0.4rem;
+  }
+  section.card {
+    padding: 1.2rem 0.7rem 1rem 0.7rem;
+  }
+  header {
+    padding: 1rem 0.6rem 0.6rem 0.6rem;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+}

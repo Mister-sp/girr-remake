@@ -1,0 +1,107 @@
+/* Toast styles */
+.toast {
+  position: fixed;
+  top: 30px;
+  right: 30px;
+  min-width: 220px;
+  max-width: 350px;
+  background: var(--primary-dark);
+  color: var(--white);
+  padding: 1.1em 1.5em;
+  border-radius: var(--radius);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+  font-size: 1.05rem;
+  font-weight: 500;
+  z-index: 9999;
+  opacity: 0.96;
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  animation: toast-in 0.4s cubic-bezier(.4,1.5,.5,1.01);
+}
+.toast.toast-success {
+  background: #2ecc40;
+}
+.toast.toast-error {
+  background: #e74c3c;
+}
+@keyframes toast-in {
+  from { transform: translateY(-30px) scale(0.95); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 0.96; }
+}
+
+/* Modal styles */
+.confirm-modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+}
+.confirm-modal .modal-content {
+  background: var(--white);
+  color: var(--text);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  padding: 2.2rem 2rem 1.5rem 2rem;
+  max-width: 380px;
+  min-width: 260px;
+  text-align: center;
+}
+.confirm-modal .modal-content button {
+  margin: 0 0.7em;
+  min-width: 90px;
+}
+
+/* Button hover/focus/active improvements */
+button, input[type="submit"] {
+  transition: background 0.2s, box-shadow 0.2s, color 0.2s, transform 0.13s;
+  box-shadow: 0 1px 5px rgba(79,140,255,0.07);
+}
+button:hover, input[type="submit"]:hover {
+  background: var(--accent);
+  color: var(--primary-dark);
+  box-shadow: 0 2px 12px rgba(79,140,255,0.15);
+  transform: translateY(-2px) scale(1.05);
+}
+button:focus, input[type="submit"]:focus {
+  outline: 2px solid var(--accent);
+  box-shadow: 0 0 0 3px #ffd16655;
+}
+
+/* Card and input transitions */
+section.card, input, textarea, select {
+  transition: background 0.23s, box-shadow 0.23s, border 0.23s, color 0.23s;
+}
+section.card {
+  box-shadow: 0 8px 32px rgba(79,140,255,0.10);
+}
+
+/* Drag & drop elevation */
+li[draggable="true"], .dragging {
+  box-shadow: 0 6px 24px rgba(79,140,255,0.18) !important;
+  z-index: 10;
+  background: #fafdff;
+  border: 1.5px solid var(--primary-dark);
+}
+body.dark li[draggable="true"], body.dark .dragging {
+  background: #232b3b;
+}
+
+/* Responsive sidebar (mobile) */
+@media (max-width: 700px) {
+  .sidebar {
+    width: 60px;
+    padding: 1.5rem 0.5rem 0.5rem 0.5rem;
+    align-items: center;
+  }
+  #root {
+    margin-left: 60px;
+    padding: 1rem 0.3rem 2rem 0.3rem;
+  }
+  .sidebar .brand {
+    font-size: 1.25rem;
+  }
+}
