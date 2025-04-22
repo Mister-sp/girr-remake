@@ -43,10 +43,44 @@ Il est composé de deux parties :
     ```
     L'application sera accessible sur `http://localhost:5173` (ou un autre port indiqué par Vite).
 
-## Fonctionnalités (en cours)
+## Fonctionnalités réalisées
 
--   Gestion des Programmes, Épisodes, Sujets.
--   Gestion des Médias (Texte, Vidéo YouTube) associés aux Sujets.
--   Prévisualisation des vidéos YouTube.
--   Édition inline du contenu texte.
--   Réorganisation par glisser-déposer des médias (Sauvegarde de l'ordre en cours de débogage).
+- UI moderne : affichage en cartes, responsive, modals, boutons flottants homogènes
+- Sidebar avec logo et branding personnalisés
+- Gestion des Programmes, Épisodes, Sujets (CRUD complet)
+- Gestion des Médias (texte, vidéo YouTube) associés aux sujets
+- Prévisualisation des vidéos YouTube
+- Édition inline du contenu texte
+- Upload de logos personnalisés pour chaque programme
+- WebSocket temps réel (socket.io) : notifications, synchronisation live
+- Gestion et synchronisation des scènes (Scene) : API REST + WebSocket
+- Pilotage live multi-clients, feedback instantané (snackbar/notifications)
+
+## Titrage OBS (Lower Third)
+
+Le composant `LowerThird` assure un affichage professionnel du titrage (bandeau bas) dans l’aperçu OBS et la sortie principale :
+
+- **Fidélité broadcast** : le rendu est identique dans la miniature et la sortie principale.
+- **Bandeau adaptatif** : occupe toute la largeur du cadre vidéo, collé en bas, hauteur variable selon le texte.
+- **Retour à la ligne automatique** : aucun mot n’est coupé, même pour des titres très longs.
+- **Personnalisation facile** : modifiez `frontend/src/components/LowerThird.jsx` pour ajuster couleur, taille, padding, bordures, etc.
+- **Effet professionnel** : fond sombre, texte blanc, bordures haut/bas, padding broadcast.
+
+**Exemple d’intégration :**
+```jsx
+import LowerThird from './LowerThird';
+...
+<LowerThird title={current.title} />
+```
+
+Le composant est utilisé à la fois dans `ObsOutput.jsx` (sortie principale) et dans `ObsPreview.jsx` (miniature), garantissant un rendu cohérent partout.
+
+## Roadmap / À faire
+
+- Logger avancé côté backend (et affichage admin optionnel)
+- Documentation API interactive (Swagger UI sur /api-docs)
+- Tests automatisés (unitaires backend, intégration frontend)
+- Settings avancés / gestion des utilisateurs (profils, droits, personnalisation)
+- Améliorations UI/UX : drag & drop médias plus robuste, filtres/sort sur les programmes, etc.
+- Refonte/optimisation du backend (si besoin de persistance durable)
+- Suggestions ou besoins à discuter au fil du projet
