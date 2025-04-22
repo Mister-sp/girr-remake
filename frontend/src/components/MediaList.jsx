@@ -19,7 +19,13 @@ function getYouTubeId(url) {
 }
 
 // Prend programId, episodeId, topicId, topicTitle, onBack
-function MediaList({ programId, episodeId, topicId, topicTitle, onBack }) {
+import { useParams } from 'react-router-dom';
+
+function MediaList({ programId: propProgramId, episodeId: propEpisodeId, topicId: propTopicId, topicTitle, onBack }) {
+  const params = useParams();
+  const programId = propProgramId || params.programId;
+  const episodeId = propEpisodeId || params.episodeId;
+  const topicId = propTopicId || params.topicId;
   const [mediaItems, setMediaItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

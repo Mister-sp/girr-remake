@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 // Importer les fonctions API pour les sujets
 import { getTopicsForEpisode, createTopic, deleteTopic, updateTopic } from '../services/api';
 import ConfirmModal from './ConfirmModal.jsx';
@@ -10,7 +11,14 @@ import { buttonStyle } from './buttonStyle';
 // (supprimé car maintenant importé)
 
 // Ce composant prend programId, episodeId, episodeTitle, onSelectTopic et onBack en props
-function TopicList({ programId, episodeId, episodeTitle, onSelectTopic, onBack }) {
+import { useNavigate } from 'react-router-dom';
+
+function TopicList({ programId: propProgramId, episodeId: propEpisodeId, episodeTitle, onSelectTopic, onBack }) {
+  const params = useParams();
+  const programId = propProgramId || params.programId;
+  const episodeId = propEpisodeId || params.episodeId;
+  const navigate = useNavigate();
+
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -73,6 +81,11 @@ function TopicList({ programId, episodeId, episodeTitle, onSelectTopic, onBack }
     }
   };
 
+  // Gestionnaire de navigation au clic sur un sujet
+  const handleTopicClick = (topicId, topicTitle) => {
+    navigate(`/program/${programId}/episode/${episodeId}/topic/${topicId}`);
+  };
+
   // Affichage
   if (!programId || !episodeId) {
     return <div>IDs manquants pour afficher les sujets.</div>; // Message d'erreur
@@ -93,7 +106,7 @@ function TopicList({ programId, episodeId, episodeTitle, onSelectTopic, onBack }
         <div style={{ color: 'red' }}>Erreur : {error}</div>
         <TopicForm onSubmit={handleAddTopic} title={newTopicTitle} setTitle={setNewTopicTitle} />
         {/* Passer onSelectTopic à TopicDisplay */}
-        <TopicDisplay topics={topics} onDelete={handleDeleteTopic} onSelect={onSelectTopic} />
+        <TopicDisplay topics={topics} onDelete={handleDeleteTopic} onSelect={handleTopicClick} />
       </div>
     );
   }
@@ -106,7 +119,7 @@ function TopicList({ programId, episodeId, episodeTitle, onSelectTopic, onBack }
       <h2>Sujets de l'épisode "{episodeTitle}"</h2>
       <TopicForm onSubmit={handleAddTopic} title={newTopicTitle} setTitle={setNewTopicTitle} />
       {/* Passer onSelectTopic à TopicDisplay */}
-      <TopicDisplay topics={topics} onDelete={handleDeleteTopic} onSelect={onSelectTopic} />
+      <TopicDisplay topics={topics} onDelete={handleDeleteTopic} onSelect={handleTopicClick} />
     </div>
   );
 }

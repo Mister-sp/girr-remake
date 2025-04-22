@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 // Importer les fonctions API pour les épisodes
 import { getEpisodesForProgram, createEpisode, deleteEpisode, updateEpisode } from '../services/api';
 import ConfirmModal from './ConfirmModal.jsx';
@@ -10,11 +11,33 @@ import { buttonStyle } from './buttonStyle';
 // (supprimé car maintenant importé)
 
 // Ce composant prend l'ID du programme parent en props
-function EpisodeList({ programId, programTitle, onSelectEpisode, onBack }) {
+import { useNavigate } from 'react-router-dom';
+
+function EpisodeList({ programId: propProgramId, programTitle: propProgramTitle, onSelectEpisode, onBack }) {
+  const params = useParams();
+  const programId = propProgramId || params.programId;
+  const [programTitle, setProgramTitle] = useState(propProgramTitle || '');
+  const navigate = useNavigate();
+
   const [episodes, setEpisodes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [newEpisodeTitle, setNewEpisodeTitle] = useState('');
+
+  // Charger le titre du programme si absent
+  useEffect(() => {
+    async function fetchTitle() {
+      if (!programTitle && programId) {
+        // Appel API pour récupérer le titre du programme
+        try {
+          const response = await fetch(`/api/programs/${programId}`);
+          const data = await response.json();
+          setProgramTitle(data.title || '');
+        } catch (e) { setProgramTitle(''); }
+      }
+    }
+    fetchTitle();
+  }, [programId, programTitle]);
 
   // Fonction pour charger les épisodes du programme spécifié
   const loadEpisodes = async () => {
@@ -48,9 +71,15 @@ function EpisodeList({ programId, programTitle, onSelectEpisode, onBack }) {
       // Note: Le backend s'attend peut-être à d'autres champs (ex: position, etc.)
       // Pour l'instant, on envoie juste le titre.
       const episodeData = { title: newEpisodeTitle }; 
-      await createEpisode(programId, episodeData);
+      const res = await createEpisode(programId, episodeData);
       setNewEpisodeTitle('');
-      await loadEpisodes(); // Recharger la liste
+      // Redirige automatiquement vers la page du nouvel épisode si l'API retourne l'id
+      const newId = res && res.data && (res.data.id || res.data._id);
+      if (newId) {
+        navigate(`/program/${programId}/episode/${newId}`);
+      } else {
+        await loadEpisodes(); // fallback si pas d'id
+      }
     } catch (err) {
       console.error("Erreur lors de la création de l'épisode:", err);
       setError('Impossible de créer l\'épisode.');
@@ -70,6 +99,11 @@ function EpisodeList({ programId, programTitle, onSelectEpisode, onBack }) {
         setError('Impossible de supprimer l\'épisode.');
       }
     }
+  };
+
+  // Gestionnaire de navigation au clic sur un épisode
+  const handleEpisodeClick = (episodeId, episodeTitle) => {
+    navigate(`/program/${programId}/episode/${episodeId}`);
   };
 
   // Affichage
@@ -92,7 +126,7 @@ function EpisodeList({ programId, programTitle, onSelectEpisode, onBack }) {
         <h2>Épisodes de "{programTitle}"</h2>
         <div style={{ color: 'red' }}>Erreur : {error}</div>
         <EpisodeForm onSubmit={handleAddEpisode} title={newEpisodeTitle} setTitle={setNewEpisodeTitle} />
-        <EpisodeDisplay episodes={episodes} onDelete={handleDeleteEpisode} onSelect={onSelectEpisode} />
+        <EpisodeDisplay episodes={episodes} onDelete={handleDeleteEpisode} onSelect={handleEpisodeClick} />
       </div>
     );
   }
@@ -105,7 +139,7 @@ function EpisodeList({ programId, programTitle, onSelectEpisode, onBack }) {
       {/* Ne plus afficher l'ID ici */}
       <h2>Épisodes de "{programTitle}"</h2>
       <EpisodeForm onSubmit={handleAddEpisode} title={newEpisodeTitle} setTitle={setNewEpisodeTitle} />
-      <EpisodeDisplay episodes={episodes} onDelete={handleDeleteEpisode} onSelect={onSelectEpisode} />
+      <EpisodeDisplay episodes={episodes} onDelete={handleDeleteEpisode} onSelect={handleEpisodeClick} />
     </div>
   );
 }

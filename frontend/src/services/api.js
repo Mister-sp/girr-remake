@@ -29,6 +29,7 @@ export const deleteProgram = (id) => apiClient.delete(`/programs/${id}`); // Ajo
 
 // Fonctions pour interagir avec l'API des épisodes (imbriqués sous les programmes)
 export const getEpisodesForProgram = (programId) => apiClient.get(`/programs/${programId}/episodes`);
+export const getEpisodeDetails = (programId, episodeId) => apiClient.get(`/programs/${programId}/episodes/${episodeId}`);
 export const createEpisode = (programId, episodeData) => apiClient.post(`/programs/${programId}/episodes`, episodeData);
 export const updateEpisode = (programId, episodeId, episodeData) => apiClient.put(`/programs/${programId}/episodes/${episodeId}`, episodeData);
 export const deleteEpisode = (programId, episodeId) => apiClient.delete(`/programs/${programId}/episodes/${episodeId}`);
