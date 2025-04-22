@@ -3,6 +3,8 @@ const cors = require('cors');
 const app = express();
 const path = require('path');
 const multer = require('multer');
+const http = require('http');
+const { initWebSocket } = require('./websocket');
 const port = process.env.PORT || 3001;
 
 // Importer les routes
@@ -29,7 +31,14 @@ app.use('/api/programs/:programId/episodes', episodeRoutes);
 app.use('/api/programs/:programId/episodes/:episodeId/topics', topicRoutes);
 app.use('/api/programs/:programId/episodes/:episodeId/topics/:topicId/media', mediaRoutes);
 
+// Route scène (GET/PUT)
+const sceneRoutes = require('./routes/scene');
+app.use('/api/scene', sceneRoutes);
+
 // Démarrage du serveur
-app.listen(port, () => {
+const server = http.createServer(app);
+initWebSocket(server);
+server.listen(port, () => {
   console.log(`Serveur backend démarré sur http://localhost:${port}`);
+  console.log(`WebSocket disponible sur le même port`);
 });

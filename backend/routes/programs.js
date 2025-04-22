@@ -19,7 +19,7 @@ const upload = multer({ storage });
 // Importer les routes imbriquées
 const episodeRoutes = require('./episodes');
 // Importer le store
-const { store, deleteProgramCascade } = require('../data/store');
+const { store, saveStore, deleteProgramCascade } = require('../data/store');
 const fs = require('fs');
 
 // NE PLUS UTILISER LES ROUTES IMBRIQUEES ICI - FAIT DANS SERVER.JS
@@ -39,7 +39,7 @@ router.post('/', (req, res) => {
     // Ajoutez d'autres champs si nécessaire
   };
   store.programs.push(newProgram);
-  require('../data/store').saveStore();
+  saveStore();
   res.status(201).json(newProgram);
 });
 
@@ -78,7 +78,7 @@ router.put('/:id', upload.single('logo'), (req, res) => {
   // Assurer que l'ID n'est pas modifié
   updatedProgram.id = programId;
   store.programs[programIndex] = updatedProgram;
-  require('../data/store').saveStore();
+  saveStore();
   res.json(updatedProgram);
 });
 

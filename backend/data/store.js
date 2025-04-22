@@ -64,9 +64,25 @@ const deleteTopicCascade = (topicId, episodeId, programId) => {
   saveStore();
 };
 
+function getCurrentScene() {
+  return store.currentScene || { name: '', lastChanged: null };
+}
+
+function setCurrentScene(name) {
+  store.currentScene = {
+    name,
+    lastChanged: new Date().toISOString()
+  };
+  saveStore();
+  return store.currentScene;
+}
+
 module.exports = {
   store,
+  saveStore,
   deleteProgramCascade,
   deleteEpisodeCascade,
-  deleteTopicCascade
+  deleteTopicCascade,
+  getCurrentScene,
+  setCurrentScene
 };
