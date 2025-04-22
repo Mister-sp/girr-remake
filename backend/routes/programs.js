@@ -31,11 +31,18 @@ router.get('/', (req, res) => {
 });
 
 // POST /api/programs - Créer un nouveau programme
-router.post('/', (req, res) => {
+router.post('/', upload.single('logo'), (req, res) => {
+  console.log('POST /api/programs req.body:', req.body);
+  console.log('POST /api/programs req.file:', req.file);
+  let logoUrl = '';
+  if (req.file) {
+    logoUrl = `/logos/${req.file.filename}`;
+  }
   const newProgram = { 
     id: store.nextProgramId++,
     title: req.body.title || 'Nouveau Programme',
     description: req.body.description || '',
+    logoUrl,
     // Ajoutez d'autres champs si nécessaire
   };
   store.programs.push(newProgram);

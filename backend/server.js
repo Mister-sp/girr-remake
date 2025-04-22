@@ -2,6 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 const path = require('path');
+
+// Exposer les logos en statique
+app.use('/logos', express.static(path.join(__dirname, 'public/logos')));
 const multer = require('multer');
 const http = require('http');
 const { initWebSocket } = require('./websocket');

@@ -3,7 +3,14 @@
     {
       "id": 3,
       "title": "Test ",
-      "description": ""
+      "description": "",
+      "logoUrl": "/logos/1745321342043-529271278.png"
+    },
+    {
+      "id": 9,
+      "title": "Brainstormgeek ",
+      "description": "",
+      "logoUrl": "/logos/1745321004306-627393871.png"
     }
   ],
   "episodes": [
@@ -28,13 +35,6 @@
       "title": "Intro",
       "position": 0,
       "script": "Test"
-    },
-    {
-      "id": 2,
-      "programId": 3,
-      "episodeId": 3,
-      "title": "Windsurf",
-      "position": 0
     },
     {
       "id": 5,
@@ -64,7 +64,7 @@
       "order": 1
     }
   ],
-  "nextProgramId": 4,
+  "nextProgramId": 10,
   "nextEpisodeId": 6,
   "nextTopicId": 7,
   "nextMediaId": 3,

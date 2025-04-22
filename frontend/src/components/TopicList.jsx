@@ -5,6 +5,7 @@ import { getTopicsForEpisode, createTopic, deleteTopic, updateTopic } from '../s
 import ConfirmModal from './ConfirmModal.jsx';
 import { useToast } from './ToastProvider.jsx';
 import { FaPencilAlt, FaCheck, FaTimes, FaPlus, FaTrash, FaArrowLeft } from 'react-icons/fa';
+import Modal from './Modal.jsx';
 
 import { buttonStyle } from './buttonStyle';
 // Style uniforme pour tous les boutons d'action
@@ -14,6 +15,7 @@ import { buttonStyle } from './buttonStyle';
 import { useNavigate } from 'react-router-dom';
 
 function TopicList({ programId: propProgramId, episodeId: propEpisodeId, episodeTitle, onSelectTopic, onBack }) {
+  const [showModal, setShowModal] = useState(false);
   const params = useParams();
   const programId = propProgramId || params.programId;
   const episodeId = propEpisodeId || params.episodeId;
@@ -117,7 +119,36 @@ function TopicList({ programId: propProgramId, episodeId: propEpisodeId, episode
         <FaArrowLeft />
       </button>
       <h2>Sujets de l'épisode "{episodeTitle}"</h2>
-      <TopicForm onSubmit={handleAddTopic} title={newTopicTitle} setTitle={setNewTopicTitle} />
+      {/* Bouton flottant + pour ouvrir le modal d'ajout */}
+      <button
+        onClick={() => setShowModal(true)}
+        style={{
+          position: 'fixed',
+          top: 112,
+          right: 32,
+          zIndex: 1000,
+          width: 56,
+          height: 56,
+          borderRadius: '50%',
+          background: '#4F8CFF',
+          color: '#fff',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.18)',
+          border: 'none',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 0,
+        }}
+        title="Ajouter un sujet"
+        aria-label="Ajouter un sujet"
+      >
+        <FaPlus style={{ fontSize: 28, display: 'block', margin: 0, padding: 0 }} />
+      </button>
+      {/* Modal d'ajout */}
+      <Modal open={showModal} onClose={() => setShowModal(false)}>
+        <TopicForm onSubmit={handleAddTopic} title={newTopicTitle} setTitle={setNewTopicTitle} />
+      </Modal>
       {/* Passer onSelectTopic à TopicDisplay */}
       <TopicDisplay topics={topics} onDelete={handleDeleteTopic} onSelect={handleTopicClick} />
     </div>

@@ -133,9 +133,9 @@ function EpisodeFullView() {
       <style>{`
         .floating-add-btn {
           position: fixed;
-          bottom: 100px;
+          top: 32px;
           right: 32px;
-          z-index: 100;
+          z-index: 1000;
           width: 64px;
           height: 64px;
           border-radius: 50%;
@@ -172,7 +172,7 @@ function EpisodeFullView() {
       `}</style>
       {/* Formulaire d'ajout de sujet */}
       {addMode && (
-        <form onSubmit={handleAddTopic} style={{ position: 'fixed', bottom: 100, right: 32, background: '#222', padding: 16, borderRadius: 8, boxShadow: '0 4px 16px #0006', zIndex: 101, display: 'flex', gap: 8 }}>
+        <form onSubmit={handleAddTopic} style={{ position: 'fixed', top: 112, right: 32, background: '#222', padding: 16, borderRadius: 8, boxShadow: '0 4px 16px #0006', zIndex: 101, display: 'flex', gap: 8 }}>
           <input
             type="text"
             value={newTopicTitle}
