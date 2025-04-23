@@ -89,7 +89,7 @@ export default function ObsOutput() {
   }, []);
 
   return (
-    <div style={{
+    <div className="obs-output-root" style={{
       width: 1920,
       height: 1080,
       transform: `scale(${scale})`,
@@ -98,7 +98,7 @@ export default function ObsOutput() {
       position: 'fixed',
       top: 0,
       left: 0,
-      background: '#000',
+      background: current.media ? '#000' : 'none',
       fontFamily: 'Inter, Arial, sans-serif',
       margin: 0,
       padding: 0,
@@ -121,7 +121,7 @@ export default function ObsOutput() {
           objectFit: 'cover',
           borderRadius: 0,
           boxShadow: 'none',
-          background: '#000',
+          background: current.media ? '#000' : 'none',
           zIndex: 10,
           display: 'block',
         }} />
@@ -158,7 +158,7 @@ export default function ObsOutput() {
             border: 'none',
             borderRadius: 0,
             boxShadow: 'none',
-            background: '#000',
+            background: current.media ? '#000' : 'none',
             zIndex: 10,
             display: 'block',
             objectFit: 'cover',

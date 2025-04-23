@@ -7,7 +7,10 @@ import { FaFilm, FaListUl, FaBookOpen, FaArrowLeft, FaMoon, FaSun } from './comp
 import ProgramList from './components/ProgramList';
 import EpisodeList from './components/EpisodeList';
 import TopicList from './components/TopicList';
-import MediaList from './components/MediaList';
+import CustomMediaList from "./components/CustomMediaList";
+import ObsOutput from './components/ObsOutput';
+import ObsMediaOutput from './components/ObsMediaOutput';
+import ObsTitrageOutput from './components/ObsTitrageOutput';
 import AppWebSocketTest from './AppWebSocketTest';
 import SceneTest from './SceneTest.jsx';
 import LiveControl from './LiveControl.jsx';
@@ -95,22 +98,40 @@ function AppWithNavigation() {
   };
 
   return (
-    <>
-      <Sidebar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
-      <main style={{ marginLeft: 220, padding: '24px 16px 80px 16px', minHeight: '100vh', background: darkMode ? '#181a1b' : '#f7f7fa' }}>
-        <Routes>
-          <Route path="/" element={<ProgramList onSelectProgram={handleSelectProgram} />} />
-          <Route path="/program/:programId/episodes" element={<EpisodeList onSelectEpisode={handleSelectEpisode} onBack={handleBackToPrograms} />} />
-          <Route path="/program/:programId/episode/:episodeId/topics" element={<TopicList onSelectTopic={handleSelectTopic} onBack={handleBackToEpisodes} />} />
-<Route path="/program/:programId/episode/:episodeId" element={<EpisodeFullView />} />
-          <Route path="/program/:programId/episode/:episodeId/topic/:topicId" element={<MediaList onBack={handleBackToTopics} />} />
-          <Route path="/test-websocket" element={<AppWebSocketTest />} />
-          <Route path="/scene-test" element={<SceneTest />} />
-          <Route path="/live-control" element={<LiveControl />} />
-        </Routes>
-      </main>
-      <LiveControlFooter />
-    </>
+    <Routes>
+      <Route path="/obs" element={<ObsOutput />} />
+      <Route path="/obs-media" element={<ObsMediaOutput />} />
+      <Route path="/obs-titrage" element={<ObsTitrageOutput />} />
+      <Route path="*" element={
+        <>
+          <Sidebar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+          <main style={{ marginLeft: 220, padding: '24px 16px 80px 16px', minHeight: '100vh', background: darkMode ? '#181a1b' : '#f7f7fa' }}>
+            <Routes>
+              <Route path="/" element={<ProgramList onSelectProgram={handleSelectProgram} />} />
+              <Route path="/program/:programId/episodes" element={<EpisodeList onSelectEpisode={handleSelectEpisode} onBack={handleBackToPrograms} />} />
+              <Route path="/program/:programId/episode/:episodeId/topics" element={<TopicList onSelectTopic={handleSelectTopic} onBack={handleBackToEpisodes} />} />
+              <Route path="/program/:programId/episode/:episodeId" element={<EpisodeFullView />} />
+              <Route path="/program/:programId/episode/:episodeId/topic/:topicId" element={<CustomMediaList onBack={handleBackToTopics} />} />
+              <Route path="/test-websocket" element={<AppWebSocketTest />} />
+              <Route path="/scene-test" element={<SceneTest />} />
+              <Route path="/live-control" element={<LiveControl />} />
+            </Routes>
+          </main>
+          <LiveControlFooter />
+        </>
+      } />
+    </Routes>
+  );
+}
+
+// Navigation entre overlays OBS
+function ObsOutputNavigation() {
+  return (
+    <div style={{position:'fixed',top:20,left:20,zIndex:100000}}>
+      <a href="/obs" style={{marginRight:8,padding:'8px 12px',background:'#333',color:'#fff',borderRadius:6,textDecoration:'none'}}>Média + Titrage</a>
+      <a href="/obs-media" style={{marginRight:8,padding:'8px 12px',background:'#333',color:'#fff',borderRadius:6,textDecoration:'none'}}>Média seul</a>
+      <a href="/obs-titrage" style={{padding:'8px 12px',background:'#333',color:'#fff',borderRadius:6,textDecoration:'none'}}>Titrage seul</a>
+    </div>
   );
 }
 

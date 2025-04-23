@@ -29,6 +29,7 @@ function MediaPreview({ url }) {
 function EditTopicModal({
   open, onClose, topic, onUpdate, onDelete, onAddMedia, mediaItems = [], onUpdateMedia, onDeleteMedia
 }) {
+  console.log('MODAL RENDU', open, topic);
   const [editingId, setEditingId] = useState(null);
   const [title, setTitle] = useState(topic.title || '');
   const [script, setScript] = useState(topic.script || '');

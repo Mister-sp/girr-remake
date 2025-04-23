@@ -15,7 +15,11 @@ function initWebSocket(server) {
   io.on('connection', (socket) => {
     console.log('Nouvelle connexion WebSocket :', socket.id);
     socket.emit('hello', { msg: 'Connexion WebSocket réussie !' });
-    // Ici, tu pourras ajouter d'autres events plus tard
+    // RELAY obs:update
+    socket.on('obs:update', (data) => {
+      console.log('[SOCKET.IO] Reçu obs:update de', socket.id, data);
+      io.emit('obs:update', data); // Broadcast à tous les clients
+    });
     socket.on('disconnect', () => {
       console.log('Déconnexion WebSocket :', socket.id);
     });

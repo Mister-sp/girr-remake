@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { getEpisodeDetails, getTopicsForEpisode, getMediaForTopic, updateTopic, deleteTopic, createMedia, createTopic } from '../services/api';
+import CustomMediaList from './CustomMediaList.jsx';
 import EditTopicModal from './EditTopicModal';
-import { FaPencilAlt, FaPlay, FaChevronUp, FaChevronDown, FaPlus } from 'react-icons/fa';
+import { FaPencilAlt, FaPlay, FaChevronUp, FaChevronDown, FaPlus, FaPause } from 'react-icons/fa';
+import { MdCast, MdCastConnected } from 'react-icons/md';
 
 function EpisodeFullView() {
   const { programId, episodeId } = useParams();
@@ -23,8 +25,10 @@ function EpisodeFullView() {
       setLoading(true);
       try {
         const episodeRes = await getEpisodeDetails(programId, episodeId);
+        console.log('DEBUG episodeRes.data', episodeRes.data);
         setEpisode(episodeRes.data);
         const topicsRes = await getTopicsForEpisode(programId, episodeId);
+        console.log('DEBUG topicsRes.data', topicsRes.data);
         setTopics(topicsRes.data);
         const mediaObj = {};
         for (const topic of topicsRes.data) {
@@ -58,7 +62,10 @@ function EpisodeFullView() {
     }
   };
 
-  const handleEdit = (topic) => setEditTopic(topic);
+  const handleEdit = (topic) => {
+    console.log('handleEdit appelé', topic);
+    setEditTopic(topic);
+  };
   const handleCloseEdit = () => setEditTopic(null);
   const handleUpdateTopic = async (updated) => {
     await updateTopic(programId, episodeId, updated.id, updated);
@@ -76,14 +83,63 @@ function EpisodeFullView() {
     await reloadAll();
   };
   const handlePlay = (topic) => {
-    // TODO: envoyer au live control
-    alert('Envoyer au live control: ' + topic.title);
+    // Envoie le titre du sujet et le logo du programme à la page OBS via WebSocket
+    import('../services/websocket').then(({ connectWebSocket }) => {
+      const socket = connectWebSocket();
+      socket.emit('obs:update', { title: topic.title, media: null, logoUrl: episode && (episode.logo || episode.programLogo || null) });
+    });
   };
+
+
   const toggleExpand = (topicId) => {
     setExpandedTopics((prev) => ({ ...prev, [topicId]: !prev[topicId] }));
   };
   // Pour mémoriser le dernier topic ajouté (id à ouvrir)
   const [pendingOpenTopicId, setPendingOpenTopicId] = useState(null);
+
+  // État pour titrage/cast actif
+  const [titrageActif, setTitrageActif] = useState(null); // topicId
+  const [castActif, setCastActif] = useState(null); // mediaId
+
+  // Handler titrage OBS
+  const handleTitrage = (topic) => {
+    setTitrageActif(topic.id);
+    setCastActif(null); // désactive tout cast
+    import('../services/websocket').then(({ connectWebSocket }) => {
+      const socket = connectWebSocket();
+      socket.emit('obs:update', {
+        title: topic.title,
+        media: null,
+        logoUrl: episode && (episode.logo || episode.programLogo || null),
+      });
+    });
+  };
+  // Handler cast OBS
+  function isYouTubeUrl(url) {
+    return /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//.test(url);
+  }
+  const handleCast = (topic, media) => {
+    setCastActif(media.id);
+    setTitrageActif(null); // désactive titrage
+    import('../services/websocket').then(({ connectWebSocket }) => {
+      const socket = connectWebSocket();
+      let type = media.type;
+      let url = media.content;
+      if (/\.(jpg|jpeg|png|gif|webp)$/i.test(url)) {
+        type = 'image';
+      } else if (isYouTubeUrl(url)) {
+        type = 'youtube';
+      }
+      socket.emit('obs:update', {
+        title: topic.title,
+        media: { type, url },
+        logoUrl: episode && (episode.logo || episode.programLogo || null),
+      });
+    });
+  };
+
+
+
 
   const handleAddTopic = async (e) => {
     e.preventDefault();
@@ -113,11 +169,12 @@ function EpisodeFullView() {
 
   if (loading) return <div>Chargement...</div>;
   if (error) return <div style={{ color: 'red' }}>{error}</div>;
-  if (!episode) return <div>Aucun détail pour cet épisode.</div>;
+  if (!episode || typeof episode !== 'object' || episode instanceof Response) return <div>Erreur de chargement des données épisode (type inattendu).</div>;
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto', padding: 24 }}>
+    <div style={{ maxWidth: 800, margin: '0 auto', padding: 24, position: 'relative' }}>
       <h2>Épisode {episode.title}</h2>
+
       <div style={{ background: '#222', color: '#fff', padding: 16, borderRadius: 8, marginBottom: 24 }}>
         <strong>{episode.title}</strong>
         <div style={{ marginTop: 8 }}>{episode.description}</div>
@@ -152,27 +209,22 @@ function EpisodeFullView() {
           display: block;
           width: 36px;
           height: 36px;
-          background: none;
-          position: relative;
-        }
-        .plus-icon:before, .plus-icon:after {
-          content: '';
-          position: absolute;
-          left: 16px;
-          top: 6px;
-          width: 4px;
-          height: 24px;
-          border-radius: 2px;
-          background: var(--white);
-          transition: background 0.2s;
-        }
-        .plus-icon:after {
-          transform: rotate(90deg);
+          background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2c5.514 0 10 4.486 10 10s-4.486 10-10 10-10-4.486-10-10 4.486-10 10-10zm0-2c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm6 13h-5v5h-2v-5h-5v-2h5v-5h2v5h5v2z"/></svg>') no-repeat center;
         }
       `}</style>
-      {/* Formulaire d'ajout de sujet */}
+      {editTopic && (
+        <EditTopicModal
+          open={true}
+          topic={editTopic}
+          onClose={handleCloseEdit}
+          onUpdate={handleUpdateTopic}
+          onDelete={handleDeleteTopic}
+          onAddMedia={handleAddMedia}
+          mediaItems={mediaByTopic[editTopic?.id] || []}
+        />
+      )}
       {addMode && (
-        <form onSubmit={handleAddTopic} style={{ position: 'fixed', top: 112, right: 32, background: '#222', padding: 16, borderRadius: 8, boxShadow: '0 4px 16px #0006', zIndex: 101, display: 'flex', gap: 8 }}>
+        <form onSubmit={handleAddTopic} style={{ position: 'fixed', bottom: 80, right: 80, background: '#181a1b', padding: 16, borderRadius: 8, boxShadow: '0 4px 16px #0006' }}>
           <input
             type="text"
             value={newTopicTitle}
@@ -189,8 +241,7 @@ function EpisodeFullView() {
         <div key={topic.id} style={{ marginBottom: 32, background: '#181a1b', borderRadius: 8, padding: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <h3 style={{ margin: 0, flex: 1 }}>{topic.title}</h3>
-            <button onClick={() => handleEdit(topic)} title="Modifier"><FaPencilAlt /></button>
-            <button onClick={() => handlePlay(topic)} title="Envoyer au live control"><FaPlay /></button>
+             <button onClick={e => { e.stopPropagation(); handleEdit(topic); }} title="Modifier"><FaPencilAlt /></button>
             <button onClick={() => toggleExpand(topic.id)} title={expandedTopics[topic.id] ? 'Réduire' : 'Déplier'}>
               {expandedTopics[topic.id] ? <FaChevronUp /> : <FaChevronDown />}
             </button>
@@ -203,11 +254,41 @@ function EpisodeFullView() {
           )}
           {expandedTopics[topic.id] !== false && (
             <div style={{ marginTop: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: 10 }}>
+                 <button onClick={() => {
+                   if (titrageActif === topic.id) {
+                     setTitrageActif(null);
+                     import('../services/websocket').then(({ connectWebSocket }) => {
+                       const socket = connectWebSocket();
+                       socket.emit('obs:update', { title: '', media: null, logoUrl: episode && (episode.logo || episode.programLogo || null) });
+                     });
+                   } else {
+                     handleTitrage(topic);
+                   }
+                 }} style={{ background: titrageActif === topic.id ? '#1976d2' : '#388e3c', color: 'white', border: 'none', borderRadius: 4, padding: '8px 12px', fontWeight: 600, display: 'flex', alignItems: 'center', fontSize: 20 }}>
+                   {titrageActif === topic.id ? <FaPause /> : <FaPlay />}<span style={{marginLeft:8,fontSize:15}}>Titrage</span>
+                 </button>
+              </div>
               {mediaByTopic[topic.id] && mediaByTopic[topic.id].length > 0 ? (
                 <ul style={{ listStyle: 'none', padding: 0 }}>
                   {mediaByTopic[topic.id].map(media => (
-                    <li key={media.id} style={{ marginBottom: 16 }}>
-                      <MediaPreview url={media.content} type={media.type} />
+                    <li key={media.id} style={{ marginBottom: 16, display: 'flex', alignItems: 'center' }}>
+                      <div style={{ flex: 1 }}>
+                        <MediaPreview url={media.content} type={media.type} />
+                      </div>
+                      <button onClick={() => {
+                    if (castActif === media.id) {
+                      setCastActif(null);
+                      import('../services/websocket').then(({ connectWebSocket }) => {
+                        const socket = connectWebSocket();
+                        socket.emit('obs:update', { title: '', media: null, logoUrl: episode && (episode.logo || episode.programLogo || null) });
+                      });
+                    } else {
+                      handleCast(topic, media);
+                    }
+                  }} style={{ marginLeft: 18, background: castActif === media.id ? '#388e3c' : '#222', color: castActif === media.id ? '#fff' : '#90caf9', border: 'none', borderRadius: 4, padding: '8px 12px', fontWeight: 600, display: 'flex', alignItems: 'center', fontSize: 22 }}>
+                    {castActif === media.id ? <MdCastConnected /> : <MdCast />}
+                  </button>
                     </li>
                   ))}
                 </ul>
@@ -218,28 +299,13 @@ function EpisodeFullView() {
           )}
         </div>
       ))}
-      <EditTopicModal
-        open={!!editTopic}
-        onClose={handleCloseEdit}
-        topic={editTopic || {}}
-        mediaItems={editTopic && mediaByTopic[editTopic.id] ? mediaByTopic[editTopic.id] : []}
-        onUpdate={handleUpdateTopic}
-        onDelete={handleDeleteTopic}
-        onAddMedia={handleAddMedia}
-        onUpdateMedia={async (mediaId, newValue) => {
-          const media = (mediaByTopic[editTopic.id] || []).find(m => m.id === mediaId);
-          if (!media || media.content === newValue) return;
-          await updateMedia(programId, episodeId, editTopic.id, mediaId, { ...media, content: newValue });
-          await reloadAll();
-        }}
-        onDeleteMedia={async (mediaId) => {
-          await deleteMedia(programId, episodeId, editTopic.id, mediaId);
-          await reloadAll();
-        }}
-      />
+      {/* Affichage des médias du sujet sélectionné si topicId présent */}
+
+
     </div>
   );
 }
+
 
 // Aperçu média intelligent (image, YouTube, lien)
 function MediaPreview({ url, type }) {

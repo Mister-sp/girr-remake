@@ -1,0 +1,25 @@
+/* Styles globaux pour la page OBS : fond clean, pas de marges, pas de couleurs parasites */
+body.obs-output, html.obs-output {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.obs-output-root,
+#root.obs-output-root,
+body.obs-output #root,
+html.obs-output body.obs-output #root,
+html.obs-output body.obs-output #root.obs-output-root {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+html.obs-output, body.obs-output, #root, .obs-output-root {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+

@@ -9,6 +9,7 @@ const SCENE_PRESETS = [
 ];
 
 export default function LiveControlFooter() {
+  const [obsPreviewUrl, setObsPreviewUrl] = useState('/obs');
   const [scene, setScene] = useState({ name: '', lastChanged: null });
   const [custom, setCustom] = useState('');
   const [wsConnected, setWsConnected] = useState(false);
@@ -57,47 +58,59 @@ export default function LiveControlFooter() {
       display:'flex',alignItems:'center',justifyContent:'space-between',
       gap:18,minHeight:64
     }}>
+      {/* Colonne OBS : boutons pour changer l'aperçu */}
+      <div style={{display:'flex',alignItems:'center',gap:10}}>
+        <span style={{fontWeight:600,marginRight:8}}>OBS :</span>
+        <button onClick={() => setObsPreviewUrl('/obs')} style={{marginRight:4,padding:'7px 12px',background:'#333',color:'#fff',borderRadius:6,border:'none',fontSize:14,cursor:'pointer'}}>Média + Titrage</button>
+        <button onClick={() => setObsPreviewUrl('/obs-media')} style={{marginRight:4,padding:'7px 12px',background:'#333',color:'#fff',borderRadius:6,border:'none',fontSize:14,cursor:'pointer'}}>Média seul</button>
+        <button onClick={() => setObsPreviewUrl('/obs-titrage')} style={{padding:'7px 12px',background:'#333',color:'#fff',borderRadius:6,border:'none',fontSize:14,cursor:'pointer'}}>Titrage seul</button>
+      </div>
+      {/* Colonne 1 : état WebSocket */}
       <div style={{display:'flex',alignItems:'center',gap:10}}>
         <span style={{width:10,height:10,borderRadius:'50%',background:wsConnected?'#3c3':'#f44',display:'inline-block',border:'1px solid #222'}} />
         <span style={{fontSize:14}}>
           WebSocket&nbsp;: {wsConnected ? 'connecté' : 'déconnecté'}
         </span>
       </div>
-      <div style={{display:'flex',alignItems:'center',gap:16}}>
-        {SCENE_PRESETS.map(preset => (
-          <button
-            key={preset.label}
-            onClick={() => changeScene(preset.label)}
-            disabled={loading || scene.name === preset.label}
-            style={{
-              background:preset.color,
-              color:'#222',fontWeight:600,fontSize:15,border:'none',
-              borderRadius:7,padding:'8px 16px',cursor:loading||scene.name===preset.label?'not-allowed':'pointer',
-              opacity:scene.name===preset.label?0.6:1,boxShadow:'0 1px 4px #0002'
-            }}
-          >
-            {preset.label}
-          </button>
-        ))}
-        <form onSubmit={e => {e.preventDefault(); if(custom.trim()) changeScene(custom.trim());}} style={{display:'flex',gap:6}}>
-          <input
-            value={custom}
-            onChange={e => setCustom(e.target.value)}
-            placeholder="Scène personnalisée"
-            style={{minWidth:90,padding:'7px 10px',borderRadius:6,border:'1px solid #bbb',fontSize:14}}
-            disabled={loading}
-          />
-          <button type="submit" disabled={loading||!custom.trim()} style={{padding:'7px 14px',borderRadius:6,fontWeight:600,fontSize:14}}>
-            {loading ? '...' : 'OK'}
-          </button>
-        </form>
-      </div>
+
+      {/* Colonne 3 : nom de la scène */}
       <div style={{fontSize:17,fontWeight:700,color:'#FFD166',textShadow:'0 1px 4px #0007'}}>
         {scene.name || <i style={{color:'#ccc'}}>(aucune scène)</i>}
         <span style={{fontSize:13,color:'#bbb',marginLeft:12}}>
           {scene.lastChanged ? new Date(scene.lastChanged).toLocaleTimeString() : ''}
         </span>
         {success && <span style={{color:'#3c3',fontWeight:500,fontSize:13,marginLeft:10}}>{success}</span>}
+      </div>
+      {/* Aperçu OBS en bas à droite, hors du flux principal mais dans le footer */}
+      <div style={{
+        position: 'fixed',
+        right: 24,
+        bottom: 88,
+        zIndex: 1200,
+        boxShadow: '0 2px 12px #0008',
+        borderRadius: 12,
+        overflow: 'hidden',
+        border: '2px solid #3399ff',
+        width: 320,
+        height: 180,
+        aspectRatio: '16/9',
+        background: '#222',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <iframe
+          src={obsPreviewUrl}
+          title="Aperçu OBS"
+          style={{
+            width: '100%',
+            height: '100%',
+            border: 'none',
+            background: '#222',
+            pointerEvents: 'none', // évite les clics dans l'aperçu
+          }}
+          allow="autoplay; encrypted-media"
+        />
       </div>
     </footer>
   );
