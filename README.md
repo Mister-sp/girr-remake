@@ -150,3 +150,49 @@ _Un Raspberry Pi 3/4 suffit pour du dev ou une petite prod._
 - Sécurise la machine : firewall, mots de passe forts, désactive SSH root.
 
 ---
+
+## Déploiement automatique (CI/CD) sur le cloud
+
+Le projet inclut des fichiers de configuration pour automatiser le déploiement du frontend et du backend sur différentes plateformes cloud populaires :
+
+- **Render** (`render.yaml` à la racine) : déploie automatiquement le backend (Node.js) et le frontend (buildé puis servi en statique) sur [Render.com](https://render.com). Il suffit de connecter le repo GitHub à Render, il détecte le fichier et crée les services.
+- **Railway** (`railway.json` dans `frontend/` et `backend/`) : permet de déployer séparément le frontend et le backend sur [Railway.app](https://railway.app). Importe le repo sur Railway, sélectionne le dossier à builder (frontend ou backend).
+- **Vercel** (`vercel.json` dans `frontend/`) : déploie le frontend statique sur [Vercel.com](https://vercel.com). Connecte le repo GitHub, Vercel détecte le fichier et build automatiquement le projet.
+- **Netlify** (`netlify.toml` dans `frontend/`) : déploie le frontend statique sur [Netlify.com](https://netlify.com). Connecte le repo, Netlify lit le fichier et build le projet.
+
+### Comment déployer ?
+
+1. **Pousse le projet sur GitHub (ou autre gestionnaire de sources)**
+2. **Sur la plateforme choisie (Render, Railway, Vercel, Netlify) :**
+   - Crée un nouveau projet/site
+   - Connecte ton repo
+   - La plateforme détecte automatiquement le fichier de config et lance le build/déploiement
+   - (Sur Render/Railway, configure les variables d’environnement si besoin)
+
+> Pour le backend Node.js, privilégie Render ou Railway.
+> Pour le frontend statique (build Vite/React), privilégie Netlify ou Vercel.
+
+**Avantage :** tout est automatisé, pas besoin de scripts ou de configuration manuelle supplémentaire.
+
+### Autres plateformes (Glitch, Cyclic, Heroku…)
+
+Le dépôt contient aussi des fichiers pour automatiser le déploiement du frontend sur d’autres plateformes gratuites :
+
+- **Heroku** (`frontend/heroku.yml`) :
+  - Permet de builder et servir le frontend en mode statique via Docker sur Heroku.
+  - Procédure : crée une nouvelle app Heroku, connecte le repo GitHub, Heroku détecte le fichier et build l’app.
+- **Glitch** (`frontend/glitch-start.sh`) :
+  - Script de démarrage pour builder puis servir le frontend sur Glitch.
+  - Procédure : importe le dossier frontend sur Glitch, configure le script comme commande de démarrage.
+- **Cyclic** (`frontend/cyclic.json`) :
+  - Décrit les commandes de build et de start pour Cyclic.sh.
+  - Procédure : importe le repo sur Cyclic, sélectionne le dossier frontend, Cyclic détecte le fichier et build automatiquement.
+
+Pour chaque plateforme, il suffit généralement de :
+1. Pousser le projet sur GitHub
+2. Connecter le repo à la plateforme
+3. Laisser la plateforme détecter le fichier de config et lancer le build
+
+> Pour le backend Node.js, privilégie Render ou Railway (voir plus haut).
+
+---
