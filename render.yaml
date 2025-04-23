@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: girr-backend
+    env: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node index.js
+    envVars:
+      - key: PORT
+        value: 3001
+
+  - type: web
+    name: girr-frontend
+    env: node
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm install -g serve && serve -s dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://girr-backend.onrender.com
