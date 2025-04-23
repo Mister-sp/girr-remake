@@ -77,6 +77,22 @@ Le composant est utilisé à la fois dans `ObsOutput.jsx` (sortie principale) et
 
 ## Roadmap / À faire
 
+---
+
+## Aperçu de l'interface
+
+Voici quelques captures d'écran de l'interface utilisateur :
+
+### Sidebar avec bouton d'ouverture simultanée des overlays OBS
+
+![Sidebar Aperçu OBS](frontend/public/sidebar-apercu.png)
+
+### Footer avec mini-apercu OBS et boutons de sélection dynamique
+
+![Footer Aperçu OBS](frontend/public/footer-apercu.png)
+
+> Pour ajouter vos propres captures d'écran : placez vos fichiers PNG/JPG dans `frontend/public/` puis modifiez les liens ci-dessus si besoin.
+
 - Logger avancé côté backend (et affichage admin optionnel)
 - Documentation API interactive (Swagger UI sur /api-docs)
 - Synchronisation des overlays OBS : permettre aux boutons du footer de contrôler à distance toutes les pages OBS ouvertes (media/titrage) via un canal de communication.
