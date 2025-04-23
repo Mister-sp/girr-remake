@@ -30,12 +30,15 @@ export default function Sidebar({ children }) {
         {open && (
           <div className="sidebar-content">
 
-            <nav style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '0px' }}>
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '0px', marginBottom: 32 }}>
               <a href="/" style={{ color: 'inherit', textDecoration: 'none', fontSize: '1.1em' }}>🏠 Accueil</a>
               <a href="/" style={{ color: 'inherit', textDecoration: 'none' }}>📺 Programmes</a>
               <a href="/test-websocket" style={{ color: 'inherit', textDecoration: 'none' }}>🧪 WebSocket Test</a>
               <a href="/live-control" style={{ color: 'inherit', textDecoration: 'none' }}>🎛️ Live Control</a>
               <a href="/scene-test" style={{ color: 'inherit', textDecoration: 'none' }}>🧑‍💻 Test dev</a>
+              <a href="/obs" target="_blank" rel="noopener noreferrer" style={{ color: '#4F8CFF', fontWeight: 700, marginTop: 32, border: '1px solid #4F8CFF', borderRadius: 10, padding: '8px 0', textAlign: 'center', background: '#eaf2ff' }}>🎬 Aperçu OBS</a>
+
+              <button onClick={() => {window.open('/obs-media', '_blank'); window.open('/obs-titrage', '_blank');}} style={{ color: '#fff', fontWeight: 700, border: '1px solid #4F8CFF', borderRadius: 10, padding: '8px 0', textAlign: 'center', background: '#4F8CFF', marginTop: 8, cursor: 'pointer', width: '100%' }}>🪟 Ouvrir Media + Titrage séparés</button>
             </nav>
             {children}
           </div>

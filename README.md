@@ -79,6 +79,7 @@ Le composant est utilisé à la fois dans `ObsOutput.jsx` (sortie principale) et
 
 - Logger avancé côté backend (et affichage admin optionnel)
 - Documentation API interactive (Swagger UI sur /api-docs)
+- Synchronisation des overlays OBS : permettre aux boutons du footer de contrôler à distance toutes les pages OBS ouvertes (media/titrage) via un canal de communication.
 - Tests automatisés (unitaires backend, intégration frontend)
 - Settings avancés / gestion des utilisateurs (profils, droits, personnalisation)
 - Améliorations UI/UX : drag & drop médias plus robuste, filtres/sort sur les programmes, etc.
