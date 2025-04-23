@@ -35,6 +35,17 @@ socket.on('disconnect', () => {
 });
 
 export default function ObsOutput() {
+  // Synchronisation multi-onglets OBS (BroadcastChannel)
+  useEffect(() => {
+    const channel = new window.BroadcastChannel('obs-sync');
+    const handler = (event) => {
+      if (event.data?.type === 'CHANGE_VIEW' && event.data.url && window.location.pathname !== event.data.url) {
+        window.location.href = event.data.url;
+      }
+    };
+    channel.addEventListener('message', handler);
+    return () => channel.close();
+  }, []);
   // Applique la classe obs-output au body et html pour fond clean
   useEffect(() => {
     document.body.classList.add('obs-output');

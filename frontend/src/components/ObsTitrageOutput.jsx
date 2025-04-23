@@ -6,6 +6,17 @@ import LowerThird from './LowerThird';
 const socket = io('http://localhost:3001');
 
 export default function ObsTitrageOutput() {
+  // Synchronisation multi-onglets OBS (BroadcastChannel)
+  useEffect(() => {
+    const channel = new window.BroadcastChannel('obs-sync');
+    const handler = (event) => {
+      if (event.data?.type === 'CHANGE_VIEW' && event.data.url && window.location.pathname !== event.data.url) {
+        window.location.href = event.data.url;
+      }
+    };
+    channel.addEventListener('message', handler);
+    return () => channel.close();
+  }, []);
   useEffect(() => {
     document.body.classList.add('obs-output');
     document.documentElement.classList.add('obs-output');

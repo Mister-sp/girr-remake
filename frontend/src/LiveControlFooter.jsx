@@ -9,6 +9,12 @@ const SCENE_PRESETS = [
 ];
 
 export default function LiveControlFooter() {
+  // Canal de synchronisation multi-onglets OBS
+  const obsSyncChannel = React.useRef(null);
+  React.useEffect(() => {
+    obsSyncChannel.current = new window.BroadcastChannel('obs-sync');
+    return () => obsSyncChannel.current && obsSyncChannel.current.close();
+  }, []);
   const [obsPreviewUrl, setObsPreviewUrl] = useState('/obs');
   const [scene, setScene] = useState({ name: '', lastChanged: null });
   const [custom, setCustom] = useState('');
@@ -61,9 +67,18 @@ export default function LiveControlFooter() {
       {/* Colonne OBS : boutons pour changer l'aperçu */}
       <div style={{display:'flex',alignItems:'center',gap:10}}>
         <span style={{fontWeight:600,marginRight:8}}>OBS :</span>
-        <button onClick={() => setObsPreviewUrl('/obs')} style={{marginRight:4,padding:'7px 12px',background:'#333',color:'#fff',borderRadius:6,border:'none',fontSize:14,cursor:'pointer'}}>Média + Titrage</button>
-        <button onClick={() => setObsPreviewUrl('/obs-media')} style={{marginRight:4,padding:'7px 12px',background:'#333',color:'#fff',borderRadius:6,border:'none',fontSize:14,cursor:'pointer'}}>Média seul</button>
-        <button onClick={() => setObsPreviewUrl('/obs-titrage')} style={{padding:'7px 12px',background:'#333',color:'#fff',borderRadius:6,border:'none',fontSize:14,cursor:'pointer'}}>Titrage seul</button>
+        <button onClick={() => {
+          setObsPreviewUrl('/obs');
+          obsSyncChannel.current && obsSyncChannel.current.postMessage({ type: 'CHANGE_VIEW', url: '/obs' });
+        }} style={{marginRight:4,padding:'7px 12px',background:'#333',color:'#fff',borderRadius:6,border:'none',fontSize:14,cursor:'pointer'}}>Média + Titrage</button>
+        <button onClick={() => {
+          setObsPreviewUrl('/obs-media');
+          obsSyncChannel.current && obsSyncChannel.current.postMessage({ type: 'CHANGE_VIEW', url: '/obs-media' });
+        }} style={{marginRight:4,padding:'7px 12px',background:'#333',color:'#fff',borderRadius:6,border:'none',fontSize:14,cursor:'pointer'}}>Média seul</button>
+        <button onClick={() => {
+          setObsPreviewUrl('/obs-titrage');
+          obsSyncChannel.current && obsSyncChannel.current.postMessage({ type: 'CHANGE_VIEW', url: '/obs-titrage' });
+        }} style={{padding:'7px 12px',background:'#333',color:'#fff',borderRadius:6,border:'none',fontSize:14,cursor:'pointer'}}>Titrage seul</button>
       </div>
       {/* Colonne 1 : état WebSocket */}
       <div style={{display:'flex',alignItems:'center',gap:10}}>
