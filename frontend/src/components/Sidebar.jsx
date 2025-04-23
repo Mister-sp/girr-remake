@@ -1,6 +1,44 @@
 import React, { useState } from 'react';
+
+function DevMenu() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ position: 'relative' }}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        title="Outils développeur"
+        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, display: 'flex', alignItems: 'center', gap: 6 }}
+      >
+        <span role="img" aria-label="Dev">🛠️</span>
+        <span style={{ fontSize: 13 }}>Dev</span>
+      </button>
+      {open && (
+        <div style={{
+          position: 'absolute',
+          left: 0,
+          top: '100%',
+          background: '#fff',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          borderRadius: 6,
+          zIndex: 10,
+          minWidth: 170,
+          marginTop: 4,
+          padding: '8px 0',
+        }}>
+          <a href="/test-websocket" style={{ display: 'block', padding: '6px 20px', color: '#222', textDecoration: 'none', fontSize: 15 }}>🧪 WebSocket Test</a>
+          <a href="/live-control" style={{ display: 'block', padding: '6px 20px', color: '#222', textDecoration: 'none', fontSize: 15 }}>🎛️ Live Control</a>
+          <a href="/scene-test" style={{ display: 'block', padding: '6px 20px', color: '#222', textDecoration: 'none', fontSize: 15 }}>🧑‍💻 Test dev</a>
+        </div>
+      )}
+    </div>
+  );
+}
+
 import { FaBars, FaTimes } from 'react-icons/fa';
 import defaultLogo from '../assets/default-logo.png';
+import ObsFullIcon from '../icons/ObsFullIcon.jsx';
+import ObsMediaIcon from '../icons/ObsMediaIcon.jsx';
+import ObsTitrageIcon from '../icons/ObsTitrageIcon.jsx';
 
 export default function Sidebar({ children }) {
   const [open, setOpen] = useState(true);
@@ -33,12 +71,21 @@ export default function Sidebar({ children }) {
             <nav style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '0px', marginBottom: 32 }}>
               <a href="/" style={{ color: 'inherit', textDecoration: 'none', fontSize: '1.1em' }}>🏠 Accueil</a>
               <a href="/" style={{ color: 'inherit', textDecoration: 'none' }}>📺 Programmes</a>
-              <a href="/test-websocket" style={{ color: 'inherit', textDecoration: 'none' }}>🧪 WebSocket Test</a>
-              <a href="/live-control" style={{ color: 'inherit', textDecoration: 'none' }}>🎛️ Live Control</a>
-              <a href="/scene-test" style={{ color: 'inherit', textDecoration: 'none' }}>🧑‍💻 Test dev</a>
-              <a href="/obs" target="_blank" rel="noopener noreferrer" style={{ color: '#4F8CFF', fontWeight: 700, marginTop: 32, border: '1px solid #4F8CFF', borderRadius: 10, padding: '8px 0', textAlign: 'center', background: '#eaf2ff' }}>🎬 Aperçu OBS</a>
-
-              <button onClick={() => {window.open('/obs-media', '_blank'); window.open('/obs-titrage', '_blank');}} style={{ color: '#fff', fontWeight: 700, border: '1px solid #4F8CFF', borderRadius: 10, padding: '8px 0', textAlign: 'center', background: '#4F8CFF', marginTop: 8, cursor: 'pointer', width: '100%' }}>🪟 Ouvrir Media + Titrage séparés</button>
+              
+              <div style={{ display: 'flex', flexDirection: 'row', gap: 12, marginTop: 32, justifyContent: 'center' }}>
+  <button title="Ouvrir OBS (media+titrage)" onClick={() => window.open('/obs', '_blank')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+    <ObsFullIcon style={{ width: 32, height: 32 }} />
+  </button>
+  <button title="Ouvrir OBS Media seul" onClick={() => window.open('/obs-media', '_blank')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+    <ObsMediaIcon style={{ width: 32, height: 32 }} />
+  </button>
+  <button title="Ouvrir OBS Titrage seul" onClick={() => window.open('/obs-titrage', '_blank')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+    <ObsTitrageIcon style={{ width: 32, height: 32 }} />
+  </button>
+</div>
+<div style={{ marginTop: 16 }}>
+  <DevMenu />
+</div>
             </nav>
             {children}
           </div>

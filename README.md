@@ -55,6 +55,13 @@ Il est composé de deux parties :
 - WebSocket temps réel (socket.io) : notifications, synchronisation live
 - Gestion et synchronisation des scènes (Scene) : API REST + WebSocket
 - Pilotage live multi-clients, feedback instantané (snackbar/notifications)
+- Footer OBS optimisé (hauteur réduite, boutons verticaux, statut WebSocket sous l’aperçu)
+- Sidebar épurée (devtools regroupés, accès rapide OBS)
+- Roadmap détaillée et structurée (frontend/backend)
+- Préparation d’un espace central pour l’émission/sujet dans le footer
+- Navigation plus claire et interface allégée
+- Correction et relance des serveurs, WebSocket fonctionnel
+- Nettoyage du README
 
 ## Titrage OBS (Lower Third)
 
@@ -75,29 +82,71 @@ import LowerThird from './LowerThird';
 
 Le composant est utilisé à la fois dans `ObsOutput.jsx` (sortie principale) et dans `ObsPreview.jsx` (miniature), garantissant un rendu cohérent partout.
 
-## Roadmap / À faire
+## Roadmap
 
----
-
-## Aperçu de l'interface
-
-Voici quelques captures d'écran de l'interface utilisateur :
-
-### Sidebar avec bouton d'ouverture simultanée des overlays OBS
-
-![Sidebar Aperçu OBS](frontend/public/sidebar-apercu.png)
-
-### Footer avec mini-apercu OBS et boutons de sélection dynamique
-
-![Footer Aperçu OBS](frontend/public/footer-apercu.png)
-
-> Pour ajouter vos propres captures d'écran : placez vos fichiers PNG/JPG dans `frontend/public/` puis modifiez les liens ci-dessus si besoin.
-
-- Logger avancé côté backend (et affichage admin optionnel)
-- Documentation API interactive (Swagger UI sur /api-docs)
+### Frontend : Overlays, UI/UX & Fonctionnalités
+- Afficher l'émission et le sujet en cours dans le footer (zone centrale)
+- Personnalisation du lower third (transition, police d'écriture, etc.)
+- Effet d'apparition/disparition personnalisable pour les médias
+- Modifier la position du logo de l'émission et personnalisation (effet flottement, glitch, etc.)
+- Améliorations UI/UX : drag & drop médias plus robuste, filtres/sort sur les programmes, etc.
+- Suggestions ou besoins à discuter au fil du projet
 - Synchronisation des overlays OBS : permettre aux boutons du footer de contrôler à distance toutes les pages OBS ouvertes (media/titrage) via un canal de communication.
 - Tests automatisés (unitaires backend, intégration frontend)
 - Settings avancés / gestion des utilisateurs (profils, droits, personnalisation)
-- Améliorations UI/UX : drag & drop médias plus robuste, filtres/sort sur les programmes, etc.
+
+### Backend & API
+- Logger avancé côté backend (et affichage admin optionnel)
+- Documentation API interactive (Swagger UI sur /api-docs)
 - Refonte/optimisation du backend (si besoin de persistance durable)
-- Suggestions ou besoins à discuter au fil du projet
+
+### Déploiement & Infrastructure
+
+#### Solutions gratuites ou à coût nul pour héberger backend/frontend
+
+- **Local avec accès distant** :
+  - PC personnel (Windows/Linux/Mac) : ouvrir les ports sur la box/routeur pour accès distant.
+  - Tunnel temporaire (ngrok, LocalTunnel, Cloudflare Tunnel) : expose ton serveur local via une URL publique, pratique pour la démo/test.
+  - Avantage : aucun coût, contrôle total. Inconvénient : sécurité à gérer, dépend de ta connexion.
+- **Cloud gratuit** :
+  - Backend Node.js : Render, Railway, Cyclic, Glitch, Heroku (limité).
+  - Frontend (build statique) : Netlify, Vercel, GitHub Pages.
+  - Avantage : accès distant, pas besoin de PC allumé. Inconvénient : ressources limitées, endormissement possible.
+- **VPS gratuits/éducation** :
+  - Oracle Cloud Free Tier : petit VPS Linux gratuit, contrôle total, config plus technique.
+
+**Conclusion rapide**
+- Pour test : PC local + tunnel.
+- Pour démo : Render/Railway (backend) + Netlify/Vercel (frontend).
+- Pour usage sérieux : VPS gratuit ou serveur local bien sécurisé.
+
+#### Spécifications minimales recommandées
+
+- CPU : 1 cœur moderne (Intel/AMD ou ARM type Raspberry Pi 3+)
+- RAM : 512 Mo à 1 Go
+- Stockage : 1 Go libre (plus si beaucoup de médias)
+- OS : Windows, Linux ou MacOS (Node.js et npm installés)
+- Connexion : ADSL/VDSL/4G minimum (montant ≥ 1 Mbps recommandé)
+- Sécurité : firewall, ports ouverts uniquement, HTTPS conseillé
+
+_Un Raspberry Pi 3/4 suffit pour du dev ou une petite prod._
+
+#### Utiliser un Raspberry Pi, un vieux PC ou un serveur Proxmox comme serveur
+
+- Un Raspberry Pi 3 (ou supérieur) suffit pour héberger le backend Node.js et servir le frontend à quelques utilisateurs (contrôle, affichage, pilotage, streaming YouTube côté client).
+- Un vieux PC (même dual-core, 2 Go RAM) sous Linux ou Windows fait aussi très bien l’affaire pour héberger le projet.
+- **Intégration sur un serveur Proxmox** :
+  - Crée une VM ou un conteneur LXC (Debian/Ubuntu recommandé) dédié à Girr Remake.
+  - Alloue 1 à 2 Go de RAM, 1 à 2 vCPU (même un CPU bas de gamme suffit pour Node.js/React).
+  - Installe Node.js, npm, et (optionnel) nginx pour servir le frontend buildé.
+  - Tu peux monter un partage OpenMediaVault dans la VM/CT pour stocker les médias.
+  - Girr Remake peut cohabiter sur le même serveur avec d'autres stacks/services (ex : Home Assistant, autres applications domotiques ou médias) sans problème, chaque service étant isolé dans sa propre VM ou conteneur.
+- Pour l’accès distant au frontend/backend :
+  - **Ouvrir les ports sur la box/routeur** (redirection du port 80 ou 5173 vers l’IP locale du Pi/PC/VM).
+  - **Utiliser un tunnel gratuit** (Cloudflare Tunnel, ngrok, LocalTunnel) : expose le serveur local via une URL publique sécurisée, sans toucher à la box.
+    - Ex : `cloudflared tunnel --url http://localhost:80` (voir doc Cloudflare Tunnel)
+  - **VPN maison** (Zerotier, Tailscale, Wireguard) : accès sécurisé à ton réseau local depuis l’extérieur.
+- Pour de meilleures performances sur le Pi ou en VM, utilise le build statique du frontend (`npm run build` puis `serve dist`).
+- Sécurise la machine : firewall, mots de passe forts, désactive SSH root.
+
+---

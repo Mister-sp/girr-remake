@@ -1,7 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import io from 'socket.io-client';
+import logo from '../assets/default-logo.png';
 
+// Utilitaire pour extraire l'ID YouTube depuis une URL (classique, embed ou courte)
+function extractYoutubeId(url) {
+  if (!url) return '';
+  const regExp = /(?:youtube\.com\/(?:.*v=|.*\/embed\/|.*\/shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+  const match = url.match(regExp);
+  if (match && match[1]) return match[1];
+  try {
+    const urlObj = new URL(url, window.location.origin);
+    if (urlObj.searchParams.has('v')) return urlObj.searchParams.get('v');
+  } catch (e) {}
+  return '';
+}
+function getYoutubeEmbedUrl(url) {
+  const id = extractYoutubeId(url);
+  return id
+    ? `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&controls=0&showinfo=0&enablejsapi=1&rel=0&modestbranding=1&iv_load_policy=0`
+    : '';
+}
+
+const matrixBg = 'https://assets.codepen.io/1468070/matrix-bg.jpg';
 const socket = io('http://localhost:3001');
 
 export default function ObsMediaOutput() {
@@ -25,41 +46,95 @@ export default function ObsMediaOutput() {
     };
   }, []);
   const [searchParams] = useSearchParams();
-  const [current, setCurrent] = useState({ media: null });
+  const [current, setCurrent] = useState({
+    media: null,
+    logoUrl: logo,
+    background: matrixBg,
+  });
 
   useEffect(() => {
-    socket.on('obs:update', (data) => setCurrent((prev) => ({ ...prev, ...data })));
+    socket.on('obs:update', (data) => {
+      setCurrent((prev) => ({ ...prev, ...data }));
+    });
     return () => socket.off('obs:update');
   }, []);
 
-  // Transparence si rien à afficher
-  const showMedia = current.media && (current.media.type === 'image' || current.media.type === 'youtube');
+  // --- Auto-scale pour mini-OBS ou plein écran ---
+  const [scale, setScale] = React.useState(1);
+  React.useEffect(() => {
+    function handleResize() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      setScale(Math.min(w / 1920, h / 1080));
+    }
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <div className="obs-output-root" style={{
       width: 1920,
       height: 1080,
+      transform: `scale(${scale})`,
+      transformOrigin: 'top left',
+      overflow: 'hidden',
       position: 'fixed',
       top: 0,
       left: 0,
-      background: showMedia ? '#000' : 'none',
+      background: current.media ? '#000' : 'none',
+      fontFamily: 'Inter, Arial, sans-serif',
+      margin: 0,
+      padding: 0,
+      border: 'none',
+      boxSizing: 'border-box',
       zIndex: 99999,
-      overflow: 'hidden',
     }}>
-      {showMedia && current.media.type === 'image' && (
+      {/* Logo émission en haut à droite */}
+      <img src={current.logoUrl || logo} alt="logo" style={{position:'absolute',top:28,right:36,width:80,height:80,objectFit:'contain',borderRadius:18,boxShadow:'0 2px 12px #0007',background:'transparent'}} />
+      {/* Image d'illustration centrée */}
+      {current.media && current.media.type === 'image' && (
         <img src={current.media.url} alt="media" style={{
           position: 'absolute',
-          top: 0, left: 0, width: '1920px', height: '1080px', objectFit: 'cover',
+          top: 0,
+          left: 0,
+          width: '1920px',
+          height: '1080px',
+          minWidth: '100%',
+          minHeight: '100%',
+          objectFit: 'cover',
+          borderRadius: 0,
+          boxShadow: 'none',
+          background: current.media ? '#000' : 'none',
+          zIndex: 10,
+          display: 'block',
         }} />
       )}
-      {showMedia && current.media.type === 'youtube' && (
-        <iframe
-          src={current.media.url}
-          style={{ position: 'absolute', top: 0, left: 0, width: '1920px', height: '1080px', border: 'none' }}
-          allow="autoplay; encrypted-media"
-          allowFullScreen
-        />
-      )}
+      {current.media && current.media.type === 'youtube' && (
+         <iframe
+           src={getYoutubeEmbedUrl(current.media.url)}
+           style={{
+             position: 'absolute',
+             top: 0,
+             left: 0,
+             width: '1920px',
+             height: '1080px',
+             minWidth: '100%',
+             minHeight: '100%',
+             border: 'none',
+             borderRadius: 0,
+             boxShadow: 'none',
+             background: current.media ? '#000' : 'none',
+             zIndex: 10,
+             display: 'block',
+             objectFit: 'cover',
+           }}
+           frameBorder="0"
+           allow="autoplay; encrypted-media"
+           allowFullScreen
+           title="YouTube video"
+         />
+       )}
     </div>
   );
 }

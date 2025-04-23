@@ -1,7 +1,7 @@
 import React from 'react';
 
-export default function LowerThird({ title }) {
-  if (!title) return null;
+export default function LowerThird({ title, subtitle }) {
+  if (!title && !subtitle) return null;
   return (
     <div style={{
       position: 'absolute',
@@ -33,7 +33,8 @@ export default function LowerThird({ title }) {
         margin: 0,
         boxSizing: 'border-box',
       }}>
-        {title}
+        {title && <div>{title}</div>}
+        {subtitle && <div style={{ fontSize: 22, fontWeight: 400, color: '#FFD166', marginTop: 4 }}>{subtitle}</div>}
       </div>
     </div>
   );

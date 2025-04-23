@@ -1,5 +1,15 @@
 # Changelog
 
+## [2025-04-23]
+
+- Refonte du footer : réduction de la hauteur, suppression des éléments inutiles, organisation verticale des boutons OBS, statut WebSocket déplacé sous l’aperçu.
+- Sidebar épurée : icônes OBS en accès rapide, liens de développement regroupés derrière un bouton "Dev".
+- Ajout d’un espace central réservé dans le footer pour l’affichage futur de l’émission/sujet.
+- Roadmap restructurée et enrichie dans le README, avec sous-thèmes frontend/backend.
+- Amélioration de la clarté de la navigation et de l’ergonomie générale.
+- Correction et relance des serveurs frontend/backend, vérification du fonctionnement WebSocket.
+- Nettoyage du README (suppression des sections d’aperçu, roadmap réorganisée).
+
 ## [Unreleased]
 ### Ajouts et améliorations
 - Ajout d'un bouton dans la sidebar permettant d'ouvrir simultanément les overlays OBS Media (`/obs-media`) et Titrage (`/obs-titrage`) dans deux nouveaux onglets.
