@@ -57,9 +57,9 @@ Il est composé de deux parties :
 - Pilotage live multi-clients, feedback instantané (snackbar/notifications)
 - Footer OBS optimisé (hauteur réduite, boutons verticaux, statut WebSocket sous l’aperçu)
 - Sidebar épurée (devtools regroupés, accès rapide OBS)
-- Roadmap détaillée et structurée (frontend/backend)
 - Affichage dynamique dans le footer : le nom du programme, le logo, le nom de l'épisode et le sujet en cours sont affichés en temps réel dans la zone centrale du footer (avec gestion des logos transparents)
-- Préparation d’un espace central pour l’émission/sujet dans le footer
+- Effets visuels sur le logo OBS : appliquez des effets animés (flottement, glitch, Old TV, VHS) au logo de chaque programme dans la sortie OBS, sélectionnables dans l'interface. Les effets sont visibles en temps réel dans l'output OBS.
+- Roadmap détaillée et structurée (frontend/backend)
 - Navigation plus claire et interface allégée
 - Correction et relance des serveurs, WebSocket fonctionnel
 - Nettoyage du README
@@ -87,12 +87,12 @@ Le composant est utilisé à la fois dans `ObsOutput.jsx` (sortie principale) et
 
 ### Fonctionnalités réalisées
 
-- **Affichage dynamique dans le footer** : Le nom du programme, le nom de l'épisode et le sujet en cours sont désormais affichés dynamiquement dans le footer (zone centrale), avec le logo du programme. Cette fonctionnalité apporte une meilleure visibilité et cohérence broadcast à l'interface.
+
 
 ### Frontend : Overlays, UI/UX & Fonctionnalités
 - Personnalisation du lower third (transition, police d'écriture, etc.)
 - Effet d'apparition/disparition personnalisable pour les médias
-- Modifier la position du logo de l'émission et personnalisation (effet flottement, glitch, etc.)
+- Modifier la position du logo de l'émission (top/bottom, gauche/centre/droite) et personnalisation (autres effets à venir)
 - Améliorations UI/UX : drag & drop médias plus robuste, filtres/sort sur les programmes, etc.
 - Suggestions ou besoins à discuter au fil du projet
 - Synchronisation des overlays OBS : permettre aux boutons du footer de contrôler à distance toutes les pages OBS ouvertes (media/titrage) via un canal de communication.

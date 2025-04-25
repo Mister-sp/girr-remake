@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import io from 'socket.io-client';
-import logo from '../assets/default-logo.png';
+
 import LowerThird from './LowerThird';
 
 // Utilitaire pour extraire l'ID YouTube depuis une URL (classique, embed ou courte)
@@ -64,7 +64,7 @@ export default function ObsOutput() {
     title: '',
     subtitle: '',
     background: matrixBg,
-    logoUrl: logo,
+    logoUrl: '/default-logo.png',
   });
 
   // Récupère les paramètres d'URL (pour forcer un affichage précis si besoin)
@@ -118,7 +118,50 @@ export default function ObsOutput() {
       zIndex: 99999,
     }}>
       {/* Logo émission en haut à droite */}
-      <img src={current.logoUrl || logo} alt="logo" style={{position:'absolute',top:28,right:36,width:80,height:80,objectFit:'contain',borderRadius:18,boxShadow:'0 2px 12px #0007',background:'transparent'}} />
+      {typeof current.logoUrl === 'string' && current.logoUrl && current.logoUrl !== '/default-logo.png' && (
+        <img
+          src={
+            current.logoUrl.startsWith('http') || current.logoUrl.startsWith('data:')
+              ? current.logoUrl
+              : `http://localhost:3001${current.logoUrl}`
+          }
+          alt="logo"
+          className={(() => {
+            switch (current.logoEffect) {
+              case 'float': return 'logo-floating';
+              case 'glitch': return 'logo-glitch';
+              case 'pulse': return 'logo-pulse';
+              case 'oldtv': return 'logo-oldtv';
+              case 'vhs': return 'logo-vhs';
+              default: return '';
+            }
+          })()}
+          style={{
+            position: 'absolute',
+            ...(() => {
+              switch (current.logoPosition) {
+                case 'top-left': return { top: 28, left: 36 };
+                case 'top-center': return { top: 28, left: '50%', transform: 'translateX(-50%)' };
+                case 'top-right': return { top: 28, right: 36 };
+                case 'bottom-left': return { bottom: 28, left: 36 };
+                case 'bottom-center': return { bottom: 28, left: '50%', transform: 'translateX(-50%)' };
+                case 'bottom-right': return { bottom: 28, right: 36 };
+                default: return { top: 28, right: 36 };
+              }
+            })(),
+            width: current.logoSize ?? 80,
+            height: current.logoSize ?? 80,
+            objectFit: 'contain',
+            borderRadius: 18,
+            boxShadow: '0 2px 12px #0007',
+            background: 'transparent',
+            zIndex: 100,
+            ...(current.logoEffect === 'glitch' ? {'--glitch-intensity': current.logoEffectIntensity ?? 5} : {}),
+            ...(current.logoEffect === 'oldtv' ? {'--oldtv-intensity': current.logoEffectIntensity ?? 5} : {}),
+            ...(current.logoEffect === 'vhs' ? {'--vhs-intensity': current.logoEffectIntensity ?? 5} : {}),
+          }}
+        />
+      )}
       {/* Image d'illustration centrée */}
       {current.media && current.media.type === 'image' && (
         <img src={current.media.url} alt="media" style={{

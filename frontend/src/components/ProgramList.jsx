@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getPrograms, createProgram, deleteProgram, updateProgram } from '../services/api'; // Importer createProgram, deleteProgram et updateProgram
 import defaultLogo from '../assets/default-logo.png';
 import Modal from './Modal.jsx';
+import './logo-effects.css';
 
 // Accepter onSelectProgram en props
 function ProgramList({ onSelectProgram }) {
@@ -11,6 +12,10 @@ function ProgramList({ onSelectProgram }) {
   const [error, setError] = useState(null);
   const [newProgramTitle, setNewProgramTitle] = useState(''); // État pour le titre du nouveau programme
   const [newLogoFile, setNewLogoFile] = useState(null); // État pour le logo du nouveau programme
+  const [newLogoPosition, setNewLogoPosition] = useState('top-right');
+  const [newLogoSize, setNewLogoSize] = useState(80);
+  const [newLogoEffect, setNewLogoEffect] = useState('none');
+  const [newLogoEffectIntensity, setNewLogoEffectIntensity] = useState(5);
 
   // Fonction pour charger les programmes
   const loadPrograms = async () => {
@@ -43,9 +48,17 @@ function ProgramList({ onSelectProgram }) {
       const formData = new FormData();
       formData.append('title', newProgramTitle);
       if (newLogoFile) formData.append('logo', newLogoFile);
+      formData.append('logoPosition', newLogoPosition);
+      formData.append('logoSize', newLogoSize);
+      formData.append('logoEffect', newLogoEffect);
+      formData.append('logoEffectIntensity', newLogoEffectIntensity);
       await createProgram(formData); // Appeler l'API pour créer
       setNewProgramTitle(''); // Vider le champ de saisie
       setNewLogoFile(null);
+      setNewLogoPosition('top-right');
+      setNewLogoSize(80);
+      setNewLogoEffect('none');
+      setNewLogoEffectIntensity(5);
       await loadPrograms(); // Recharger la liste des programmes pour voir le nouveau
     } catch (err) {
       console.error("Erreur lors de la création du programme:", err);
@@ -78,7 +91,19 @@ function ProgramList({ onSelectProgram }) {
       <div>
         <div style={{ color: 'red' }}>Erreur : {error}</div>
         {/* Afficher quand même le formulaire et la liste existante si disponible */}
-        <ProgramForm onSubmit={handleAddProgram} title={newProgramTitle} setTitle={setNewProgramTitle} logoFile={newLogoFile} setLogoFile={setNewLogoFile} />
+        <ProgramForm
+  onSubmit={handleAddProgram}
+  title={newProgramTitle}
+  setTitle={setNewProgramTitle}
+  logoFile={newLogoFile}
+  setLogoFile={setNewLogoFile}
+  logoPosition={newLogoPosition}
+  setLogoPosition={setNewLogoPosition}
+  logoSize={newLogoSize}
+  setLogoSize={setNewLogoSize}
+  logoEffect={newLogoEffect}
+  setLogoEffect={setNewLogoEffect}
+/>
         {/* Passer onSelectProgram à ProgramDisplay */}
         <ProgramDisplay programs={programs} onDelete={handleDeleteProgram} onSelect={onSelectProgram} />
       </div>
@@ -115,7 +140,19 @@ function ProgramList({ onSelectProgram }) {
       </button>
       {/* Modal d'ajout */}
       <Modal open={showModal} onClose={() => setShowModal(false)}>
-        <ProgramForm onSubmit={handleAddProgram} title={newProgramTitle} setTitle={setNewProgramTitle} logoFile={newLogoFile} setLogoFile={setNewLogoFile} />
+        <ProgramForm
+  onSubmit={handleAddProgram}
+  title={newProgramTitle}
+  setTitle={setNewProgramTitle}
+  logoFile={newLogoFile}
+  setLogoFile={setNewLogoFile}
+  logoPosition={newLogoPosition}
+  setLogoPosition={setNewLogoPosition}
+  logoSize={newLogoSize}
+  setLogoSize={setNewLogoSize}
+  logoEffect={newLogoEffect}
+  setLogoEffect={setNewLogoEffect}
+/>
       </Modal>
       {/* Passer onSelectProgram à ProgramDisplay */}
       <ProgramDisplay programs={programs} onDelete={handleDeleteProgram} onSelect={onSelectProgram} />
@@ -124,25 +161,59 @@ function ProgramList({ onSelectProgram }) {
 }
 
 // Sous-composant pour le formulaire d'ajout
-function ProgramForm({ onSubmit, title, setTitle, logoFile, setLogoFile }) {
+function ProgramForm({ onSubmit, title, setTitle, logoFile, setLogoFile, logoPosition, setLogoPosition, logoSize, setLogoSize, logoEffect, setLogoEffect, logoEffectIntensity, setLogoEffectIntensity }) {
   return (
-    <form onSubmit={onSubmit} style={{ marginBottom: '20px' }} encType="multipart/form-data">
-      <h3>Ajouter un nouveau programme</h3>
-      <input
-        type="text"
-        placeholder="Titre du programme"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        required
-        style={{ marginRight: '10px' }}
-      />
-      <input
-  type="file"
-  accept="image/*"
-  onChange={e => setLogoFile(e.target.files[0])}
-  style={{ marginRight: '10px' }}
-/>
-<button type="submit" title="Ajouter"><FaPlus /></button>
+    <form onSubmit={onSubmit} style={{marginBottom:'20px', maxWidth:380}} encType="multipart/form-data">
+      <div style={{display:'flex',flexDirection:'column',gap:10,maxHeight:340,overflowY:'auto',paddingRight:6}}>
+        <div style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:3}}>
+          <label style={{fontWeight:600,marginBottom:2,color:'#222'}}>Titre du programme</label>
+          <input
+            type="text"
+            placeholder="Titre du programme"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            required
+            style={{fontSize: 18, borderRadius: 6, border: '1px solid #bbb', padding: 6, width:'100%'}}
+          />
+        </div>
+        <div style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:3}}>
+          <label style={{fontWeight:600,marginBottom:2,color:'#222'}}>Logo</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={e => setLogoFile(e.target.files[0])}
+          />
+        </div>
+        <div style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:3}}>
+          <label style={{fontWeight:600,marginBottom:2,color:'#222'}}>Position du logo</label>
+          <select value={logoPosition} onChange={e=>setLogoPosition(e.target.value)} style={{fontSize:16,padding:'4px 8px',width:'100%'}}>
+            <option value="top-left">Haut gauche</option>
+            <option value="top-center">Haut centre</option>
+            <option value="top-right">Haut droite</option>
+            <option value="bottom-left">Bas gauche</option>
+            <option value="bottom-center">Bas centre</option>
+            <option value="bottom-right">Bas droite</option>
+          </select>
+        </div>
+        <div style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:3}}>
+          <label style={{fontWeight:600,marginBottom:2,color:'#222'}}>Taille du logo (px)</label>
+          <input type="number" placeholder="Taille (px)" style={{width:100,fontSize:16,padding:'4px 8px'}} value={logoSize} onChange={e=>setLogoSize(Number(e.target.value))} />
+        </div>
+        <div style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:3}}>
+          <label style={{fontWeight:600,marginBottom:2,color:'#222'}}>Effet</label>
+          <select value={logoEffect || 'none'} onChange={e=>setLogoEffect(e.target.value)} style={{fontSize:16,padding:'4px 8px',width:'100%'}}>
+            <option value="none">Aucun</option>
+            <option value="float">Flottant</option>
+            <option value="glitch">Glitch</option>
+            <option value="pulse">Pulse</option>
+            <option value="oldtv">Old TV</option>
+            <option value="vhs">VHS</option>
+          </select>
+        </div>
+        <div style={{display:'flex',gap:8,marginTop:12}}>
+          <button type="submit" title="Ajouter" style={{color: 'white', background:'#43a047', border:'none', borderRadius:6, fontSize:18, padding:'6px 18px', fontWeight:600, cursor:'pointer'}}><FaPlus style={{marginRight:5}}/>Créer</button>
+        </div>
+      </div>
     </form>
   );
 }
@@ -154,8 +225,13 @@ import { FaPencilAlt, FaCheck, FaTimes, FaPlus, FaTrash } from 'react-icons/fa';
 function ProgramDisplay({ programs, onDelete, onSelect }) {
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState('');
-const [editLogoFile, setEditLogoFile] = useState(null);
-const [editLogoPreview, setEditLogoPreview] = useState(null);
+  const [editLogoFile, setEditLogoFile] = useState(null);
+  const [editLogoPreview, setEditLogoPreview] = useState(null);
+  const [editLogoPosition, setEditLogoPosition] = useState('top-right'); // valeurs: 'top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'
+  const [editLogoSize, setEditLogoSize] = useState(80);
+  const [editLogoEffect, setEditLogoEffect] = useState('float'); // valeurs: 'none', 'float', 'glitch', 'pulse'
+  const [editLogoEffectIntensity, setEditLogoEffectIntensity] = useState(5);
+
   const [saving, setSaving] = useState(false);
 
   const handleEditClick = (program) => {
@@ -163,6 +239,10 @@ const [editLogoPreview, setEditLogoPreview] = useState(null);
     setEditTitle(program.title);
     setEditLogoPreview(program.logoUrl ? `http://localhost:3001${program.logoUrl}` : null);
     setEditLogoFile(null);
+    setEditLogoPosition(program.logoPosition || 'top-right');
+    setEditLogoSize(program.logoSize || 80);
+    setEditLogoEffect(program.logoEffect || 'none');
+    setEditLogoEffectIntensity(program.logoEffectIntensity || 5);
   };
   const handleEditCancel = () => {
     setEditingId(null);
@@ -176,7 +256,11 @@ const [editLogoPreview, setEditLogoPreview] = useState(null);
       const formData = new FormData();
       formData.append('title', editTitle);
       if (editLogoFile) formData.append('logo', editLogoFile);
-      await updateProgram(id, formData);
+      formData.append('logoPosition', editLogoPosition);
+      formData.append('logoSize', editLogoSize);
+      formData.append('logoEffect', editLogoEffect);
+      formData.append('logoEffectIntensity', editLogoEffectIntensity);
+    await updateProgram(id, formData);
       setEditingId(null);
       setEditTitle('');
       setEditLogoFile(null);
@@ -240,26 +324,64 @@ const [editLogoPreview, setEditLogoPreview] = useState(null);
                 }}>
                   {editingId === program.id ? (
                     <>
-                      <input
-                        type="text"
-                        value={editTitle}
-                        onChange={e => setEditTitle(e.target.value)}
-                        style={{marginRight: '8px', fontSize: 20, borderRadius: 6, border: '1px solid #bbb', padding: 4}}
-                      />
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={e => {
-                          setEditLogoFile(e.target.files[0]);
-                          setEditLogoPreview(e.target.files[0] ? URL.createObjectURL(e.target.files[0]) : editLogoPreview);
-                        }}
-                        style={{marginRight: '8px'}}
-                      />
-                      {editLogoPreview && (
-                        <img src={editLogoPreview} alt="logo preview" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 8, marginRight: 8, border: '2px solid #4F8CFF', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }} />
-                      )}
-                      <button onClick={() => handleEditSave(program.id)} disabled={saving} style={{color: 'green', marginRight: 4, fontSize: 18}}><FaCheck /></button>
-                      <button onClick={handleEditCancel} disabled={saving} style={{color: 'red', fontSize: 18}}><FaTimes /></button>
+                      <div style={{display:'flex',flexDirection:'column',gap:10,maxHeight:340,overflowY:'auto',paddingRight:6}}>
+
+                        <div style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:3}}>
+                          <label style={{fontWeight:600,marginBottom:2,color:'#222'}}>Titre du programme</label>
+                          <input
+                            type="text"
+                            value={editTitle}
+                            onChange={e => setEditTitle(e.target.value)}
+                            style={{fontSize: 18, borderRadius: 6, border: '1px solid #bbb', padding: 6, width:'100%'}}
+                          />
+                        </div>
+                        <div style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:3}}>
+                          <label style={{fontWeight:600,marginBottom:2,color:'#222'}}>Logo</label>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={e => {
+                              setEditLogoFile(e.target.files[0]);
+                              setEditLogoPreview(e.target.files[0] ? URL.createObjectURL(e.target.files[0]) : editLogoPreview);
+                            }}
+                          />
+                          {editLogoPreview && (
+                            <img src={editLogoPreview} alt="logo preview" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8, marginTop: 4, border: '2px solid #4F8CFF', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }} />
+                          )}
+                        </div>
+                        <div style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:3}}>
+                          <label style={{fontWeight:600,marginBottom:2,color:'#222'}}>Position du logo</label>
+                          <select value={editLogoPosition} onChange={e=>setEditLogoPosition(e.target.value)} style={{fontSize:16,padding:'4px 8px',width:'100%'}}>
+                            <option value="top-left">Haut gauche</option>
+                            <option value="top-center">Haut centre</option>
+                            <option value="top-right">Haut droite</option>
+                            <option value="bottom-left">Bas gauche</option>
+                            <option value="bottom-center">Bas centre</option>
+                            <option value="bottom-right">Bas droite</option>
+                          </select>
+                        </div>
+                        <div style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:3}}>
+                          <label style={{fontWeight:600,marginBottom:2,color:'#222'}}>Taille du logo (px)</label>
+                          <input type="number" placeholder="Taille (px)" style={{width:100,fontSize:16,padding:'4px 8px'}} value={editLogoSize} onChange={e=>setEditLogoSize(Number(e.target.value))} />
+                        </div>
+                        <div style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:3}}>
+                          <label style={{fontWeight:600,marginBottom:2,color:'#222'}}>Effet</label>
+                          <select value={editLogoEffect} onChange={e=>setEditLogoEffect(e.target.value)} style={{fontSize:16,padding:'4px 8px',width:'100%'}}>
+                            <option value="none">Aucun</option>
+                            <option value="float">Flottant</option>
+                            <option value="glitch">Glitch</option>
+                            <option value="pulse">Pulse</option>
+                            <option value="oldtv">Old TV</option>
+                            <option value="vhs">VHS</option>
+                          </select>
+                          <label style={{fontWeight:600,margin:'8px 0 2px 0',color:'#222'}}>Intensité de l'effet</label>
+                          <input type="range" min={1} max={10} value={editLogoEffectIntensity} onChange={e=>setEditLogoEffectIntensity(Number(e.target.value))} style={{width:'100%'}} />
+                        </div>
+                        <div style={{display:'flex',gap:8,marginTop:12}}>
+                          <button onClick={() => handleEditSave(program.id)} disabled={saving} style={{color: 'white', background:'#43a047', border:'none', borderRadius:6, fontSize:18, padding:'6px 18px', fontWeight:600, cursor:'pointer'}}><FaCheck style={{marginRight:5}}/>Valider</button>
+                          <button onClick={handleEditCancel} disabled={saving} style={{color: 'white', background:'#e53935', border:'none', borderRadius:6, fontSize:18, padding:'6px 18px', fontWeight:600, cursor:'pointer'}}><FaTimes style={{marginRight:5}}/>Annuler</button>
+                        </div>
+                      </div>
                     </>
                   ) : (
                     <>

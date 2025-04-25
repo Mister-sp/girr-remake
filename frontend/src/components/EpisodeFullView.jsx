@@ -95,7 +95,14 @@ function EpisodeFullView() {
     // Envoie le titre du sujet et le logo du programme à la page OBS via WebSocket
     import('../services/websocket').then(({ connectWebSocket }) => {
       const socket = connectWebSocket();
-      socket.emit('obs:update', { title: topic.title, media: null, logoUrl: episode && (episode.logo || episode.programLogo || null) });
+      socket.emit('obs:update', {
+        title: topic.title,
+        media: null,
+        logoUrl: (episode && episode.logo) || (program && program.logoUrl) || null,
+        logoEffect: (episode && episode.logoEffect) || (program && program.logoEffect) || 'none',
+        logoPosition: (episode && episode.logoPosition) || (program && program.logoPosition) || 'top-right',
+        logoSize: (episode && episode.logoSize) || (program && program.logoSize) || 80,
+      });
     });
   };
 
@@ -133,7 +140,10 @@ function EpisodeFullView() {
       socket.emit('obs:update', {
         title: topic.title,
         media: null,
-        logoUrl: episode && (episode.logo || episode.programLogo || null),
+        logoUrl: (episode && episode.logo) || (program && program.logoUrl) || null,
+        logoEffect: (episode && episode.logoEffect) || (program && program.logoEffect) || 'none',
+        logoPosition: (episode && episode.logoPosition) || (program && program.logoPosition) || 'top-right',
+        logoSize: (episode && episode.logoSize) || (program && program.logoSize) || 80,
       });
     });
   };
@@ -170,7 +180,10 @@ function EpisodeFullView() {
       socket.emit('obs:update', {
         title: topic.title,
         media: { type, url },
-        logoUrl: episode && (episode.logo || episode.programLogo || null),
+        logoUrl: (episode && episode.logo) || (program && program.logoUrl) || null,
+        logoEffect: (episode && episode.logoEffect) || (program && program.logoEffect) || 'none',
+        logoPosition: (episode && episode.logoPosition) || (program && program.logoPosition) || 'top-right',
+        logoSize: (episode && episode.logoSize) || (program && program.logoSize) || 80,
       });
     });
   };

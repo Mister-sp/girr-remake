@@ -43,7 +43,9 @@ router.post('/', upload.single('logo'), (req, res) => {
     title: req.body.title || 'Nouveau Programme',
     description: req.body.description || '',
     logoUrl,
-    // Ajoutez d'autres champs si nécessaire
+    logoEffect: req.body.logoEffect || 'none',
+    logoPosition: req.body.logoPosition || 'top-right',
+    logoSize: req.body.logoSize ? Number(req.body.logoSize) : 80
   };
   store.programs.push(newProgram);
   saveStore();
@@ -80,7 +82,10 @@ router.put('/:id', upload.single('logo'), (req, res) => {
     ...store.programs[programIndex], 
     title: req.body.title !== undefined ? req.body.title : store.programs[programIndex].title,
     description: req.body.description !== undefined ? req.body.description : store.programs[programIndex].description,
-    logoUrl
+    logoUrl,
+    logoEffect: req.body.logoEffect !== undefined ? req.body.logoEffect : store.programs[programIndex].logoEffect || 'none',
+    logoPosition: req.body.logoPosition !== undefined ? req.body.logoPosition : store.programs[programIndex].logoPosition || 'top-right',
+    logoSize: req.body.logoSize !== undefined ? Number(req.body.logoSize) : store.programs[programIndex].logoSize || 80
   };
   // Assurer que l'ID n'est pas modifié
   updatedProgram.id = programId;

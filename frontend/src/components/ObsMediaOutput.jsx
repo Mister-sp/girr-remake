@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import './logo-effects.css';
 import { useSearchParams } from 'react-router-dom';
 import io from 'socket.io-client';
-import logo from '../assets/default-logo.png';
+
 
 // Utilitaire pour extraire l'ID YouTube depuis une URL (classique, embed ou courte)
 function extractYoutubeId(url) {
@@ -48,7 +49,7 @@ export default function ObsMediaOutput() {
   const [searchParams] = useSearchParams();
   const [current, setCurrent] = useState({
     media: null,
-    logoUrl: logo,
+    logoUrl: '/default-logo.png',
     background: matrixBg,
   });
 
@@ -91,7 +92,46 @@ export default function ObsMediaOutput() {
       zIndex: 99999,
     }}>
       {/* Logo émission en haut à droite */}
-      <img src={current.logoUrl || logo} alt="logo" style={{position:'absolute',top:28,right:36,width:80,height:80,objectFit:'contain',borderRadius:18,boxShadow:'0 2px 12px #0007',background:'transparent'}} />
+      {typeof current.logoUrl === 'string' && current.logoUrl && current.logoUrl !== '/default-logo.png' && (
+        <img
+          src={
+            current.logoUrl.startsWith('http') || current.logoUrl.startsWith('data:')
+              ? current.logoUrl
+              : `http://localhost:3001${current.logoUrl}`
+          }
+          alt="logo"
+          className={(() => {
+                switch (current.logoEffect) {
+                    case 'float': return 'logo-floating';
+                    case 'glitch': return 'logo-glitch';
+                    case 'pulse': return 'logo-pulse';
+                    case 'oldtv': return 'logo-oldtv';
+                    default: return '';
+                }
+            })()}
+          style={{
+            position: 'absolute',
+            ...(() => {
+              switch (current.logoPosition) {
+                case 'top-left': return { top: 28, left: 36 };
+                case 'top-center': return { top: 28, left: '50%', transform: 'translateX(-50%)' };
+                case 'top-right': return { top: 28, right: 36 };
+                case 'bottom-left': return { bottom: 28, left: 36 };
+                case 'bottom-center': return { bottom: 28, left: '50%', transform: 'translateX(-50%)' };
+                case 'bottom-right': return { bottom: 28, right: 36 };
+                default: return { top: 28, right: 36 };
+              }
+            })(),
+            width: current.logoSize ?? 80,
+            height: current.logoSize ?? 80,
+            objectFit: 'contain',
+            borderRadius: 18,
+            boxShadow: '0 2px 12px #0007',
+            background: 'transparent',
+            zIndex: 100,
+          }}
+        />
+      )}
       {/* Image d'illustration centrée */}
       {current.media && current.media.type === 'image' && (
         <img src={current.media.url} alt="media" style={{
@@ -111,30 +151,30 @@ export default function ObsMediaOutput() {
         }} />
       )}
       {current.media && current.media.type === 'youtube' && (
-         <iframe
-           src={getYoutubeEmbedUrl(current.media.url)}
-           style={{
-             position: 'absolute',
-             top: 0,
-             left: 0,
-             width: '1920px',
-             height: '1080px',
-             minWidth: '100%',
-             minHeight: '100%',
-             border: 'none',
-             borderRadius: 0,
-             boxShadow: 'none',
-             background: current.media ? '#000' : 'none',
-             zIndex: 10,
-             display: 'block',
-             objectFit: 'cover',
-           }}
-           frameBorder="0"
-           allow="autoplay; encrypted-media"
-           allowFullScreen
-           title="YouTube video"
-         />
-       )}
+        <iframe
+          src={getYoutubeEmbedUrl(current.media.url)}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '1920px',
+            height: '1080px',
+            minWidth: '100%',
+            minHeight: '100%',
+            border: 'none',
+            borderRadius: 0,
+            boxShadow: 'none',
+            background: current.media ? '#000' : 'none',
+            zIndex: 10,
+            display: 'block',
+            objectFit: 'cover'
+          }}
+          frameBorder="0"
+          allow="autoplay; encrypted-media"
+          allowFullScreen
+          title="YouTube video"
+        />
+      )}
     </div>
   );
 }
