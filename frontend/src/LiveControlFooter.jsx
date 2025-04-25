@@ -8,6 +8,8 @@ const SCENE_PRESETS = [
   { label: 'Fin', color: '#06D6A0' }
 ];
 
+import defaultLogo from './assets/default-logo.js';
+
 export default function LiveControlFooter() {
   // Canal de synchronisation multi-onglets OBS
   const obsSyncChannel = React.useRef(null);
@@ -21,6 +23,31 @@ export default function LiveControlFooter() {
   const [wsConnected, setWsConnected] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
+
+  // Nouvel état pour le topic et le programme courant (reçus via BroadcastChannel)
+  const [currentInfo, setCurrentInfo] = useState({
+    programTitle: '',
+    programLogo: '',
+    episodeTitle: '',
+    topicTitle: ''
+  });
+
+  // Écoute du BroadcastChannel pour recevoir les infos topic/programme
+  useEffect(() => {
+    if (!obsSyncChannel.current) return;
+    const handler = (event) => {
+      if (event.data && event.data.type === 'TOPIC_UPDATE') {
+        setCurrentInfo({
+          programTitle: event.data.topic.programTitle || '',
+          programLogo: event.data.topic.programLogo || '',
+          episodeTitle: event.data.topic.episodeTitle || '',
+          topicTitle: event.data.topic.title || ''
+        });
+      }
+    };
+    obsSyncChannel.current.addEventListener('message', handler);
+    return () => obsSyncChannel.current.removeEventListener('message', handler);
+  }, []);
 
   useEffect(() => {
     fetch('http://localhost:3001/api/scene')
@@ -71,7 +98,21 @@ export default function LiveControlFooter() {
         <button onClick={() => window.open('/obs-titrage', '_blank')} style={{padding:'5px 8px',background:'#333',color:'#fff',borderRadius:6,border:'none',fontSize:13,cursor:'pointer',width:120,textAlign:'left'}}>Titrage seul</button>
       </div>
 
-
+      {/* Centre : logo + nom programme + topic */}
+      <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:16,minWidth:0}}>
+        <div style={{display:'flex',flexDirection:'column',alignItems:'center',minWidth:0}}>
+  <img
+    src={currentInfo.programLogo ? (currentInfo.programLogo.startsWith('http') ? currentInfo.programLogo : `http://localhost:3001${currentInfo.programLogo}`) : defaultLogo}
+    alt="Logo programme"
+    style={{height:40,width:40,objectFit:'contain',borderRadius:8,background:'#232938',boxShadow:'0 2px 8px #0003',marginBottom:2,border:'1.5px solid #444'}}
+  />
+  <span style={{fontWeight:700,fontSize:16,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',color:'#FFD166',marginTop:2}}>{currentInfo.programTitle || 'Programme...'}</span>
+</div>
+<div style={{display:'flex',flexDirection:'column',minWidth:0,marginLeft:16}}>
+  <span style={{fontWeight:600,fontSize:15,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',color:'#8ecae6'}}>{currentInfo.episodeTitle || ''}</span>
+  <span style={{fontWeight:500,fontSize:16,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',color:'#fff'}}>{currentInfo.topicTitle || 'Sujet...'}</span>
+</div>
+      </div>
 
       {/* Aperçu OBS intégré à droite du footer + statut WebSocket dessous */}
       <div style={{marginLeft: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>

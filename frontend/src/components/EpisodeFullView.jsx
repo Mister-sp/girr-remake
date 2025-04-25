@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { getEpisodeDetails, getTopicsForEpisode, getMediaForTopic, updateTopic, deleteTopic, createMedia, createTopic } from '../services/api';
+import { getEpisodeDetails, getTopicsForEpisode, getMediaForTopic, updateTopic, deleteTopic, createMedia, createTopic, getPrograms } from '../services/api';
 import CustomMediaList from './CustomMediaList.jsx';
 import EditTopicModal from './EditTopicModal';
 import { FaPencilAlt, FaPlay, FaChevronUp, FaChevronDown, FaPlus, FaPause } from 'react-icons/fa';
@@ -9,6 +9,7 @@ import { MdCast, MdCastConnected } from 'react-icons/md';
 function EpisodeFullView() {
   const { programId, episodeId } = useParams();
   const [episode, setEpisode] = useState(null);
+  const [program, setProgram] = useState(null); // Ajout pour stocker le programme
   const [topics, setTopics] = useState([]);
   const [mediaByTopic, setMediaByTopic] = useState({});
   const [loading, setLoading] = useState(true);
@@ -24,11 +25,19 @@ function EpisodeFullView() {
     async function fetchAll() {
       setLoading(true);
       try {
+        // Récupération de l'épisode
         const episodeRes = await getEpisodeDetails(programId, episodeId);
-        console.log('DEBUG episodeRes.data', episodeRes.data);
         setEpisode(episodeRes.data);
+        // Récupération du programme associé
+        try {
+          const programRes = await getPrograms();
+          const found = programRes.data.find(p => String(p.id) === String(programId));
+          setProgram(found || null);
+        } catch (e) {
+          setProgram(null);
+        }
+        // Récupération des topics
         const topicsRes = await getTopicsForEpisode(programId, episodeId);
-        console.log('DEBUG topicsRes.data', topicsRes.data);
         setTopics(topicsRes.data);
         const mediaObj = {};
         for (const topic of topicsRes.data) {
@@ -105,6 +114,20 @@ function EpisodeFullView() {
   const handleTitrage = (topic) => {
     setTitrageActif(topic.id);
     setCastActif(null); // désactive tout cast
+    // Envoi BroadcastChannel pour synchroniser le footer
+    try {
+      const obsSyncChannel = new window.BroadcastChannel('obs-sync');
+      obsSyncChannel.postMessage({
+        type: 'TOPIC_UPDATE',
+        topic: {
+          title: topic.title,
+          programTitle: program?.title || '',
+          programLogo: program?.logoUrl || '',
+          episodeTitle: episode?.title || ''
+        }
+      });
+      obsSyncChannel.close();
+    } catch (e) { /* ignore */ }
     import('../services/websocket').then(({ connectWebSocket }) => {
       const socket = connectWebSocket();
       socket.emit('obs:update', {
@@ -121,6 +144,20 @@ function EpisodeFullView() {
   const handleCast = (topic, media) => {
     setCastActif(media.id);
     setTitrageActif(null); // désactive titrage
+    // Envoi BroadcastChannel pour synchroniser le footer
+    try {
+      const obsSyncChannel = new window.BroadcastChannel('obs-sync');
+      obsSyncChannel.postMessage({
+        type: 'TOPIC_UPDATE',
+        topic: {
+          title: topic.title,
+          programTitle: program?.title || '',
+          programLogo: program?.logoUrl || '',
+          episodeTitle: episode?.title || ''
+        }
+      });
+      obsSyncChannel.close();
+    } catch (e) { /* ignore */ }
     import('../services/websocket').then(({ connectWebSocket }) => {
       const socket = connectWebSocket();
       let type = media.type;

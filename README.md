@@ -58,6 +58,7 @@ Il est composé de deux parties :
 - Footer OBS optimisé (hauteur réduite, boutons verticaux, statut WebSocket sous l’aperçu)
 - Sidebar épurée (devtools regroupés, accès rapide OBS)
 - Roadmap détaillée et structurée (frontend/backend)
+- Affichage dynamique dans le footer : le nom du programme, le logo, le nom de l'épisode et le sujet en cours sont affichés en temps réel dans la zone centrale du footer (avec gestion des logos transparents)
 - Préparation d’un espace central pour l’émission/sujet dans le footer
 - Navigation plus claire et interface allégée
 - Correction et relance des serveurs, WebSocket fonctionnel
@@ -84,8 +85,11 @@ Le composant est utilisé à la fois dans `ObsOutput.jsx` (sortie principale) et
 
 ## Roadmap
 
+### Fonctionnalités réalisées
+
+- **Affichage dynamique dans le footer** : Le nom du programme, le nom de l'épisode et le sujet en cours sont désormais affichés dynamiquement dans le footer (zone centrale), avec le logo du programme. Cette fonctionnalité apporte une meilleure visibilité et cohérence broadcast à l'interface.
+
 ### Frontend : Overlays, UI/UX & Fonctionnalités
-- Afficher l'émission et le sujet en cours dans le footer (zone centrale)
 - Personnalisation du lower third (transition, police d'écriture, etc.)
 - Effet d'apparition/disparition personnalisable pour les médias
 - Modifier la position du logo de l'émission et personnalisation (effet flottement, glitch, etc.)
