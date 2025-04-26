@@ -12,6 +12,15 @@
 
 ## [Unreleased]
 ### Ajouts et améliorations
+- Refonte UX de la liste des programmes :
+  - Header sticky avec titre et bouton « + » d’ajout aligné à droite (flex).
+  - Le bouton d’ajout ouvre un modal pour créer un programme.
+  - Scrollbar parfaitement alignée à droite de la zone centrale.
+  - Suppression des anciens boutons flottants redondants.
+  - Utilisation de flexbox pour un alignement moderne, responsive et une UX améliorée.
+- Personnalisation avancée du lower third (titrage) lors de la création et la modification de programme :
+  - Choix police, taille, couleur, effet, fond, position et transitions directement dans le formulaire.
+
 - Ajout d'un bouton dans la sidebar permettant d'ouvrir simultanément les overlays OBS Media (`/obs-media`) et Titrage (`/obs-titrage`) dans deux nouveaux onglets.
 - Les boutons individuels « Aperçu OBS Media » et « Aperçu OBS Titrage » ont été retirés de la sidebar pour simplifier l'UI.
 - Le footer permet toujours de prévisualiser dynamiquement l'un des overlays dans le mini-apercu intégré.

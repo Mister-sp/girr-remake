@@ -59,6 +59,7 @@ Il est composé de deux parties :
 - Sidebar épurée (devtools regroupés, accès rapide OBS)
 - Affichage dynamique dans le footer : le nom du programme, le logo, le nom de l'épisode et le sujet en cours sont affichés en temps réel dans la zone centrale du footer (avec gestion des logos transparents)
 - Effets visuels sur le logo OBS : appliquez des effets animés (flottement, glitch, Old TV, VHS) au logo de chaque programme dans la sortie OBS, sélectionnables dans l'interface. Les effets sont visibles en temps réel dans l'output OBS.
+- Personnalisation avancée du lower third (titrage) lors de la création ou modification de programme : choix police, couleur, taille, effet, fond, position, transitions, etc. directement dans le formulaire.
 - Roadmap détaillée et structurée (frontend/backend)
 - Navigation plus claire et interface allégée
 - Correction et relance des serveurs, WebSocket fonctionnel
@@ -85,17 +86,11 @@ Le composant est utilisé à la fois dans `ObsOutput.jsx` (sortie principale) et
 
 ## Roadmap
 
-### Fonctionnalités réalisées
-
-
-
 ### Frontend : Overlays, UI/UX & Fonctionnalités
-- Personnalisation du lower third (transition, police d'écriture, etc.)
 - Effet d'apparition/disparition personnalisable pour les médias
-- Modifier la position du logo de l'émission (top/bottom, gauche/centre/droite) et personnalisation (autres effets à venir)
 - Améliorations UI/UX : drag & drop médias plus robuste, filtres/sort sur les programmes, etc.
+- Gestion multi-client (utilisation simultanée sur plusieurs appareils/navigateurs)
 - Suggestions ou besoins à discuter au fil du projet
-- Synchronisation des overlays OBS : permettre aux boutons du footer de contrôler à distance toutes les pages OBS ouvertes (media/titrage) via un canal de communication.
 - Tests automatisés (unitaires backend, intégration frontend)
 - Settings avancés / gestion des utilisateurs (profils, droits, personnalisation)
 
@@ -103,8 +98,10 @@ Le composant est utilisé à la fois dans `ObsOutput.jsx` (sortie principale) et
 - Logger avancé côté backend (et affichage admin optionnel)
 - Documentation API interactive (Swagger UI sur /api-docs)
 - Refonte/optimisation du backend (si besoin de persistance durable)
+- Possibilité de redondance/failover (backend répliqué, tolérance aux pannes)
 
 ### Déploiement & Infrastructure
+- Déploiement automatique (CI/CD, build & push auto sur cloud ou serveur)
 
 #### Solutions gratuites ou à coût nul pour héberger backend/frontend
 

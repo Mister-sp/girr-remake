@@ -8,10 +8,14 @@ export default function Modal({ open, onClose, children }) {
       background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center'
     }}>
       <div style={{
-        background: '#fff', borderRadius: 10, padding: 32, minWidth: 320, maxWidth: '90vw', boxShadow: '0 2px 16px rgba(0,0,0,0.18)', position: 'relative',
+        background: '#fff', borderRadius: 16, padding: 48, minWidth: 520, maxWidth: '98vw', minHeight: 480, maxHeight: '96vh', boxShadow: '0 4px 32px rgba(0,0,0,0.22)', position: 'relative',
+        overflowY: 'auto', overflowX: 'auto',
+        display: 'flex', flexDirection: 'column',
       }}>
-        <button onClick={onClose} style={{ position: 'absolute', top: 10, right: 14, background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#333' }}>×</button>
-        {children}
+        <button onClick={onClose} style={{ position: 'absolute', top: 18, right: 22, background: 'none', border: 'none', fontSize: 32, cursor: 'pointer', color: '#333', zIndex: 2 }}>×</button>
+        <div style={{flex:1, minWidth:360}}>
+          {children}
+        </div>
       </div>
     </div>
   );

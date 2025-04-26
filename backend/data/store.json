@@ -5,15 +5,53 @@
       "title": "Test ",
       "description": "",
       "logoUrl": "/logos/1745321342043-529271278.png",
-      "logoEffect": "vhs",
+      "logoEffect": "glitch",
       "logoPosition": "top-center",
+      "logoSize": 80,
+      "lowerThirdConfig": {
+        "transitionIn": "fade",
+        "transitionOut": "slide",
+        "fontFamily": "Roboto",
+        "fontUrl": "https://fonts.googleapis.com/css?family=Roboto",
+        "fontSize": 32,
+        "fontWeight": "bold",
+        "fontStyle": "normal",
+        "textDecoration": "none",
+        "textColor": "#FFFFFF",
+        "textStrokeColor": "#000000",
+        "textStrokeWidth": 2,
+        "backgroundColor": "#181818",
+        "backgroundOpacity": 0.97,
+        "logoInLowerThird": false,
+        "logoPosition": "left"
+      }
+    },
+    {
+      "id": 10,
+      "title": "Test programme",
+      "description": "",
+      "logoUrl": "",
+      "logoEffect": "none",
+      "logoPosition": "top-right",
       "logoSize": 80
     },
     {
-      "id": 9,
-      "title": "Brainstormgeek ",
+      "id": 11,
+      "title": "Coin COin",
       "description": "",
-      "logoUrl": "/logos/1745321004306-627393871.png"
+      "logoUrl": "",
+      "logoEffect": "none",
+      "logoPosition": "top-right",
+      "logoSize": 80
+    },
+    {
+      "id": 13,
+      "title": "456",
+      "description": "",
+      "logoUrl": "",
+      "logoEffect": "none",
+      "logoPosition": "top-right",
+      "logoSize": 80
     }
   ],
   "episodes": [
@@ -67,7 +105,7 @@
       "order": 1
     }
   ],
-  "nextProgramId": 10,
+  "nextProgramId": 14,
   "nextEpisodeId": 6,
   "nextTopicId": 7,
   "nextMediaId": 3,

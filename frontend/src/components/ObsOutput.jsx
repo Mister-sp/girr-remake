@@ -224,7 +224,14 @@ export default function ObsOutput() {
         />
       )}
       {/* Lower third titrage */}
-      <LowerThird title={current.title} />
+      {current.title && (
+        <LowerThird
+          title={current.title}
+          subtitle={current.subtitle}
+          {...(current.lowerThirdConfig || {})}
+          logoUrl={current.logoUrl}
+        />
+      )}
     </div>
   );
 }

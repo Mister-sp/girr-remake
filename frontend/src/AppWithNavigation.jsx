@@ -2,9 +2,9 @@ import { useEffect, useState as useReactState } from 'react';
 import { useState } from 'react';
 import './modern-ui.css';
 import './toasts-and-modal.css';
+import './modern-layout.css';
 import { ToastProvider } from './components/ToastProvider.jsx';
-import { FaFilm, FaListUl, FaBookOpen, FaArrowLeft, FaMoon, FaSun } from './components/Icons';
-import ProgramList from './components/ProgramList';
+import ProgramList from './components/ProgramList.jsx';
 import EpisodeList from './components/EpisodeList';
 import TopicList from './components/TopicList';
 import CustomMediaList from "./components/CustomMediaList";
@@ -105,7 +105,7 @@ function AppWithNavigation() {
       <Route path="*" element={
         <>
           <Sidebar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
-          <main style={{ marginLeft: 220, padding: '24px 16px 80px 16px', minHeight: '100vh', background: darkMode ? '#181a1b' : '#f7f7fa' }}>
+          <main className="main-content-scrollable" style={{ marginLeft: 220, padding: '24px 16px 80px 16px', background: darkMode ? '#181a1b' : '#f7f7fa' }}>
             <Routes>
               <Route path="/" element={<ProgramList onSelectProgram={handleSelectProgram} />} />
               <Route path="/program/:programId/episodes" element={<EpisodeList onSelectEpisode={handleSelectEpisode} onBack={handleBackToPrograms} />} />
