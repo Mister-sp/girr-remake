@@ -1,6 +1,20 @@
-# Girr Remake Project
+# FREMEN
 
-Ce projet est une tentative de recréer des fonctionnalités de l'application Girr.
+*Flow de Régie d'Écrans, de Médias, d'Événements et de News*
+
+**Slogan :** Tel Shai-Hulud, maîtrisez le stream
+
+> **Branding harmonisé :**
+> - Nouveau nom FREMEN appliqué partout (sidebar, README, logo, etc.)
+> - Slogan corrigé et synchronisé dans toute l’interface
+> - Sidebar mise à jour avec le branding et le slogan
+> - Suppression des anciennes mentions et slogans
+
+
+> ⚠️ **Changement de nom !**
+> Ce projet s’appelait auparavant **girr-remake** et s’inspire toujours du projet initial **Girr** de [chrischamicas](https://github.com/chrischamicas/girr). Il poursuit la même philosophie d’outillage de régie, mais sous un nouveau nom et avec une vision élargie.
+
+Ce projet est un outil moderne et modulaire de régie pour le streaming, la gestion d’événements, de médias et d’actualités.
 Il est composé de deux parties :
 
 -   `frontend/`: Une application React (utilisant Vite) pour l'interface utilisateur.
@@ -44,6 +58,11 @@ Il est composé de deux parties :
     L'application sera accessible sur `http://localhost:5173` (ou un autre port indiqué par Vite).
 
 ## Fonctionnalités réalisées
+
+- Branding FREMEN généralisé (sidebar, README, logo, etc.)
+- Slogan harmonisé partout dans l’interface et la documentation
+- Sidebar corrigée avec nouveau nom et slogan
+
 
 - UI moderne : affichage en cartes, responsive, modals, boutons flottants homogènes
 - Sidebar avec logo et branding personnalisés
@@ -137,11 +156,11 @@ _Un Raspberry Pi 3/4 suffit pour du dev ou une petite prod._
 - Un Raspberry Pi 3 (ou supérieur) suffit pour héberger le backend Node.js et servir le frontend à quelques utilisateurs (contrôle, affichage, pilotage, streaming YouTube côté client).
 - Un vieux PC (même dual-core, 2 Go RAM) sous Linux ou Windows fait aussi très bien l’affaire pour héberger le projet.
 - **Intégration sur un serveur Proxmox** :
-  - Crée une VM ou un conteneur LXC (Debian/Ubuntu recommandé) dédié à Girr Remake.
+  - Crée une VM ou un conteneur LXC (Debian/Ubuntu recommandé) dédié à FREMEN.
   - Alloue 1 à 2 Go de RAM, 1 à 2 vCPU (même un CPU bas de gamme suffit pour Node.js/React).
   - Installe Node.js, npm, et (optionnel) nginx pour servir le frontend buildé.
   - Tu peux monter un partage OpenMediaVault dans la VM/CT pour stocker les médias.
-  - Girr Remake peut cohabiter sur le même serveur avec d'autres stacks/services (ex : Home Assistant, autres applications domotiques ou médias) sans problème, chaque service étant isolé dans sa propre VM ou conteneur.
+  - FREMEN peut cohabiter sur le même serveur avec d'autres stacks/services (ex : Home Assistant, autres applications domotiques ou médias) sans problème, chaque service étant isolé dans sa propre VM ou conteneur.
 - Pour l’accès distant au frontend/backend :
   - **Ouvrir les ports sur la box/routeur** (redirection du port 80 ou 5173 vers l’IP locale du Pi/PC/VM).
   - **Utiliser un tunnel gratuit** (Cloudflare Tunnel, ngrok, LocalTunnel) : expose le serveur local via une URL publique sécurisée, sans toucher à la box.

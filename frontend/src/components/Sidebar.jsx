@@ -51,8 +51,8 @@ export default function Sidebar({ children }) {
             <>
               <img src={defaultLogo} alt="Logo Girr Remake" style={{ height: 32, width: 'auto', marginRight: 8 }} />
               <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <span style={{ fontWeight: 600, fontSize: 13, color: '#222', lineHeight: 1 }}>Girr Remake</span>
-                <span style={{ fontSize: 10, color: '#444', fontWeight: 400, lineHeight: 1 }}>la régie refaite par Mister_SP</span>
+                <span style={{ fontWeight: 600, fontSize: 13, color: '#222', lineHeight: 1 }}>FREMEN</span>
+                <span style={{ fontSize: 10, color: '#444', fontWeight: 400, lineHeight: 1 }}>Tel Shai-Hulud, maîtrisez le stream</span>
               </div>
             </>
           )}

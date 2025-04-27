@@ -34,6 +34,10 @@ socket.on('disconnect', () => {
   console.warn('[OBS] Déconnecté du WebSocket');
 });
 
+// Blague React pour les devs curieux :
+// Pourquoi les développeurs React aiment-ils les hooks ?
+// Parce qu’ils ne supportaient plus d’être classés !
+
 export default function ObsOutput() {
   // Synchronisation multi-onglets OBS (BroadcastChannel)
   useEffect(() => {

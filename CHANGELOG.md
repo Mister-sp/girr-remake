@@ -12,6 +12,11 @@
 
 ## [Unreleased]
 ### Ajouts et améliorations
+- Harmonisation du branding FREMEN dans toute l’application (sidebar, README, logo, etc.)
+- Correction et synchronisation du slogan (« Tel Shai-Hulud, maîtrisez le stream ») partout dans l’interface et la documentation
+- Sidebar mise à jour avec le nouveau nom et le slogan
+- Nettoyage du README et suppression des anciennes mentions/slogans
+
 - Refonte UX de la liste des programmes :
   - Header sticky avec titre et bouton « + » d’ajout aligné à droite (flex).
   - Le bouton d’ajout ouvre un modal pour créer un programme.
