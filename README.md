@@ -12,7 +12,7 @@
 
 
 > ⚠️ **Changement de nom !**
-> Ce projet s’appelait auparavant **girr-remake** et s’inspire toujours du projet initial **Girr** de [chrischamicas](https://github.com/chrischamicas/girr). Il poursuit la même philosophie d’outillage de régie, mais sous un nouveau nom et avec une vision élargie.
+> Ce projet s’appelait auparavant **girr-remake** et s’inspire toujours du projet initial **Girr** de [chriscamicas](https://github.com/chriscamicas/girr). Il poursuit la même philosophie d’outillage de régie, mais sous un nouveau nom et avec une vision élargie.
 
 Ce projet est un outil moderne et modulaire de régie pour le streaming, la gestion d’événements, de médias et d’actualités.
 Il est composé de deux parties :
