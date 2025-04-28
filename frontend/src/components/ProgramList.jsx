@@ -850,7 +850,34 @@ function ProgramForm({
 // Ajouter 'onSelect' aux props
 import { FaPencilAlt, FaCheck, FaTimes, FaPlus, FaTrash } from 'react-icons/fa';
 
+import { useNavigate } from 'react-router-dom';
+
 function ProgramDisplay({ programs, onDelete, onSelect }) {
+  const [showModal, setShowModal] = useState(false);
+  // États pour le formulaire d'ajout
+  const [newProgramTitle, setNewProgramTitle] = useState("");
+  const [newLogoFile, setNewLogoFile] = useState(null);
+  const [newLogoPosition, setNewLogoPosition] = useState("top-right");
+  const [newLogoSize, setNewLogoSize] = useState(80);
+  const [newLogoEffect, setNewLogoEffect] = useState("none");
+  const [newLogoEffectIntensity, setNewLogoEffectIntensity] = useState(5);
+  // Lower Third config
+  const [ltTransitionIn, setLtTransitionIn] = useState('fade');
+  const [ltTransitionOut, setLtTransitionOut] = useState('slide');
+  const [ltFontFamily, setLtFontFamily] = useState('Roboto');
+  const [ltFontUrl, setLtFontUrl] = useState('https://fonts.googleapis.com/css?family=Roboto');
+  const [ltFontSize, setLtFontSize] = useState(32);
+  const [ltFontWeight, setLtFontWeight] = useState('bold');
+  const [ltFontStyle, setLtFontStyle] = useState('normal');
+  const [ltTextDecoration, setLtTextDecoration] = useState('none');
+  const [ltTextColor, setLtTextColor] = useState('#FFFFFF');
+  const [ltTextStrokeColor, setLtTextStrokeColor] = useState('#000000');
+  const [ltTextStrokeWidth, setLtTextStrokeWidth] = useState(2);
+  const [ltBackgroundColor, setLtBackgroundColor] = useState('#181818');
+  const [ltBackgroundOpacity, setLtBackgroundOpacity] = useState(0.97);
+  const [ltLogoInLowerThird, setLtLogoInLowerThird] = useState(false);
+  const [ltLogoPosition, setLtLogoPosition] = useState('left');
+  const navigate = useNavigate();
   // Nouveau système d'édition : un seul programme édité à la fois, et tous les champs dans editFormState
   const [editingProgram, setEditingProgram] = useState(null);
   const [editFormState, setEditFormState] = useState(null);
@@ -941,11 +968,60 @@ function ProgramDisplay({ programs, onDelete, onSelect }) {
             title="Ajouter un programme"
             aria-label="Ajouter un programme"
             onClick={() => setShowModal(true)}
+            type="button"
           >
             <FaPlus style={{ fontSize: 28, display: 'block', margin: 0, padding: 0 }} />
           </button>
         </div>
       </div>
+      {/* Modal d'ajout */}
+      <Modal open={showModal} onClose={() => setShowModal(false)}>
+        <ProgramForm
+          onSubmit={e => { e.preventDefault(); /* Ajoute ici la logique d'ajout réelle */ setShowModal(false); }}
+          title={newProgramTitle}
+          setTitle={setNewProgramTitle}
+          logoFile={newLogoFile}
+          setLogoFile={setNewLogoFile}
+          logoPosition={newLogoPosition}
+          setLogoPosition={setNewLogoPosition}
+          logoSize={newLogoSize}
+          setLogoSize={setNewLogoSize}
+          logoEffect={newLogoEffect}
+          setLogoEffect={setNewLogoEffect}
+          logoEffectIntensity={newLogoEffectIntensity}
+          setLogoEffectIntensity={setNewLogoEffectIntensity}
+          ltTransitionIn={ltTransitionIn}
+          setLtTransitionIn={setLtTransitionIn}
+          ltTransitionOut={ltTransitionOut}
+          setLtTransitionOut={setLtTransitionOut}
+          ltFontFamily={ltFontFamily}
+          setLtFontFamily={setLtFontFamily}
+          ltFontUrl={ltFontUrl}
+          setLtFontUrl={setLtFontUrl}
+          ltFontSize={ltFontSize}
+          setLtFontSize={setLtFontSize}
+          ltFontWeight={ltFontWeight}
+          setLtFontWeight={setLtFontWeight}
+          ltFontStyle={ltFontStyle}
+          setLtFontStyle={setLtFontStyle}
+          ltTextDecoration={ltTextDecoration}
+          setLtTextDecoration={setLtTextDecoration}
+          ltTextColor={ltTextColor}
+          setLtTextColor={setLtTextColor}
+          ltTextStrokeColor={ltTextStrokeColor}
+          setLtTextStrokeColor={setLtTextStrokeColor}
+          ltTextStrokeWidth={ltTextStrokeWidth}
+          setLtTextStrokeWidth={setLtTextStrokeWidth}
+          ltBackgroundColor={ltBackgroundColor}
+          setLtBackgroundColor={setLtBackgroundColor}
+          ltBackgroundOpacity={ltBackgroundOpacity}
+          setLtBackgroundOpacity={setLtBackgroundOpacity}
+          ltLogoInLowerThird={ltLogoInLowerThird}
+          setLtLogoInLowerThird={setLtLogoInLowerThird}
+          ltLogoPosition={ltLogoPosition}
+          setLtLogoPosition={setLtLogoPosition}
+        />
+      </Modal>
       <div className={styles.programsGrid} style={{clear:'both'}}>
         {programs.length === 0 ? (
           <p style={{textAlign:'center',color:'#888',fontSize:18,margin:'48px 0'}}>Aucun programme trouvé.</p>
@@ -953,7 +1029,23 @@ function ProgramDisplay({ programs, onDelete, onSelect }) {
           programs.map((program) => {
             const imageUrl = program.logoUrl ? `http://localhost:3001${program.logoUrl}` : defaultLogo;
             return (
-              <div key={program.id} className={styles.programCard}>
+              <div
+                key={program.id}
+                className={styles.programCard}
+                tabIndex={0}
+                role="button"
+                style={{ cursor: 'pointer' }}
+                onClick={e => {
+                  // Ne pas naviguer si clic sur un bouton d'action
+                  if (e.target.closest('button')) return;
+                  navigate(`/program/${program.id}/episodes`);
+                }}
+                onKeyDown={e => {
+                  if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('button')) {
+                    navigate(`/program/${program.id}/episodes`);
+                  }
+                }}
+              >
                 <img
                   src={imageUrl}
                   alt={program.title}
@@ -963,10 +1055,10 @@ function ProgramDisplay({ programs, onDelete, onSelect }) {
                 <div className={styles.programInfo}>
                   <div className={styles.programTitle}>{program.title}</div>
                   <div className={styles.programActions}>
-                    <button onClick={() => handleEditClick(program)} className={styles.programEditBtn} title="Modifier">
+                    <button onClick={e => { e.stopPropagation(); handleEditClick(program); }} className={styles.programEditBtn} title="Modifier">
                       <FaPencilAlt />
                     </button>
-                    <button onClick={() => onDelete(program.id)} className={styles.programDeleteBtn} title="Supprimer">
+                    <button onClick={e => { e.stopPropagation(); onDelete(program.id); }} className={styles.programDeleteBtn} title="Supprimer">
                       <FaTrash />
                     </button>
                   </div>
