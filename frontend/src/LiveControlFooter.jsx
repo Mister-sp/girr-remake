@@ -1,17 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { io } from 'socket.io-client';
+import React, { useEffect, useState, useRef } from 'react';
 import defaultLogo from './assets/default-logo.js';
 import ObsPreview from './components/ObsPreview';
+import { connectWebSocket, getConnectedClients, getBroadcastChannel, cleanup } from './services/websocket';
 
 export default function LiveControlFooter() {
-  // Canal de synchronisation multi-onglets OBS
-  const obsSyncChannel = React.useRef(null);
-  React.useEffect(() => {
-    obsSyncChannel.current = new window.BroadcastChannel('obs-sync');
-    return () => obsSyncChannel.current && obsSyncChannel.current.close();
-  }, []);
-
-  // Nouvel état pour le topic et le programme courant (reçus via BroadcastChannel)
   const [currentInfo, setCurrentInfo] = useState({
     programTitle: '',
     programLogo: '',
@@ -19,11 +11,43 @@ export default function LiveControlFooter() {
     topicTitle: ''
   });
   const [wsConnected, setWsConnected] = useState(false);
+  const [connectedClients, setConnectedClients] = useState([]);
+  const [obsStatuses, setObsStatuses] = useState({
+    media: false,
+    titrage: false
+  });
 
+  // Écoute des événements WebSocket et BroadcastChannel
   useEffect(() => {
-    if (!obsSyncChannel.current) return;
-    const handler = (event) => {
-      if (event.data && event.data.type === 'TOPIC_UPDATE') {
+    const socket = connectWebSocket();
+    const channel = getBroadcastChannel();
+    
+    const handleConnect = () => {
+      console.log('WebSocket connecté');
+      setWsConnected(true);
+    };
+
+    const handleDisconnect = () => {
+      console.log('WebSocket déconnecté');
+      setWsConnected(false);
+      setConnectedClients([]);
+    };
+    
+    const handleClientsUpdate = (data) => {
+      console.log('Mise à jour clients:', data);
+      if (data.clients) {
+        setConnectedClients(data.clients);
+      }
+    };
+
+    const handleObsStatus = (data) => {
+      console.log('Mise à jour statut OBS:', data);
+      setObsStatuses(data);
+    };
+
+    const handleTopicUpdate = (event) => {
+      if (event.data?.type === 'TOPIC_UPDATE') {
+        console.log('Mise à jour topic via BroadcastChannel:', event.data);
         setCurrentInfo({
           programTitle: event.data.topic.programTitle || '',
           programLogo: event.data.topic.programLogo || '',
@@ -32,17 +56,51 @@ export default function LiveControlFooter() {
         });
       }
     };
-    obsSyncChannel.current.addEventListener('message', handler);
-    return () => obsSyncChannel.current.removeEventListener('message', handler);
+    
+    socket.on('connect', handleConnect);
+    socket.on('disconnect', handleDisconnect);
+    socket.on('clients:update', handleClientsUpdate);
+    socket.on('obs:status', handleObsStatus);
+
+    if (channel) {
+      channel.addEventListener('message', handleTopicUpdate);
+    }
+
+    // Initialisation des clients connectés
+    const initialClients = getConnectedClients();
+    if (initialClients.length > 0) {
+      setConnectedClients(initialClients);
+    }
+
+    // Cleanup
+    return () => {
+      socket.off('connect', handleConnect);
+      socket.off('disconnect', handleDisconnect);
+      socket.off('clients:update', handleClientsUpdate);
+      socket.off('obs:status', handleObsStatus);
+      if (channel) {
+        channel.removeEventListener('message', handleTopicUpdate);
+      }
+      cleanup();
+    };
   }, []);
 
-  // WebSocket connection
-  useEffect(() => {
-    const socket = io('http://localhost:3001');
-    socket.on('connect', () => setWsConnected(true));
-    socket.on('disconnect', () => setWsConnected(false));
-    return () => socket.disconnect();
-  }, []);
+  // Comptage des clients par type
+  const obsViewers = connectedClients.filter(c => c.type?.includes('obs')).length;
+  const controlViewers = connectedClients.filter(c => c.type === 'control').length;
+
+  // Ouvrir une fenêtre OBS
+  const openObsWindow = (type) => {
+    const width = 1920;
+    const height = 1080;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+    window.open(
+      `/${type}`, 
+      `OBS_${type}`,
+      `width=${width},height=${height},left=${left},top=${top}`
+    );
+  };
 
   return (
     <footer style={{
@@ -53,11 +111,47 @@ export default function LiveControlFooter() {
       display:'flex',alignItems:'center',justifyContent:'space-between',
       gap:10,minHeight:44
     }}>
-      {/* Colonne gauche : boutons OBS */}
-      <div style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:6}}>
-        <button onClick={() => window.open('/obs', '_blank')} style={{padding:'5px 8px',background:'#333',color:'#fff',borderRadius:6,border:'none',fontSize:13,cursor:'pointer',width:120,textAlign:'left'}}>Média + Titrage</button>
-        <button onClick={() => window.open('/obs-media', '_blank')} style={{padding:'5px 8px',background:'#333',color:'#fff',borderRadius:6,border:'none',fontSize:13,cursor:'pointer',width:120,textAlign:'left'}}>Média seul</button>
-        <button onClick={() => window.open('/obs-titrage', '_blank')} style={{padding:'5px 8px',background:'#333',color:'#fff',borderRadius:6,border:'none',fontSize:13,cursor:'pointer',width:120,textAlign:'left'}}>Titrage seul</button>
+      {/* Colonne gauche : boutons OBS + statuts */}
+      <div style={{display:'flex',flexDirection:'column',gap:6}}>
+        <div style={{display:'flex',alignItems:'center',gap:8}}>
+          <button onClick={() => openObsWindow('obs')} 
+            style={{padding:'5px 8px',background:'#333',color:'#fff',borderRadius:6,border:'none',fontSize:13,cursor:'pointer',width:120,textAlign:'left'}}>
+            Média + Titrage
+          </button>
+          <span style={{
+            width:8,
+            height:8,
+            borderRadius:'50%',
+            background: obsStatuses.media && obsStatuses.titrage ? '#3c3' : '#666',
+            marginLeft:4
+          }} title="Statut de diffusion" />
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:8}}>
+          <button onClick={() => openObsWindow('obs-media')} 
+            style={{padding:'5px 8px',background:'#333',color:'#fff',borderRadius:6,border:'none',fontSize:13,cursor:'pointer',width:120,textAlign:'left'}}>
+            Média seul
+          </button>
+          <span style={{
+            width:8,
+            height:8,
+            borderRadius:'50%',
+            background: obsStatuses.media ? '#3c3' : '#666',
+            marginLeft:4
+          }} title="Statut de diffusion" />
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:8}}>
+          <button onClick={() => openObsWindow('obs-titrage')} 
+            style={{padding:'5px 8px',background:'#333',color:'#fff',borderRadius:6,border:'none',fontSize:13,cursor:'pointer',width:120,textAlign:'left'}}>
+            Titrage seul
+          </button>
+          <span style={{
+            width:8,
+            height:8,
+            borderRadius:'50%',
+            background: obsStatuses.titrage ? '#3c3' : '#666',
+            marginLeft:4
+          }} title="Statut de diffusion" />
+        </div>
       </div>
 
       {/* Centre : logo + nom programme + topic */}
@@ -79,14 +173,40 @@ export default function LiveControlFooter() {
         )}
       </div>
 
-      {/* Droite : preview OBS + statut WebSocket */}
+      {/* Droite : preview OBS + statut WebSocket + clients connectés */}
       <div style={{display:'flex', flexDirection:'column', alignItems:'flex-end', gap:8}}>
-        <div style={{width:160,height:90,borderRadius:6,overflow:'hidden',backgroundColor:'#000'}}>
-          <ObsPreview width={160} height={90} />
+        <div style={{
+          width: 160,
+          height: 90,
+          borderRadius: 6,
+          overflow: 'hidden',
+          backgroundColor: '#000',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <ObsPreview 
+            width={160} 
+            height={90}
+            current={{
+              title: currentInfo.topicTitle || '',
+              subtitle: currentInfo.programTitle || '',
+              logoUrl: currentInfo.programLogo,
+              program: currentInfo.programTitle,
+              episode: currentInfo.episodeTitle
+            }}
+          />
         </div>
-        <div style={{display:'flex',alignItems:'center',gap:8,fontSize:13,color:'#bbb',minWidth:120,justifyContent:'flex-end'}}>
-          <span style={{width:12,height:12,borderRadius:'50%',background:wsConnected?'#3c3':'#f44',display:'inline-block',border:'1px solid #222',marginRight:7}} />
-          <span>{wsConnected ? 'WebSocket OK' : 'WebSocket HS'}</span>
+        <div style={{display:'flex',alignItems:'center',gap:12,fontSize:13,color:'#bbb',minWidth:120,justifyContent:'flex-end'}}>
+          <span style={{display:'flex',alignItems:'center',gap:6}}>
+            <span style={{fontSize:12}}>🎥</span>
+            <span>{obsViewers} OBS</span>
+          </span>
+          <span style={{display:'flex',alignItems:'center',gap:6}}>
+            <span style={{fontSize:12}}>🎮</span>
+            <span>{controlViewers} Control</span>
+          </span>
+          <span style={{width:12,height:12,borderRadius:'50%',background:wsConnected?'#3c3':'#f44',display:'inline-block',border:'1px solid #222'}} />
         </div>
       </div>
     </footer>

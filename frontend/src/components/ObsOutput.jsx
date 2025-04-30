@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import io from 'socket.io-client';
-
 import LowerThird from './LowerThird';
+import matrixBg from '../assets/default-logo.js';
+import { connectWebSocket } from '../services/websocket';
 
 // Utilitaire pour extraire l'ID YouTube depuis une URL (classique, embed ou courte)
 function extractYoutubeId(url) {
@@ -19,48 +19,17 @@ function extractYoutubeId(url) {
   return '';
 }
 
-
-// Fond matrix par défaut
-const matrixBg = 'https://assets.codepen.io/1468070/matrix-bg.jpg'; // Remplace par asset local si besoin
-
-const socket = io('http://localhost:3001');
-socket.on('connect', () => {
-  console.log('[OBS] Connecté au WebSocket, id:', socket.id);
-});
-socket.on('connect_error', (err) => {
-  console.error('[OBS] Erreur WebSocket :', err);
-});
-socket.on('disconnect', () => {
-  console.warn('[OBS] Déconnecté du WebSocket');
-});
-
 // Blague React pour les devs curieux :
 // Pourquoi les développeurs React aiment-ils les hooks ?
 // Parce qu’ils ne supportaient plus d’être classés !
 
-export default function ObsOutput() {
+export default function ObsOutput({ previewMode = false, current: propsCurrent, mediaDisplayed: propsMedia }) {
   // Synchronisation multi-onglets OBS (BroadcastChannel)
-  useEffect(() => {
-    const channel = new window.BroadcastChannel('obs-sync');
-    const handler = (event) => {
-      if (event.data?.type === 'CHANGE_VIEW' && event.data.url && window.location.pathname !== event.data.url) {
-        window.location.href = event.data.url;
-      }
-    };
-    channel.addEventListener('message', handler);
-    return () => channel.close();
-  }, []);
-  // Applique la classe obs-output au body et html pour fond clean
-  useEffect(() => {
-    document.body.classList.add('obs-output');
-    document.documentElement.classList.add('obs-output');
-    return () => {
-      document.body.classList.remove('obs-output');
-      document.documentElement.classList.remove('obs-output');
-    };
-  }, []);
-  const [searchParams] = useSearchParams();
-  const [current, setCurrent] = useState({
+  const obsSyncChannel = useRef(previewMode ? null : new BroadcastChannel('obs-sync'));
+  
+  const [currentScale, setCurrentScale] = useState(1);
+  
+  const [current, setCurrent] = useState(propsCurrent || {
     program: '',
     episode: '',
     topic: '',
@@ -71,15 +40,64 @@ export default function ObsOutput() {
     logoEffect: '',
     logoPosition: 'top-right',
     logoSize: 80,
-    lowerThirdConfig: {},
+    lowerThirdConfig: null,
+    media: null  // Ajout explicite de media: null dans l'état initial
   });
 
-  // State for the media currently rendered or transitioning out
-  const [displayedMedia, setDisplayedMedia] = useState(null);
-  // State to control the visibility class for fade effect
+  const [displayedMedia, setDisplayedMedia] = useState(propsMedia || null);
   const [isMediaVisible, setIsMediaVisible] = useState(false);
-  // Ref to store the timeout ID
   const transitionTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    // En mode preview, on utilise les props au lieu du channel
+    if (previewMode) {
+      if (propsCurrent) {
+        setCurrent(propsCurrent);
+      }
+      // Gestion explicite du changement de média en mode preview
+      if (propsCurrent?.media !== undefined) {
+        setDisplayedMedia(propsCurrent.media);
+        setIsMediaVisible(!!propsCurrent.media);
+      }
+      return;
+    }
+
+    // Mode normal : utiliser le channel
+    const channel = obsSyncChannel.current;
+    const handler = (event) => {
+      if (event.data?.type === 'TOPIC_UPDATE') {
+        setCurrent(prev => ({
+          ...prev,
+          title: event.data.topic.title || '',
+          logoUrl: event.data.topic.programLogo || '/default-logo.png',
+          program: event.data.topic.programTitle || '',
+          episode: event.data.topic.episodeTitle || ''
+        }));
+      }
+    };
+
+    if (channel) {
+      channel.addEventListener('message', handler);
+      return () => {
+        channel.removeEventListener('message', handler);
+        channel.close();
+      };
+    }
+  }, [previewMode, propsCurrent, propsMedia]);
+
+  // Applique la classe obs-output
+  useEffect(() => {
+    if (!previewMode) {
+      document.body.classList.add('obs-output');
+      document.documentElement.classList.add('obs-output');
+      return () => {
+        document.body.classList.remove('obs-output');
+        document.documentElement.classList.remove('obs-output');
+      };
+    }
+  }, [previewMode]);
+
+  const [searchParams] = useSearchParams();
 
   // Récupère les paramètres d'URL (pour forcer un affichage précis si besoin)
   useEffect(() => {
@@ -91,103 +109,99 @@ export default function ObsOutput() {
     }));
   }, [searchParams]);
 
-  // Synchronisation temps réel (topic/media courant)
+  // WebSocket connection uniquement en mode normal
   useEffect(() => {
+    if (previewMode) return;
+
+    const socket = connectWebSocket();
+
     const handleUpdate = (data) => {
       console.log('[OBS] Reçu obs:update', data);
-      // Update non-media settings directly
-      setCurrent((prev) => ({
-         ...prev,
-         title: data.title ?? prev.title,
-         subtitle: data.subtitle ?? prev.subtitle,
-         background: data.background ?? prev.background,
-         logoUrl: data.logoUrl ?? prev.logoUrl,
-         logoEffect: data.logoEffect ?? prev.logoEffect,
-         logoPosition: data.logoPosition ?? prev.logoPosition,
-         logoSize: data.logoSize ?? prev.logoSize,
-         lowerThirdConfig: data.lowerThirdConfig ?? prev.lowerThirdConfig,
-         // Keep program, episode, topic if they are not in data
-         program: data.program ?? prev.program,
-         episode: data.episode ?? prev.episode,
-         topic: data.topic ?? prev.topic,
-        }));
+      
+      setCurrent(prev => ({
+        ...prev,
+        title: data.title ?? prev.title,
+        subtitle: data.subtitle ?? prev.subtitle,
+        background: data.background ?? prev.background,
+        logoUrl: data.logoUrl ?? prev.logoUrl,
+        logoEffect: data.logoEffect ?? prev.logoEffect,
+        logoPosition: data.logoPosition ?? prev.logoPosition,
+        logoSize: data.logoSize ?? prev.logoSize,
+        lowerThirdConfig: data.lowerThirdConfig ?? prev.lowerThirdConfig,
+        program: data.program ?? prev.program,
+        episode: data.episode ?? prev.episode,
+        topic: data.topic ?? prev.topic,
+      }));
 
-      const newMedia = data.media; // Media from the update
+      const newMedia = data.media;
 
-      // Clear any pending transition timeout
       if (transitionTimeoutRef.current) {
         clearTimeout(transitionTimeoutRef.current);
         transitionTimeoutRef.current = null;
       }
 
-      // Check if media content has actually changed
       setDisplayedMedia(currentDisplayedMedia => {
         if (JSON.stringify(newMedia) !== JSON.stringify(currentDisplayedMedia)) {
           if (currentDisplayedMedia) {
-            // 1. Start fade-out of the current media
             setIsMediaVisible(false);
-
-            // 2. After fade-out duration, update media and fade-in (if new media exists)
             transitionTimeoutRef.current = setTimeout(() => {
-              // Update displayedMedia state AFTER the timeout
               setDisplayedMedia(newMedia);
               if (newMedia) {
-                // Use rAF to ensure the state update is processed before adding 'visible'
                 requestAnimationFrame(() => {
-                   setIsMediaVisible(true);
+                  setIsMediaVisible(true);
                 });
               }
-              transitionTimeoutRef.current = null; // Clear ref after execution
-            }, 500); // Match CSS transition duration (0.5s)
-            // Keep the current media displayed during fade-out
+              transitionTimeoutRef.current = null;
+            }, 500);
             return currentDisplayedMedia;
           } else if (newMedia) {
-            // No media currently displayed, just set and fade-in the new one
-             setDisplayedMedia(newMedia); // Update immediately
-             requestAnimationFrame(() => {
-               setIsMediaVisible(true);
+            setDisplayedMedia(newMedia);
+            requestAnimationFrame(() => {
+              setIsMediaVisible(true);
             });
-            return newMedia; // Return the new media state
+            return newMedia;
           } else {
-            // New media is null, and nothing was displayed or is fading out.
-            setDisplayedMedia(null); // Update immediately
+            setDisplayedMedia(null);
             setIsMediaVisible(false);
-            return null; // Return the new media state
+            return null;
           }
         }
-        // If media hasn't changed, return the current state
         return currentDisplayedMedia;
       });
     };
 
     socket.on('obs:update', handleUpdate);
+
+    // Send registration with type
+    socket.emit('register', { pathname: '/obs', type: 'obs-full' });
+
     return () => {
-        socket.off('obs:update', handleUpdate);
-         // Clear timeout on component unmount
-        if (transitionTimeoutRef.current) {
-            clearTimeout(transitionTimeoutRef.current);
-        }
+      socket.off('obs:update', handleUpdate);
+      if (transitionTimeoutRef.current) {
+        clearTimeout(transitionTimeoutRef.current);
+      }
     };
-  }, []); // Empty dependency array: runs once
+  }, [previewMode]);
 
   // --- Auto-scale pour mini-OBS ou plein écran ---
-  const [scale, setScale] = React.useState(1);
-  React.useEffect(() => {
+  useEffect(() => {
+    if (previewMode) return; // Pas de scale en mode preview
+
     function handleResize() {
       const w = window.innerWidth;
       const h = window.innerHeight;
-      setScale(Math.min(w / 1920, h / 1080));
+      setCurrentScale(Math.min(w / 1920, h / 1080));
     }
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [previewMode]);
 
   return (
     <div className="obs-output-root" style={{
       width: 1920,
       height: 1080,
-      transform: `scale(${scale})`,
+      transform: `scale(${currentScale})`,
       transformOrigin: 'top left',
       overflow: 'hidden',
       position: 'fixed',

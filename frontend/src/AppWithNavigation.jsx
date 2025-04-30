@@ -1,9 +1,9 @@
-import { useEffect, useState as useReactState } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Route, Routes, useNavigate } from 'react-router-dom';
+import { ToastProvider } from './components/ToastProvider.jsx';
 import './modern-ui.css';
 import './toasts-and-modal.css';
 import './modern-layout.css';
-import { ToastProvider } from './components/ToastProvider.jsx';
 import ProgramList from './components/ProgramList.jsx';
 import EpisodeList from './components/EpisodeList';
 import TopicList from './components/TopicList';
@@ -17,11 +17,11 @@ import LiveControlFooter from './LiveControlFooter.jsx';
 import Sidebar from './components/Sidebar.jsx';
 import EpisodeFullView from './components/EpisodeFullView.jsx';
 import Settings from './components/Settings.jsx';
-import { Route, Routes, Link, useNavigate } from 'react-router-dom';
+import ConnectedClients from './components/ConnectedClients';
 
 function AppWithNavigation() {
   // Dark mode state & logic
-  const [darkMode, setDarkMode] = useReactState(() => {
+  const [darkMode, setDarkMode] = useState(() => {
     const stored = localStorage.getItem('darkMode');
     if (stored !== null) return stored === 'true';
     // Use system preference by default
@@ -124,4 +124,11 @@ function AppWithNavigation() {
   );
 }
 
-export default AppWithNavigation;
+export default function AppWithNavigationWrapper() {
+  return (
+    <ToastProvider>
+      <ConnectedClients />
+      <AppWithNavigation />
+    </ToastProvider>
+  );
+}

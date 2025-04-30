@@ -1,42 +1,51 @@
 # Changelog
 
-## [2025-04-23]
-
-- Refonte du footer : réduction de la hauteur, suppression des éléments inutiles, organisation verticale des boutons OBS, statut WebSocket déplacé sous l’aperçu.
-- Sidebar épurée : icônes OBS en accès rapide, liens de développement regroupés derrière un bouton "Dev".
-- Ajout d’un espace central réservé dans le footer pour l’affichage futur de l’émission/sujet.
-- Roadmap restructurée et enrichie dans le README, avec sous-thèmes frontend/backend.
-- Amélioration de la clarté de la navigation et de l’ergonomie générale.
-- Correction et relance des serveurs frontend/backend, vérification du fonctionnement WebSocket.
-- Nettoyage du README (suppression des sections d’aperçu, roadmap réorganisée).
+Toutes les modifications notables de ce projet seront documentées dans ce fichier.
+Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
+et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 ### Ajouts et améliorations
-- Harmonisation du branding FREMEN dans toute l’application (sidebar, README, logo, etc.)
-- Correction et synchronisation du slogan (« Tel Shai-Hulud, maîtrisez le stream ») partout dans l’interface et la documentation
+- ObsPreview corrigé pour afficher correctement le preview dans le footer
+- Gestion améliorée des médias dans le preview (disparition correcte)
+- Correction des conflits de variables dans ObsOutput
+
+### Corrections
+- Résolution du bug d'affichage des médias dans le preview lors du changement de titre
+- Correction de l'alignement du preview OBS dans le footer
+
+## [2025-04-23]
+### Ajouts et améliorations
+- Harmonisation du branding FREMEN dans toute l'application (sidebar, README, logo, etc.)
+- Correction et synchronisation du slogan (« Tel Shai-Hulud, maîtrisez le stream ») partout dans l'interface et la documentation
 - Sidebar mise à jour avec le nouveau nom et le slogan
 - Nettoyage du README et suppression des anciennes mentions/slogans
 
 - Refonte UX de la liste des programmes :
-  - Header sticky avec titre et bouton « + » d’ajout aligné à droite (flex).
-  - Le bouton d’ajout ouvre un modal pour créer un programme.
-  - Scrollbar parfaitement alignée à droite de la zone centrale.
-  - Suppression des anciens boutons flottants redondants.
-  - Utilisation de flexbox pour un alignement moderne, responsive et une UX améliorée.
-- Personnalisation avancée du lower third (titrage) lors de la création et la modification de programme :
-  - Choix police, taille, couleur, effet, fond, position et transitions directement dans le formulaire.
+  - Header sticky avec titre et bouton « + » d'ajout aligné à droite (flex)
+  - Le bouton d'ajout ouvre un modal pour créer un programme
+  - Scrollbar parfaitement alignée à droite de la zone centrale
+  - Suppression des anciens boutons flottants redondants
+  - Utilisation de flexbox pour un alignement moderne et responsive
 
-- Ajout d'un bouton dans la sidebar permettant d'ouvrir simultanément les overlays OBS Media (`/obs-media`) et Titrage (`/obs-titrage`) dans deux nouveaux onglets.
-- Les boutons individuels « Aperçu OBS Media » et « Aperçu OBS Titrage » ont été retirés de la sidebar pour simplifier l'UI.
-- Le footer permet toujours de prévisualiser dynamiquement l'un des overlays dans le mini-apercu intégré.
-- Ajout à la roadmap du README : synchronisation avancée des overlays OBS (contrôle à distance via les boutons du footer).
+- Personnalisation avancée du lower third (titrage) lors de la création et modification de programme :
+  - Choix police, taille, couleur, effet, fond, position et transitions directement dans le formulaire
 
-- Implémentation de l'effet de fondu (fade) pour les transitions de médias dans l'overlay OBS
+- Effet de fondu (fade) pour les transitions de médias dans l'overlay OBS :
   - Effet de fondu fluide lors de l'apparition et la disparition des médias
-  - Les autres effets de transition seront implémentés ultérieurement
+  - Architecture en place pour supporter d'autres effets de transition
+
+### Optimisations
+- Refonte du footer : réduction de la hauteur, organisation verticale des boutons OBS
+- Sidebar épurée : icônes OBS en accès rapide, liens de développement regroupés
+- Amélioration de la clarté de la navigation et de l'ergonomie générale
+- Correction et relance des serveurs frontend/backend
+- Vérification et optimisation du fonctionnement WebSocket
 
 ### Corrections
-- Nettoyage de la sidebar : suppression des liens redondants.
+- Nettoyage de la sidebar et suppression des liens redondants
+- Réorganisation de la roadmap dans le README
+- Optimisation de l'affichage dans le footer
 
 ---
 

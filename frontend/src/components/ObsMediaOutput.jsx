@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
-import './logo-effects.css';
-import './media-effects.css';
 import { useSearchParams } from 'react-router-dom';
-import io from 'socket.io-client';
+import matrixBg from '../assets/default-logo.js';
+import { connectWebSocket } from '../services/websocket';
 
 // Utilitaire pour extraire l'ID YouTube depuis une URL (classique, embed ou courte)
 function extractYoutubeId(url) {
@@ -23,21 +22,27 @@ function getYoutubeEmbedUrl(url) {
     : '';
 }
 
-const matrixBg = 'https://assets.codepen.io/1468070/matrix-bg.jpg';
-const socket = io('http://localhost:3001');
-
 export default function ObsMediaOutput() {
   // Synchronisation multi-onglets OBS (BroadcastChannel)
+  const obsSyncChannel = useRef(new BroadcastChannel('obs-sync'));
+  
   useEffect(() => {
-    const channel = new window.BroadcastChannel('obs-sync');
+    const channel = obsSyncChannel.current;
     const handler = (event) => {
-      if (event.data?.type === 'CHANGE_VIEW' && event.data.url && window.location.pathname !== event.data.url) {
-        window.location.href = event.data.url;
+      if (event.data?.type === 'TOPIC_UPDATE') {
+        setCurrentSettings(prev => ({
+          ...prev,
+          logoUrl: event.data.topic.programLogo || '/default-logo.png'
+        }));
       }
     };
     channel.addEventListener('message', handler);
-    return () => channel.close();
+    return () => {
+      channel.removeEventListener('message', handler);
+      channel.close();
+    };
   }, []);
+
   useEffect(() => {
     document.body.classList.add('obs-output');
     document.documentElement.classList.add('obs-output');
@@ -46,8 +51,8 @@ export default function ObsMediaOutput() {
       document.documentElement.classList.remove('obs-output');
     };
   }, []);
+
   const [searchParams] = useSearchParams();
-  // State for non-media data received from socket
   const [currentSettings, setCurrentSettings] = useState({
     logoUrl: '/default-logo.png',
     background: matrixBg,
@@ -114,36 +119,34 @@ export default function ObsMediaOutput() {
   const [currentEffectClass, setCurrentEffectClass] = useState('');
   const [isMediaActive, setIsMediaActive] = useState(false);
 
+  // WebSocket connection
   useEffect(() => {
-    const handleUpdate = (data) => {
-      // Update non-media settings directly
-      const newAppearEffect = data.mediaAppearEffect ?? currentSettings.mediaAppearEffect;
-      const newDisappearEffect = data.mediaDisappearEffect ?? currentSettings.mediaDisappearEffect;
+    const socket = connectWebSocket();
 
-      setCurrentSettings((prev) => ({
+    const handleUpdate = (data) => {
+      console.log('[OBS] Reçu obs:update', data);
+      
+      // Update non-media settings
+      setCurrentSettings(prev => ({
         ...prev,
         logoUrl: data.logoUrl ?? prev.logoUrl,
-        background: data.background ?? prev.background,
         logoEffect: data.logoEffect ?? prev.logoEffect,
         logoPosition: data.logoPosition ?? prev.logoPosition,
-        logoSize: data.logoSize ?? prev.logoSize,
-        mediaAppearEffect: newAppearEffect,
-        mediaDisappearEffect: newDisappearEffect
+        logoSize: data.logoSize ?? prev.logoSize
       }));
 
-      const newMedia = data.media;
-
+      // Media update logic
       if (transitionTimeoutRef.current) {
         clearTimeout(transitionTimeoutRef.current);
-        transitionTimeoutRef.current = null;
       }
+
+      const newMedia = data.media;
+      const newAppearEffect = data.appearEffect || 'fade';
 
       setDisplayedMedia(currentDisplayedMedia => {
         if (JSON.stringify(newMedia) !== JSON.stringify(currentDisplayedMedia)) {
+          setIsMediaActive(false);
           if (currentDisplayedMedia) {
-            setCurrentEffectClass(`effect-${newDisappearEffect}`);
-            setIsMediaActive(false);
-            
             transitionTimeoutRef.current = setTimeout(() => {
               if (newMedia) {
                 setDisplayedMedia(newMedia);
@@ -157,7 +160,6 @@ export default function ObsMediaOutput() {
               }
               transitionTimeoutRef.current = null;
             }, 500);
-
             return currentDisplayedMedia;
           } else if (newMedia) {
             setDisplayedMedia(newMedia);
@@ -176,13 +178,17 @@ export default function ObsMediaOutput() {
     };
 
     socket.on('obs:update', handleUpdate);
+    
+    // Register as obs-media type client
+    socket.emit('register', { pathname: '/obs-media', type: 'obs-media' });
+
     return () => {
       socket.off('obs:update', handleUpdate);
       if (transitionTimeoutRef.current) {
         clearTimeout(transitionTimeoutRef.current);
       }
     };
-  }, []); // Dependency array vide car handleUpdate utilise des refs et states
+  }, []);
 
   // --- Auto-scale pour mini-OBS ou plein écran ---
   const [scale, setScale] = React.useState(1);

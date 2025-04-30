@@ -7,7 +7,7 @@ const path = require('path');
 app.use('/logos', express.static(path.join(__dirname, 'public/logos')));
 const multer = require('multer');
 const http = require('http');
-const { initializeWebSocket } = require('./websocket');
+const { initWebSocket } = require('./websocket');
 const port = process.env.PORT || 3001;
 
 // Importer les routes
@@ -37,7 +37,7 @@ app.use('/api/settings', settingsRoutes);
 
 // Démarrage du serveur
 const server = http.createServer(app);
-initializeWebSocket(server);
+initWebSocket(server);
 server.listen(port, () => {
   console.log(`Serveur backend démarré sur http://localhost:${port}`);
   console.log(`WebSocket disponible sur le même port`);

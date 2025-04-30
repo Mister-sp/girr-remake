@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { connectWebSocket } from '../services/websocket';
 import ObsOutput from './ObsOutput';
 
 /**
@@ -9,22 +10,82 @@ import ObsOutput from './ObsOutput';
  *   - ...props: toutes les props passées à ObsOutput
  */
 export default function ObsPreview({ width = 384, height = 216, ...props }) {
-  // Ratio cible (ex: 1920x1080)
+  // État pour stocker les données de preview
+  const [previewData, setPreviewData] = useState({
+    title: '',
+    subtitle: '',
+    logoUrl: null,
+    logoEffect: 'none',
+    logoPosition: 'top-right',
+    logoSize: 80,
+    media: null,
+    lowerThirdConfig: null
+  });
+
+  // Connexion WebSocket pour recevoir les mises à jour
+  useEffect(() => {
+    const socket = connectWebSocket();
+
+    const handleUpdate = (data) => {
+      console.log('[Preview] Reçu obs:update', data);
+      setPreviewData(prev => ({
+        ...prev,
+        title: data.title ?? prev.title,
+        subtitle: data.subtitle ?? prev.subtitle,
+        logoUrl: data.logoUrl ?? prev.logoUrl,
+        logoEffect: data.logoEffect ?? prev.logoEffect,
+        logoPosition: data.logoPosition ?? prev.logoPosition,
+        logoSize: data.logoSize ?? prev.logoSize,
+        // Si data.media est undefined/null, on doit explicitement le mettre à null pour cacher le média
+        media: data.media !== undefined ? data.media : null,
+        lowerThirdConfig: data.lowerThirdConfig ?? prev.lowerThirdConfig
+      }));
+    };
+
+    socket.on('obs:update', handleUpdate);
+    
+    // S'enregistrer comme client de prévisualisation
+    socket.emit('register', { 
+      pathname: window.location.pathname,
+      type: 'control-preview'
+    });
+
+    return () => {
+      socket.off('obs:update', handleUpdate);
+    };
+  }, []);
+
+  // Ratio cible (1920x1080)
   const baseWidth = 1920;
   const baseHeight = 1080;
-  const scale = Math.min(width / baseWidth, height / baseHeight);
+
+  // Calcul de l'échelle pour maintenir le ratio 16:9
+  const containerRatio = width / height;
+  const targetRatio = baseWidth / baseHeight; 
+  const scale = containerRatio > targetRatio 
+    ? height / baseHeight
+    : width / baseWidth;
+
+  // On s'assure que les props.current contiennent bien la valeur media=null si pas de média
+  const mergedProps = {
+    ...props,
+    current: {
+      ...previewData,
+      ...(props.current || {}),
+      // On force media à null si pas de média dans les props
+      media: props.current?.media !== undefined ? props.current.media : previewData.media
+    }
+  };
 
   return (
     <div
       style={{
         width,
         height,
-        background: '#222',
-        borderRadius: 12,
+        backgroundColor: '#000',
+        borderRadius: 6,
         overflow: 'hidden',
-        boxShadow: '0 2px 16px #000a',
         position: 'relative',
-        border: '2px solid #fff',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -35,11 +96,19 @@ export default function ObsPreview({ width = 384, height = 216, ...props }) {
           width: baseWidth,
           height: baseHeight,
           transform: `scale(${scale})`,
-          transformOrigin: 'top left',
-          pointerEvents: 'none', // Pour éviter les clics dans le preview
+          transformOrigin: 'center',
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          marginTop: -(baseHeight / 2),
+          marginLeft: -(baseWidth / 2),
         }}
       >
-        <ObsOutput previewMode {...props} />
+        <ObsOutput 
+          previewMode 
+          {...mergedProps}
+          scale={1}
+        />
       </div>
     </div>
   );
