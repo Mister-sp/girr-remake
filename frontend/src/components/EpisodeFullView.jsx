@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { useHotkeys } from 'react-hotkeys-hook';
 import { getEpisodeDetails, getTopicsForEpisode, getMediaForTopic, updateTopic, deleteTopic, createMedia, createTopic, getPrograms } from '../services/api';
 import CustomMediaList from './CustomMediaList.jsx';
 import EditTopicModal from './EditTopicModal';
@@ -20,6 +21,10 @@ function EpisodeFullView() {
   const [expandedTopics, setExpandedTopics] = useState({});
   const [addMode, setAddMode] = useState(false);
   const [newTopicTitle, setNewTopicTitle] = useState('');
+
+  // État pour suivre l'index du média actuel dans la liste
+  const [currentMediaIndex, setCurrentMediaIndex] = useState(-1);
+  const [currentTopicIndex, setCurrentTopicIndex] = useState(-1);
 
   useEffect(() => {
     async function fetchAll() {
@@ -188,8 +193,97 @@ function EpisodeFullView() {
     });
   };
 
+  // Raccourcis clavier
+  useHotkeys('space', (e) => {
+    e.preventDefault();
+    if (castActif) {
+      // Arrêter le média actuel
+      const currentTopic = topics[currentTopicIndex];
+      const currentMedia = mediaByTopic[currentTopic.id]?.[currentMediaIndex];
+      if (currentMedia) {
+        setCastActif(null);
+        import('../services/websocket').then(({ connectWebSocket }) => {
+          const socket = connectWebSocket();
+          socket.emit('obs:update', { 
+            title: '', 
+            media: null, 
+            logoUrl: episode?.logo || program?.logoUrl || null 
+          });
+        });
+      }
+    }
+  }, { description: 'Play/Pause du média actuel' });
 
+  useHotkeys('right', (e) => {
+    e.preventDefault();
+    if (!topics.length) return;
+    
+    const currentTopic = topics[currentTopicIndex];
+    if (currentTopic) {
+      const mediaList = mediaByTopic[currentTopic.id] || [];
+      if (currentMediaIndex < mediaList.length - 1) {
+        // Passer au média suivant dans le même sujet
+        const nextMedia = mediaList[currentMediaIndex + 1];
+        setCurrentMediaIndex(currentMediaIndex + 1);
+        handleCast(currentTopic, nextMedia);
+      } else if (currentTopicIndex < topics.length - 1) {
+        // Passer au premier média du sujet suivant
+        const nextTopic = topics[currentTopicIndex + 1];
+        const nextMediaList = mediaByTopic[nextTopic.id] || [];
+        if (nextMediaList.length > 0) {
+          setCurrentTopicIndex(currentTopicIndex + 1);
+          setCurrentMediaIndex(0);
+          handleCast(nextTopic, nextMediaList[0]);
+        }
+      }
+    }
+  }, { description: 'Média suivant' });
 
+  useHotkeys('left', (e) => {
+    e.preventDefault();
+    if (!topics.length) return;
+
+    const currentTopic = topics[currentTopicIndex];
+    if (currentTopic) {
+      if (currentMediaIndex > 0) {
+        // Passer au média précédent dans le même sujet
+        const prevMedia = mediaByTopic[currentTopic.id][currentMediaIndex - 1];
+        setCurrentMediaIndex(currentMediaIndex - 1);
+        handleCast(currentTopic, prevMedia);
+      } else if (currentTopicIndex > 0) {
+        // Passer au dernier média du sujet précédent
+        const prevTopic = topics[currentTopicIndex - 1];
+        const prevMediaList = mediaByTopic[prevTopic.id] || [];
+        if (prevMediaList.length > 0) {
+          setCurrentTopicIndex(currentTopicIndex - 1);
+          setCurrentMediaIndex(prevMediaList.length - 1);
+          handleCast(prevTopic, prevMediaList[prevMediaList.length - 1]);
+        }
+      }
+    }
+  }, { description: 'Média précédent' });
+
+  useHotkeys('t', () => {
+    if (!topics.length) return;
+    const topic = topics[currentTopicIndex];
+    if (topic) {
+      handlePlay(topic);
+    }
+  }, { description: 'Lancer le titrage du sujet actuel' });
+
+  // Mettre à jour les index quand un média est lancé
+  useEffect(() => {
+    if (castActif) {
+      topics.forEach((topic, topicIdx) => {
+        const mediaList = mediaByTopic[topic.id] || [];
+        const mediaIdx = mediaList.findIndex(m => m.id === castActif);
+        if (mediaIdx !== -1) {
+          setCurrentTopicIndex(topicIdx);
+          setCurrentMediaIndex(mediaIdx);
+        }
+      });
+    }
+  }, [castActif]);
 
   const handleAddTopic = async (e) => {
     e.preventDefault();

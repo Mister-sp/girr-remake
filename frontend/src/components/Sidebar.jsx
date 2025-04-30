@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FaBars, FaTimes } from 'react-icons/fa';
+import { FiHelpCircle } from 'react-icons/fi';
 import defaultLogo from '../assets/default-logo.png';
 import ObsFullIcon from '../icons/ObsFullIcon.jsx';
 import ObsMediaIcon from '../icons/ObsMediaIcon.jsx';
@@ -24,7 +25,7 @@ function DevMenu() {
   );
 }
 
-export default function Sidebar({ darkMode, toggleDarkMode }) {
+export default function Sidebar({ darkMode, toggleDarkMode, onHelpClick }) {
   const [open, setOpen] = useState(true);
 
   return (
@@ -82,6 +83,27 @@ export default function Sidebar({ darkMode, toggleDarkMode }) {
                   </button>
                 </div>
               </div>
+
+              <button
+                onClick={onHelpClick}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 8, 
+                  background: 'none', 
+                  border: 'none', 
+                  cursor: 'pointer', 
+                  padding: '8px 20px', 
+                  color: '#222',
+                  fontSize: '1.1em',
+                  marginTop: 16
+                }}
+              >
+                <FiHelpCircle style={{ fontSize: 18 }} />
+                <span>Aide & Raccourcis</span>
+              </button>
+
+              <DevMenu />
             </nav>
 
             <div style={{ marginTop: 'auto', paddingBottom: 12 }}>

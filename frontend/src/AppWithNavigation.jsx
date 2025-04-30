@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Route, Routes, useNavigate } from 'react-router-dom';
+import { Route, Routes, useNavigate, useLocation } from 'react-router-dom';
 import { ToastProvider } from './components/ToastProvider.jsx';
+import { useHotkeys } from 'react-hotkeys-hook';
 import './modern-ui.css';
 import './toasts-and-modal.css';
 import './modern-layout.css';
@@ -18,8 +19,12 @@ import Sidebar from './components/Sidebar.jsx';
 import EpisodeFullView from './components/EpisodeFullView.jsx';
 import Settings from './components/Settings.jsx';
 import ConnectedClients from './components/ConnectedClients';
+import HelpModal from './components/HelpModal';
 
 function AppWithNavigation() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
   // Dark mode state & logic
   const [darkMode, setDarkMode] = useState(() => {
     const stored = localStorage.getItem('darkMode');
@@ -27,6 +32,36 @@ function AppWithNavigation() {
     // Use system preference by default
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
+
+  const toggleDarkMode = () => setDarkMode((d) => !d);
+
+  // Help modal state
+  const [showHelp, setShowHelp] = useState(false);
+
+  // Raccourcis clavier globaux
+  useHotkeys('h', () => navigate('/'), { description: 'Retour à l\'accueil' });
+  useHotkeys('l', () => navigate('/control'), { description: 'Mode contrôle live' });
+  useHotkeys('escape', () => {
+    if (location.pathname !== '/') {
+      navigate(-1);
+    }
+  }, { description: 'Retour en arrière' });
+  useHotkeys('d', toggleDarkMode, { description: 'Basculer le mode sombre' });
+  useHotkeys('shift+n', () => setShowModal(true), { description: 'Nouveau programme/épisode/sujet' });
+  useHotkeys('/', () => document.querySelector('input[type="text"]')?.focus(), { description: 'Focus sur le champ de recherche' });
+  useHotkeys('shift+p', () => navigate('/control'), { description: 'Ouvrir la preview' });
+  useHotkeys('shift+t', () => {
+    const topicTitle = selectedTopicTitle;
+    if (topicTitle) {
+      import('./services/websocket').then(({ connectWebSocket }) => {
+        const socket = connectWebSocket();
+        socket.emit('obs:update', { title: topicTitle });
+      });
+    }
+  }, { description: 'Lancer le titrage du sujet sélectionné' });
+
+  // Ajout du raccourci ? pour l'aide
+  useHotkeys('?', () => setShowHelp(true), { description: 'Afficher l\'aide' });
 
   useEffect(() => {
     if (darkMode) {
@@ -37,8 +72,6 @@ function AppWithNavigation() {
     localStorage.setItem('darkMode', darkMode);
   }, [darkMode]);
 
-  const toggleDarkMode = () => setDarkMode((d) => !d);
-
   // États pour la navigation Programme -> Épisode -> Sujet -> Média
   const [selectedProgramId, setSelectedProgramId] = useState(null);
   const [selectedProgramTitle, setSelectedProgramTitle] = useState('');
@@ -46,8 +79,6 @@ function AppWithNavigation() {
   const [selectedEpisodeTitle, setSelectedEpisodeTitle] = useState('');
   const [selectedTopicId, setSelectedTopicId] = useState(null);
   const [selectedTopicTitle, setSelectedTopicTitle] = useState('');
-
-  const navigate = useNavigate();
 
   // Sélection d'un programme
   const handleSelectProgram = (programId, programTitle) => {
@@ -118,6 +149,8 @@ function AppWithNavigation() {
             </Routes>
           </main>
           <LiveControlFooter />
+          {/* Modal d'aide */}
+          <HelpModal open={showHelp} onClose={() => setShowHelp(false)} />
         </>
       } />
     </Routes>

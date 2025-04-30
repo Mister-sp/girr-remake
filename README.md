@@ -71,6 +71,7 @@ L'application sera accessible sur `http://localhost:5173` (ou un autre port indi
 - Navigation claire et épurée
 - Footer avec preview OBS intégré
 - Sidebar avec accès rapide aux fonctions principales
+- Raccourcis clavier pour les actions principales
 
 ### Overlays OBS
 - Lower third (titrage) personnalisable
@@ -119,19 +120,25 @@ Le composant `ObsPreview` permet une prévisualisation fidèle :
 ## Roadmap
 
 ### Frontend
+- Mode sombre / thème personnalisable
 - Effets de transition additionnels
 - Drag & drop optimisé
 - Tests automatisés
+- Mode présentateur plein écran
 
 ### Backend
 - Documentation API (Swagger)
 - Logger avancé
 - Optimisation performances
+- Export/Import des configurations
+- System de backup automatique
 
 ### Infrastructure
 - CI/CD complet
 - Monitoring
 - Haute disponibilité
+- Docker compose pour déploiement rapide
+- Scripts d'installation automatisée
 
 ## License
 
