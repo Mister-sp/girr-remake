@@ -111,6 +111,17 @@
   "nextMediaId": 3,
   "currentScene": {
     "name": "Début",
-    "lastChanged": "2025-04-22T09:19:34.430Z"
+    "lastChanged": "2025-04-30T11:22:55.641Z",
+    "mediaAppearEffect": "slide",
+    "mediaDisappearEffect": "slide"
+  },
+  "transitionSettings": {
+    "appearEffect": "fade",
+    "disappearEffect": "fade",
+    "duration": 0.5,
+    "timing": "ease-in-out",
+    "slideDistance": 40,
+    "zoomScale": 0.8,
+    "rotateAngle": -10
   }
 }

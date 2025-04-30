@@ -31,6 +31,10 @@
 - Le footer permet toujours de prévisualiser dynamiquement l'un des overlays dans le mini-apercu intégré.
 - Ajout à la roadmap du README : synchronisation avancée des overlays OBS (contrôle à distance via les boutons du footer).
 
+- Implémentation de l'effet de fondu (fade) pour les transitions de médias dans l'overlay OBS
+  - Effet de fondu fluide lors de l'apparition et la disparition des médias
+  - Les autres effets de transition seront implémentés ultérieurement
+
 ### Corrections
 - Nettoyage de la sidebar : suppression des liens redondants.
 

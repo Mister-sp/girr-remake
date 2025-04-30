@@ -209,3 +209,24 @@
   80% { opacity: 0.93; filter: grayscale(0.8) contrast(1.4) brightness(0.95); }
   100% { opacity: 1; filter: grayscale(0.7) contrast(1.3) brightness(1.1); }
 }
+
+/* Styles for media fade effect */
+.media-fade {
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out; /* Adjust duration as needed */
+  position: absolute; /* Ensure positioning is handled */
+  top: 0;
+  left: 0;
+  width: 1920px; /* Match component dimensions */
+  height: 1080px; /* Match component dimensions */
+  object-fit: cover; /* Maintain aspect ratio */
+  background: #000; /* Background during transition */
+  z-index: 10; /* Ensure it's above the main background but below logo */
+  border: none; /* Reset border for iframe */
+  border-radius: 0; /* Reset border-radius */
+  box-shadow: none; /* Reset box-shadow */
+}
+
+.media-fade.visible {
+  opacity: 1;
+}

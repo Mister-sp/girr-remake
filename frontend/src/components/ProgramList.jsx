@@ -108,9 +108,11 @@ function ProgramList({ onSelectProgram }) {
   const [newLogoEffect, setNewLogoEffect] = useState('none');
   const [newLogoEffectIntensity, setNewLogoEffectIntensity] = useState(5);
 
+  // Media effects states
+  const [mediaAppearEffect, setMediaAppearEffect] = useState('fade');
+  const [mediaDisappearEffect, setMediaDisappearEffect] = useState('fade');
+
   // Lower Third Config states
-  const [ltTransitionIn, setLtTransitionIn] = useState('fade');
-  const [ltTransitionOut, setLtTransitionOut] = useState('slide');
   const [ltFontFamily, setLtFontFamily] = useState('Roboto');
   const [ltFontUrl, setLtFontUrl] = useState('https://fonts.googleapis.com/css?family=Roboto');
   const [ltFontSize, setLtFontSize] = useState(32);
@@ -164,10 +166,10 @@ function ProgramList({ onSelectProgram }) {
       formData.append('logoSize', newLogoSize);
       formData.append('logoEffect', newLogoEffect);
       formData.append('logoEffectIntensity', newLogoEffectIntensity);
+      formData.append('mediaAppearEffect', mediaAppearEffect);
+      formData.append('mediaDisappearEffect', mediaDisappearEffect);
       // Ajout de la config lower third
       const lowerThirdConfig = {
-        transitionIn: ltTransitionIn,
-        transitionOut: ltTransitionOut,
         fontFamily: ltFontFamily,
         fontUrl: ltFontUrl,
         fontSize: ltFontSize,
@@ -272,16 +274,10 @@ function ProgramList({ onSelectProgram }) {
           setLogoEffectIntensity={setNewLogoEffectIntensity}
 
 
-          ltTransitionIn={ltTransitionIn}
-
-
-          setLtTransitionIn={setLtTransitionIn}
-
-
-          ltTransitionOut={ltTransitionOut}
-
-
-          setLtTransitionOut={setLtTransitionOut}
+          mediaAppearEffect={mediaAppearEffect}
+          setMediaAppearEffect={setMediaAppearEffect}
+          mediaDisappearEffect={mediaDisappearEffect}
+          setMediaDisappearEffect={setMediaDisappearEffect}
 
 
           ltFontFamily={ltFontFamily}
@@ -416,16 +412,10 @@ function ProgramList({ onSelectProgram }) {
   setLogoEffectIntensity={setNewLogoEffectIntensity}
 
 
-  ltTransitionIn={ltTransitionIn}
-
-
-  setLtTransitionIn={setLtTransitionIn}
-
-
-  ltTransitionOut={ltTransitionOut}
-
-
-  setLtTransitionOut={setLtTransitionOut}
+  mediaAppearEffect={mediaAppearEffect}
+  setMediaAppearEffect={setMediaAppearEffect}
+  mediaDisappearEffect={mediaDisappearEffect}
+  setMediaDisappearEffect={setMediaDisappearEffect}
 
 
   ltFontFamily={ltFontFamily}
@@ -529,7 +519,6 @@ function ProgramList({ onSelectProgram }) {
 // Sous-composant pour le formulaire d'ajout
 function ProgramForm({
   onSubmit, title, setTitle, logoFile, setLogoFile, logoPosition, setLogoPosition, logoSize, setLogoSize, logoEffect, setLogoEffect, logoEffectIntensity, setLogoEffectIntensity,
-  ltTransitionIn, setLtTransitionIn, ltTransitionOut, setLtTransitionOut,
   ltFontFamily, setLtFontFamily, ltFontUrl, setLtFontUrl, ltFontSize, setLtFontSize,
   ltFontWeight, setLtFontWeight, ltFontStyle, setLtFontStyle, ltTextDecoration, setLtTextDecoration,
   ltTextColor, setLtTextColor, ltTextStrokeColor, setLtTextStrokeColor, ltTextStrokeWidth, setLtTextStrokeWidth,
@@ -592,28 +581,32 @@ function ProgramForm({
             <option value="vhs">VHS</option>
           </select>
         </div>
-        {/* Lower Third Config Section */}
-
-
-        <div style={{borderTop:'1px solid #eee', margin:'16px 0 8px 0', paddingTop:8, fontWeight:600, color:'#333'}}>Personnalisation du Lower Third</div>
+        {/* Media Effects Config Section */}
+        <div style={{borderTop:'1px solid #eee', margin:'16px 0 8px 0', paddingTop:8, fontWeight:600, color:'#333'}}>Effets des médias</div>
         <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
           <div style={{flex:'1 1 120px'}}>
-            <label>Transition entrée</label>
-            <select value={ltTransitionIn} onChange={e=>setLtTransitionIn(e.target.value)} style={{width:'100%'}}>
+            <label>Effet d'apparition</label>
+            <select value={mediaAppearEffect} onChange={e=>setMediaAppearEffect(e.target.value)} style={{width:'100%'}}>
               <option value="fade">Fondu</option>
               <option value="slide">Glissement</option>
-              <option value="none">Aucune</option>
+              <option value="scale">Échelle</option>
+              <option value="flip">Retournement</option>
+              <option value="none">Aucun</option>
             </select>
           </div>
           <div style={{flex:'1 1 120px'}}>
-            <label>Transition sortie</label>
-            <select value={ltTransitionOut} onChange={e=>setLtTransitionOut(e.target.value)} style={{width:'100%'}}>
-              <option value="slide">Glissement</option>
+            <label>Effet de disparition</label>
+            <select value={mediaDisappearEffect} onChange={e=>setMediaDisappearEffect(e.target.value)} style={{width:'100%'}}>
               <option value="fade">Fondu</option>
-              <option value="none">Aucune</option>
+              <option value="slide">Glissement</option>
+              <option value="scale">Échelle</option>
+              <option value="flip">Retournement</option>
+              <option value="none">Aucun</option>
             </select>
           </div>
         </div>
+        {/* Lower Third Config Section */}
+        <div style={{borderTop:'1px solid #eee', margin:'16px 0 8px 0', paddingTop:8, fontWeight:600, color:'#333'}}>Personnalisation du Lower Third</div>
         <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
           <div style={{flex:'1 1 120px'}}>
             <label>Police (Google Fonts ou locale)</label>
@@ -861,9 +854,10 @@ function ProgramDisplay({ programs, onDelete, onSelect }) {
   const [newLogoSize, setNewLogoSize] = useState(80);
   const [newLogoEffect, setNewLogoEffect] = useState("none");
   const [newLogoEffectIntensity, setNewLogoEffectIntensity] = useState(5);
+  // Media effects states
+  const [mediaAppearEffect, setMediaAppearEffect] = useState("fade");
+  const [mediaDisappearEffect, setMediaDisappearEffect] = useState("fade");
   // Lower Third config
-  const [ltTransitionIn, setLtTransitionIn] = useState('fade');
-  const [ltTransitionOut, setLtTransitionOut] = useState('slide');
   const [ltFontFamily, setLtFontFamily] = useState('Roboto');
   const [ltFontUrl, setLtFontUrl] = useState('https://fonts.googleapis.com/css?family=Roboto');
   const [ltFontSize, setLtFontSize] = useState(32);
@@ -894,8 +888,8 @@ function ProgramDisplay({ programs, onDelete, onSelect }) {
       logoSize: program.logoSize || 80,
       logoEffect: program.logoEffect || 'none',
       logoEffectIntensity: program.logoEffectIntensity || 5,
-      ltTransitionIn: program.ltTransitionIn || 'fade',
-      ltTransitionOut: program.ltTransitionOut || 'slide',
+      mediaAppearEffect: program.mediaAppearEffect || 'fade',
+      mediaDisappearEffect: program.mediaDisappearEffect || 'fade',
       ltFontFamily: program.ltFontFamily || 'Roboto',
       ltFontUrl: program.ltFontUrl || '',
       ltFontSize: program.ltFontSize || 32,
@@ -932,8 +926,8 @@ function ProgramDisplay({ programs, onDelete, onSelect }) {
       formData.append('logoSize', editFormState.logoSize);
       formData.append('logoEffect', editFormState.logoEffect);
       formData.append('logoEffectIntensity', editFormState.logoEffectIntensity);
-      formData.append('ltTransitionIn', editFormState.ltTransitionIn);
-      formData.append('ltTransitionOut', editFormState.ltTransitionOut);
+      formData.append('mediaAppearEffect', editFormState.mediaAppearEffect);
+      formData.append('mediaDisappearEffect', editFormState.mediaDisappearEffect);
       formData.append('ltFontFamily', editFormState.ltFontFamily);
       formData.append('ltFontUrl', editFormState.ltFontUrl);
       formData.append('ltFontSize', editFormState.ltFontSize);
@@ -990,10 +984,10 @@ function ProgramDisplay({ programs, onDelete, onSelect }) {
           setLogoEffect={setNewLogoEffect}
           logoEffectIntensity={newLogoEffectIntensity}
           setLogoEffectIntensity={setNewLogoEffectIntensity}
-          ltTransitionIn={ltTransitionIn}
-          setLtTransitionIn={setLtTransitionIn}
-          ltTransitionOut={ltTransitionOut}
-          setLtTransitionOut={setLtTransitionOut}
+          mediaAppearEffect={mediaAppearEffect}
+          setMediaAppearEffect={setMediaAppearEffect}
+          mediaDisappearEffect={mediaDisappearEffect}
+          setMediaDisappearEffect={setMediaDisappearEffect}
           ltFontFamily={ltFontFamily}
           setLtFontFamily={setLtFontFamily}
           ltFontUrl={ltFontUrl}
@@ -1085,10 +1079,10 @@ function ProgramDisplay({ programs, onDelete, onSelect }) {
             setLogoEffect={val => handleEditChange('logoEffect', val)}
             logoEffectIntensity={editFormState.logoEffectIntensity}
             setLogoEffectIntensity={val => handleEditChange('logoEffectIntensity', val)}
-            ltTransitionIn={editFormState.ltTransitionIn}
-            setLtTransitionIn={val => handleEditChange('ltTransitionIn', val)}
-            ltTransitionOut={editFormState.ltTransitionOut}
-            setLtTransitionOut={val => handleEditChange('ltTransitionOut', val)}
+            mediaAppearEffect={editFormState.mediaAppearEffect}
+            setMediaAppearEffect={val => handleEditChange('mediaAppearEffect', val)}
+            mediaDisappearEffect={editFormState.mediaDisappearEffect}
+            setMediaDisappearEffect={val => handleEditChange('mediaDisappearEffect', val)}
             ltFontFamily={editFormState.ltFontFamily}
             setLtFontFamily={val => handleEditChange('ltFontFamily', val)}
             ltFontUrl={editFormState.ltFontUrl}

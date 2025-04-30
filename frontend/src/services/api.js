@@ -59,4 +59,8 @@ export const updateMediaOrder = (programId, episodeId, topicId, orderedIds) =>
 export const deleteMedia = (programId, episodeId, topicId, mediaId) => 
   apiClient.delete(`${mediaBaseUrl(programId, episodeId, topicId)}/${mediaId}`);
 
+// Fonctions pour gérer les paramètres de transition
+export const getTransitionSettings = () => apiClient.get('/settings/transitions');
+export const updateTransitionSettings = (settings) => apiClient.post('/settings/transitions', settings);
+
 export default apiClient;

@@ -7,15 +7,16 @@ const path = require('path');
 app.use('/logos', express.static(path.join(__dirname, 'public/logos')));
 const multer = require('multer');
 const http = require('http');
-const { initWebSocket } = require('./websocket');
+const { initializeWebSocket } = require('./websocket');
 const port = process.env.PORT || 3001;
 
 // Importer les routes
 const programRoutes = require('./routes/programs');
-// Importer les autres niveaux de routes
 const episodeRoutes = require('./routes/episodes');
 const topicRoutes = require('./routes/topics');
 const mediaRoutes = require('./routes/media');
+const sceneRoutes = require('./routes/scene');
+const settingsRoutes = require('./routes/settings');
 
 // Middlewares
 app.use(cors());
@@ -27,20 +28,16 @@ app.get('/', (req, res) => {
 });
 
 // Utiliser les routes de l'API
-
-// Monter chaque routeur directement sur l'app avec le chemin complet
 app.use('/api/programs', programRoutes);
 app.use('/api/programs/:programId/episodes', episodeRoutes);
 app.use('/api/programs/:programId/episodes/:episodeId/topics', topicRoutes);
 app.use('/api/programs/:programId/episodes/:episodeId/topics/:topicId/media', mediaRoutes);
-
-// Route scène (GET/PUT)
-const sceneRoutes = require('./routes/scene');
 app.use('/api/scene', sceneRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Démarrage du serveur
 const server = http.createServer(app);
-initWebSocket(server);
+initializeWebSocket(server);
 server.listen(port, () => {
   console.log(`Serveur backend démarré sur http://localhost:${port}`);
   console.log(`WebSocket disponible sur le même port`);

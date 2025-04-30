@@ -1,0 +1,75 @@
+:root {
+  --media-transition-duration: 0.5s;
+  --media-transition-timing: ease-in-out;
+  --media-slide-distance: 40px;
+  --media-zoom-scale: 0.8;
+  --media-rotate-angle: -10deg;
+}
+
+/* Effets de transition pour les médias */
+
+/* Base styles for media container */
+.media-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: all var(--media-transition-duration, 0.5s) var(--media-transition-timing, ease-in-out);
+}
+
+.media-container.active {
+  opacity: 1;
+  transform: none !important;
+}
+
+/* Effet de fondu */
+.effect-fade {
+  opacity: 0;
+  transition: opacity var(--media-transition-duration) var(--media-transition-timing);
+}
+.effect-fade.active {
+  opacity: 1;
+}
+
+/* Effet de glissement */
+.effect-slide {
+  transform: translateY(var(--media-slide-distance));
+  opacity: 0;
+  transition: all var(--media-transition-duration) var(--media-transition-timing);
+}
+.effect-slide.active {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Effet de zoom */
+.effect-zoom {
+  transform: scale(var(--media-zoom-scale));
+  opacity: 0;
+  transition: all var(--media-transition-duration) var(--media-transition-timing);
+}
+.effect-zoom.active {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* Effet de rotation */
+.effect-rotate {
+  transform: rotate(var(--media-rotate-angle)) scale(var(--media-zoom-scale));
+  opacity: 0;
+  transition: all var(--media-transition-duration) var(--media-transition-timing);
+}
+.effect-rotate.active {
+  transform: rotate(0) scale(1);
+  opacity: 1;
+}
+
+/* Effet None (pas de transition) */
+.effect-none {
+  transition: none;
+}
+.effect-none.active {
+  opacity: 1;
+}

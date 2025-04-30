@@ -12,11 +12,11 @@ import ObsOutput from './components/ObsOutput';
 import ObsMediaOutput from './components/ObsMediaOutput';
 import ObsTitrageOutput from './components/ObsTitrageOutput';
 import AppWebSocketTest from './AppWebSocketTest';
-import SceneTest from './SceneTest.jsx';
 import LiveControl from './LiveControl.jsx';
 import LiveControlFooter from './LiveControlFooter.jsx';
 import Sidebar from './components/Sidebar.jsx';
 import EpisodeFullView from './components/EpisodeFullView.jsx';
+import Settings from './components/Settings.jsx';
 import { Route, Routes, Link, useNavigate } from 'react-router-dom';
 
 function AppWithNavigation() {
@@ -48,6 +48,7 @@ function AppWithNavigation() {
   const [selectedTopicTitle, setSelectedTopicTitle] = useState('');
 
   const navigate = useNavigate();
+
   // Sélection d'un programme
   const handleSelectProgram = (programId, programTitle) => {
     setSelectedProgramId(programId);
@@ -108,30 +109,18 @@ function AppWithNavigation() {
           <main className="main-content-scrollable" style={{ marginLeft: 220, padding: '24px 16px 80px 16px', background: darkMode ? '#181a1b' : '#f7f7fa' }}>
             <Routes>
               <Route path="/" element={<ProgramList onSelectProgram={handleSelectProgram} />} />
+              <Route path="/control" element={<LiveControl />} />
               <Route path="/program/:programId/episodes" element={<EpisodeList onSelectEpisode={handleSelectEpisode} onBack={handleBackToPrograms} />} />
               <Route path="/program/:programId/episode/:episodeId/topics" element={<TopicList onSelectTopic={handleSelectTopic} onBack={handleBackToEpisodes} />} />
               <Route path="/program/:programId/episode/:episodeId" element={<EpisodeFullView />} />
               <Route path="/program/:programId/episode/:episodeId/topic/:topicId" element={<CustomMediaList onBack={handleBackToTopics} />} />
               <Route path="/test-websocket" element={<AppWebSocketTest />} />
-              <Route path="/scene-test" element={<SceneTest />} />
-              <Route path="/live-control" element={<LiveControl />} />
             </Routes>
           </main>
           <LiveControlFooter />
         </>
       } />
     </Routes>
-  );
-}
-
-// Navigation entre overlays OBS
-function ObsOutputNavigation() {
-  return (
-    <div style={{position:'fixed',top:20,left:20,zIndex:100000}}>
-      <a href="/obs" style={{marginRight:8,padding:'8px 12px',background:'#333',color:'#fff',borderRadius:6,textDecoration:'none'}}>Média + Titrage</a>
-      <a href="/obs-media" style={{marginRight:8,padding:'8px 12px',background:'#333',color:'#fff',borderRadius:6,textDecoration:'none'}}>Média seul</a>
-      <a href="/obs-titrage" style={{padding:'8px 12px',background:'#333',color:'#fff',borderRadius:6,textDecoration:'none'}}>Titrage seul</a>
-    </div>
   );
 }
 

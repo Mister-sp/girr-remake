@@ -1,0 +1,143 @@
+/* Styles de base pour les médias */
+.media-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* Effet de fondu */
+.effect-fade {
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.effect-fade.active {
+  opacity: 1;
+}
+
+/* Effet de glissement */
+.effect-slide {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+}
+
+.effect-slide.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Effet de zoom */
+.effect-zoom {
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+}
+
+.effect-zoom.active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Effet de rotation */
+.effect-rotate {
+  opacity: 0;
+  transform: rotate(-10deg);
+  transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+}
+
+.effect-rotate.active {
+  opacity: 1;
+  transform: rotate(0deg);
+}
+
+/* Base transitions for media elements */
+.media-transition {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+/* Fade transition */
+.media-fade-enter {
+  opacity: 0;
+}
+.media-fade-enter-active {
+  opacity: 1;
+  transition: opacity 500ms ease-in-out;
+}
+.media-fade-exit {
+  opacity: 1;
+}
+.media-fade-exit-active {
+  opacity: 0;
+  transition: opacity 500ms ease-in-out;
+}
+
+/* Slide transitions */
+.media-slide-enter {
+  transform: translateY(100%);
+  opacity: 0;
+}
+.media-slide-enter-active {
+  transform: translateY(0);
+  opacity: 1;
+  transition: transform 500ms ease-out, opacity 500ms ease-in;
+}
+.media-slide-exit {
+  transform: translateY(0);
+  opacity: 1;
+}
+.media-slide-exit-active {
+  transform: translateY(-100%);
+  opacity: 0;
+  transition: transform 500ms ease-in, opacity 500ms ease-out;
+}
+
+/* Scale transition */
+.media-scale-enter {
+  transform: scale(0.8);
+  opacity: 0;
+}
+.media-scale-enter-active {
+  transform: scale(1);
+  opacity: 1;
+  transition: transform 500ms cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 500ms ease;
+}
+.media-scale-exit {
+  transform: scale(1);
+  opacity: 1;
+}
+.media-scale-exit-active {
+  transform: scale(1.2);
+  opacity: 0;
+  transition: transform 500ms cubic-bezier(0.6, -0.28, 0.735, 0.045), opacity 500ms ease;
+}
+
+/* Flip transition */
+.media-flip-enter {
+  transform: rotateX(90deg);
+  opacity: 0;
+}
+.media-flip-enter-active {
+  transform: rotateX(0deg);
+  opacity: 1;
+  transition: transform 500ms cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 500ms ease;
+}
+.media-flip-exit {
+  transform: rotateX(0deg);
+  opacity: 1;
+}
+.media-flip-exit-active {
+  transform: rotateX(-90deg);
+  opacity: 0;
+  transition: transform 500ms cubic-bezier(0.6, -0.28, 0.735, 0.045), opacity 500ms ease;
+}
+
+/* Timing variables for customization */
+:root {
+  --transition-duration: 500ms;
+  --transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+}

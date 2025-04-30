@@ -44,8 +44,12 @@ router.post('/', upload.single('logo'), (req, res) => {
     description: req.body.description || '',
     logoUrl,
     logoEffect: req.body.logoEffect || 'none',
+    logoEffectIntensity: req.body.logoEffectIntensity ? Number(req.body.logoEffectIntensity) : 5,
     logoPosition: req.body.logoPosition || 'top-right',
-    logoSize: req.body.logoSize ? Number(req.body.logoSize) : 80
+    logoSize: req.body.logoSize ? Number(req.body.logoSize) : 80,
+    // Ajout des effets de transition
+    mediaAppearEffect: req.body.mediaAppearEffect || 'fade',
+    mediaDisappearEffect: req.body.mediaDisappearEffect || 'fade'
   };
   store.programs.push(newProgram);
   saveStore();
@@ -68,25 +72,31 @@ router.put('/:id', upload.single('logo'), (req, res) => {
   if (programIndex === -1) {
     return res.status(404).send('Programme non trouvé.');
   }
-  // Assurer que l'on met à jour avec 'title' si fourni
+
   let logoUrl = store.programs[programIndex].logoUrl;
-  // Si un nouveau logo est uploadé, supprimer l'ancien fichier et utiliser le nouveau
   if (req.file) {
     if (logoUrl) {
+      // Supprimer l'ancien logo s'il existe
       const oldLogoPath = path.join(__dirname, '../public', logoUrl);
       try { if (fs.existsSync(oldLogoPath)) fs.unlinkSync(oldLogoPath); } catch(e) {}
     }
     logoUrl = `/logos/${req.file.filename}`;
   }
+
   const updatedProgram = { 
-    ...store.programs[programIndex], 
+    ...store.programs[programIndex],
     title: req.body.title !== undefined ? req.body.title : store.programs[programIndex].title,
     description: req.body.description !== undefined ? req.body.description : store.programs[programIndex].description,
     logoUrl,
     logoEffect: req.body.logoEffect !== undefined ? req.body.logoEffect : store.programs[programIndex].logoEffect || 'none',
+    logoEffectIntensity: req.body.logoEffectIntensity !== undefined ? Number(req.body.logoEffectIntensity) : store.programs[programIndex].logoEffectIntensity || 5,
     logoPosition: req.body.logoPosition !== undefined ? req.body.logoPosition : store.programs[programIndex].logoPosition || 'top-right',
-    logoSize: req.body.logoSize !== undefined ? Number(req.body.logoSize) : store.programs[programIndex].logoSize || 80
+    logoSize: req.body.logoSize !== undefined ? Number(req.body.logoSize) : store.programs[programIndex].logoSize || 80,
+    // Ajout des effets de transition
+    mediaAppearEffect: req.body.mediaAppearEffect !== undefined ? req.body.mediaAppearEffect : store.programs[programIndex].mediaAppearEffect || 'fade',
+    mediaDisappearEffect: req.body.mediaDisappearEffect !== undefined ? req.body.mediaDisappearEffect : store.programs[programIndex].mediaDisappearEffect || 'fade'
   };
+
   // Assurer que l'ID n'est pas modifié
   updatedProgram.id = programId;
   store.programs[programIndex] = updatedProgram;

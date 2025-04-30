@@ -62,8 +62,6 @@ Il est composé de deux parties :
 - Branding FREMEN généralisé (sidebar, README, logo, etc.)
 - Slogan harmonisé partout dans l’interface et la documentation
 - Sidebar corrigée avec nouveau nom et slogan
-
-
 - UI moderne : affichage en cartes, responsive, modals, boutons flottants homogènes
 - Sidebar avec logo et branding personnalisés
 - Gestion des Programmes, Épisodes, Sujets (CRUD complet)
@@ -83,6 +81,9 @@ Il est composé de deux parties :
 - Navigation plus claire et interface allégée
 - Correction et relance des serveurs, WebSocket fonctionnel
 - Nettoyage du README
+- Overlay OBS Media avec transitions :
+  - Effet de fondu (fade) fluide pour l'apparition et la disparition des médias
+  - Architecture en place pour supporter d'autres effets de transition dans le futur
 
 ## Titrage OBS (Lower Third)
 

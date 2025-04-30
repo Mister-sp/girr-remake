@@ -1,14 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
-
-const SCENE_PRESETS = [
-  { label: 'Début', color: '#4F8CFF' },
-  { label: 'Pause', color: '#FFD166' },
-  { label: 'Pub', color: '#EF476F' },
-  { label: 'Fin', color: '#06D6A0' }
-];
-
 import defaultLogo from './assets/default-logo.js';
+import ObsPreview from './components/ObsPreview';
 
 export default function LiveControlFooter() {
   // Canal de synchronisation multi-onglets OBS
@@ -17,12 +10,6 @@ export default function LiveControlFooter() {
     obsSyncChannel.current = new window.BroadcastChannel('obs-sync');
     return () => obsSyncChannel.current && obsSyncChannel.current.close();
   }, []);
-  const [obsPreviewUrl, setObsPreviewUrl] = useState('/obs');
-  const [scene, setScene] = useState({ name: '', lastChanged: null });
-  const [custom, setCustom] = useState('');
-  const [wsConnected, setWsConnected] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState('');
 
   // Nouvel état pour le topic et le programme courant (reçus via BroadcastChannel)
   const [currentInfo, setCurrentInfo] = useState({
@@ -31,8 +18,8 @@ export default function LiveControlFooter() {
     episodeTitle: '',
     topicTitle: ''
   });
+  const [wsConnected, setWsConnected] = useState(false);
 
-  // Écoute du BroadcastChannel pour recevoir les infos topic/programme
   useEffect(() => {
     if (!obsSyncChannel.current) return;
     const handler = (event) => {
@@ -49,38 +36,13 @@ export default function LiveControlFooter() {
     return () => obsSyncChannel.current.removeEventListener('message', handler);
   }, []);
 
-  useEffect(() => {
-    fetch('http://localhost:3001/api/scene')
-      .then(r => r.json())
-      .then(data => setScene(data));
-  }, []);
-
+  // WebSocket connection
   useEffect(() => {
     const socket = io('http://localhost:3001');
     socket.on('connect', () => setWsConnected(true));
     socket.on('disconnect', () => setWsConnected(false));
-    socket.on('scene:update', data => {
-      setScene(data);
-      setSuccess('Scène MAJ en temps réel !');
-      setTimeout(() => setSuccess(''), 1200);
-    });
     return () => socket.disconnect();
   }, []);
-
-  const changeScene = async (name) => {
-    setLoading(true);
-    setSuccess('');
-    try {
-      const res = await fetch('http://localhost:3001/api/scene', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name })
-      });
-      if (!res.ok) throw new Error('Erreur lors de la modification');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <footer style={{
@@ -91,48 +53,38 @@ export default function LiveControlFooter() {
       display:'flex',alignItems:'center',justifyContent:'space-between',
       gap:10,minHeight:44
     }}>
-      {/* Colonne gauche : boutons OBS en colonne + statut WebSocket */}
+      {/* Colonne gauche : boutons OBS */}
       <div style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:6}}>
         <button onClick={() => window.open('/obs', '_blank')} style={{padding:'5px 8px',background:'#333',color:'#fff',borderRadius:6,border:'none',fontSize:13,cursor:'pointer',width:120,textAlign:'left'}}>Média + Titrage</button>
         <button onClick={() => window.open('/obs-media', '_blank')} style={{padding:'5px 8px',background:'#333',color:'#fff',borderRadius:6,border:'none',fontSize:13,cursor:'pointer',width:120,textAlign:'left'}}>Média seul</button>
         <button onClick={() => window.open('/obs-titrage', '_blank')} style={{padding:'5px 8px',background:'#333',color:'#fff',borderRadius:6,border:'none',fontSize:13,cursor:'pointer',width:120,textAlign:'left'}}>Titrage seul</button>
       </div>
 
-      {/* Centre : logo + nom programme + topic */}
+      {/* Centre : logo + nom programme + topic */}
       <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:16,minWidth:0}}>
         <div style={{display:'flex',flexDirection:'column',alignItems:'center',minWidth:0}}>
-  <img
-    src={currentInfo.programLogo ? (currentInfo.programLogo.startsWith('http') ? currentInfo.programLogo : `http://localhost:3001${currentInfo.programLogo}`) : defaultLogo}
-    alt="Logo programme"
-    style={{height:40,width:40,objectFit:'contain',borderRadius:8,background:'#232938',boxShadow:'0 2px 8px #0003',marginBottom:2,border:'1.5px solid #444'}}
-  />
-  <span style={{fontWeight:700,fontSize:16,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',color:'#FFD166',marginTop:2}}>{currentInfo.programTitle || 'Programme...'}</span>
-</div>
-<div style={{display:'flex',flexDirection:'column',minWidth:0,marginLeft:16}}>
-  <span style={{fontWeight:600,fontSize:15,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',color:'#8ecae6'}}>{currentInfo.episodeTitle || ''}</span>
-  <span style={{fontWeight:500,fontSize:16,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',color:'#fff'}}>{currentInfo.topicTitle || 'Sujet...'}</span>
-</div>
+          <img
+            src={currentInfo.programLogo ? (currentInfo.programLogo.startsWith('http') ? currentInfo.programLogo : `http://localhost:3001${currentInfo.programLogo}`) : defaultLogo}
+            alt="Logo programme"
+            style={{width:36,height:36,objectFit:'contain',marginBottom:4,borderRadius:6}}
+          />
+          <div style={{color:'#aaa',fontSize:13,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:200,textAlign:'center'}}>
+            {currentInfo.programTitle || 'Aucun programme'}
+          </div>
+        </div>
+        {currentInfo.topicTitle && (
+          <div style={{fontSize:15,color:'#fff',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:400,textAlign:'center'}}>
+            {currentInfo.topicTitle}
+          </div>
+        )}
       </div>
 
-      {/* Aperçu OBS intégré à droite du footer + statut WebSocket dessous */}
-      <div style={{marginLeft: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
-        <iframe
-          src="/obs"
-          title="Aperçu OBS"
-          style={{
-            width: 220,
-            height: 124,
-            border: '2px solid #3399ff',
-            borderRadius: 10,
-            background: '#222',
-            marginLeft: 12,
-            boxShadow: '0 2px 12px #0004',
-            pointerEvents: 'none',
-            aspectRatio: '16/9',
-          }}
-          allow="autoplay; encrypted-media"
-        />
-        <div style={{marginTop: 6, display: 'flex', alignItems: 'center', fontSize: 13, color: wsConnected ? '#3c3' : '#f44', fontWeight: 500}}>
+      {/* Droite : preview OBS + statut WebSocket */}
+      <div style={{display:'flex', flexDirection:'column', alignItems:'flex-end', gap:8}}>
+        <div style={{width:160,height:90,borderRadius:6,overflow:'hidden',backgroundColor:'#000'}}>
+          <ObsPreview width={160} height={90} />
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:8,fontSize:13,color:'#bbb',minWidth:120,justifyContent:'flex-end'}}>
           <span style={{width:12,height:12,borderRadius:'50%',background:wsConnected?'#3c3':'#f44',display:'inline-block',border:'1px solid #222',marginRight:7}} />
           <span>{wsConnected ? 'WebSocket OK' : 'WebSocket HS'}</span>
         </div>

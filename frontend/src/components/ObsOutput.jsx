@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import io from 'socket.io-client';
 
@@ -64,12 +64,22 @@ export default function ObsOutput() {
     program: '',
     episode: '',
     topic: '',
-    media: null,
     title: '',
     subtitle: '',
     background: matrixBg,
     logoUrl: '/default-logo.png',
+    logoEffect: '',
+    logoPosition: 'top-right',
+    logoSize: 80,
+    lowerThirdConfig: {},
   });
+
+  // State for the media currently rendered or transitioning out
+  const [displayedMedia, setDisplayedMedia] = useState(null);
+  // State to control the visibility class for fade effect
+  const [isMediaVisible, setIsMediaVisible] = useState(false);
+  // Ref to store the timeout ID
+  const transitionTimeoutRef = useRef(null);
 
   // Récupère les paramètres d'URL (pour forcer un affichage précis si besoin)
   useEffect(() => {
@@ -83,12 +93,82 @@ export default function ObsOutput() {
 
   // Synchronisation temps réel (topic/media courant)
   useEffect(() => {
-    socket.on('obs:update', (data) => {
+    const handleUpdate = (data) => {
       console.log('[OBS] Reçu obs:update', data);
-      setCurrent((prev) => ({ ...prev, ...data }));
-    });
-    return () => socket.off('obs:update');
-  }, []);
+      // Update non-media settings directly
+      setCurrent((prev) => ({
+         ...prev,
+         title: data.title ?? prev.title,
+         subtitle: data.subtitle ?? prev.subtitle,
+         background: data.background ?? prev.background,
+         logoUrl: data.logoUrl ?? prev.logoUrl,
+         logoEffect: data.logoEffect ?? prev.logoEffect,
+         logoPosition: data.logoPosition ?? prev.logoPosition,
+         logoSize: data.logoSize ?? prev.logoSize,
+         lowerThirdConfig: data.lowerThirdConfig ?? prev.lowerThirdConfig,
+         // Keep program, episode, topic if they are not in data
+         program: data.program ?? prev.program,
+         episode: data.episode ?? prev.episode,
+         topic: data.topic ?? prev.topic,
+        }));
+
+      const newMedia = data.media; // Media from the update
+
+      // Clear any pending transition timeout
+      if (transitionTimeoutRef.current) {
+        clearTimeout(transitionTimeoutRef.current);
+        transitionTimeoutRef.current = null;
+      }
+
+      // Check if media content has actually changed
+      setDisplayedMedia(currentDisplayedMedia => {
+        if (JSON.stringify(newMedia) !== JSON.stringify(currentDisplayedMedia)) {
+          if (currentDisplayedMedia) {
+            // 1. Start fade-out of the current media
+            setIsMediaVisible(false);
+
+            // 2. After fade-out duration, update media and fade-in (if new media exists)
+            transitionTimeoutRef.current = setTimeout(() => {
+              // Update displayedMedia state AFTER the timeout
+              setDisplayedMedia(newMedia);
+              if (newMedia) {
+                // Use rAF to ensure the state update is processed before adding 'visible'
+                requestAnimationFrame(() => {
+                   setIsMediaVisible(true);
+                });
+              }
+              transitionTimeoutRef.current = null; // Clear ref after execution
+            }, 500); // Match CSS transition duration (0.5s)
+            // Keep the current media displayed during fade-out
+            return currentDisplayedMedia;
+          } else if (newMedia) {
+            // No media currently displayed, just set and fade-in the new one
+             setDisplayedMedia(newMedia); // Update immediately
+             requestAnimationFrame(() => {
+               setIsMediaVisible(true);
+            });
+            return newMedia; // Return the new media state
+          } else {
+            // New media is null, and nothing was displayed or is fading out.
+            setDisplayedMedia(null); // Update immediately
+            setIsMediaVisible(false);
+            return null; // Return the new media state
+          }
+        }
+        // If media hasn't changed, return the current state
+        return currentDisplayedMedia;
+      });
+    };
+
+    socket.on('obs:update', handleUpdate);
+    return () => {
+        socket.off('obs:update', handleUpdate);
+         // Clear timeout on component unmount
+        if (transitionTimeoutRef.current) {
+            clearTimeout(transitionTimeoutRef.current);
+        }
+    };
+  }, []); // Empty dependency array: runs once
 
   // --- Auto-scale pour mini-OBS ou plein écran ---
   const [scale, setScale] = React.useState(1);
@@ -113,7 +193,7 @@ export default function ObsOutput() {
       position: 'fixed',
       top: 0,
       left: 0,
-      background: current.media ? '#000' : 'none',
+      background: displayedMedia ? '#000' : 'none',
       fontFamily: 'Inter, Arial, sans-serif',
       margin: 0,
       padding: 0,
@@ -167,24 +247,28 @@ export default function ObsOutput() {
         />
       )}
       {/* Image d'illustration centrée */}
-      {current.media && current.media.type === 'image' && (
-        <img src={current.media.url} alt="media" style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '1920px',
-          height: '1080px',
-          minWidth: '100%',
-          minHeight: '100%',
-          objectFit: 'cover',
-          borderRadius: 0,
-          boxShadow: 'none',
-          background: current.media ? '#000' : 'none',
-          zIndex: 10,
-          display: 'block',
-        }} />
+      {displayedMedia && displayedMedia.type === 'image' && (
+        <img
+          src={displayedMedia.url}
+          alt="media"
+          className={`media-fade ${isMediaVisible ? 'visible' : ''}`}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '1920px',
+            height: '1080px',
+            minWidth: '100%',
+            minHeight: '100%',
+            objectFit: 'cover',
+            borderRadius: 0,
+            boxShadow: 'none',
+            background: '#000',
+            zIndex: 10,
+            display: 'block',
+          }} />
       )}
-      {current.media && current.media.type === 'youtube' && (
+      {displayedMedia && displayedMedia.type === 'youtube' && (
         <iframe
           src={(function getYoutubeEmbedUrl(url) {
             let embedUrl;
@@ -204,7 +288,8 @@ export default function ObsOutput() {
             }
             console.log('[OBS] URL iframe YouTube:', embedUrl);
             return embedUrl;
-          })(current.media.url)}
+          })(displayedMedia.url)}
+          className={`media-fade ${isMediaVisible ? 'visible' : ''}`}
           style={{
             position: 'absolute',
             top: 0,
@@ -216,7 +301,7 @@ export default function ObsOutput() {
             border: 'none',
             borderRadius: 0,
             boxShadow: 'none',
-            background: current.media ? '#000' : 'none',
+            background: '#000',
             zIndex: 10,
             display: 'block',
             objectFit: 'cover',

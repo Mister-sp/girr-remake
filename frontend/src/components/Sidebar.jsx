@@ -1,46 +1,30 @@
 import React, { useState } from 'react';
-
-function DevMenu() {
-  const [open, setOpen] = useState(false);
-  return (
-    <div style={{ position: 'relative' }}>
-      <button
-        onClick={() => setOpen((v) => !v)}
-        title="Outils développeur"
-        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, display: 'flex', alignItems: 'center', gap: 6 }}
-      >
-        <span role="img" aria-label="Dev">🛠️</span>
-        <span style={{ fontSize: 13 }}>Dev</span>
-      </button>
-      {open && (
-        <div style={{
-          position: 'absolute',
-          left: 0,
-          top: '100%',
-          background: '#fff',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-          borderRadius: 6,
-          zIndex: 10,
-          minWidth: 170,
-          marginTop: 4,
-          padding: '8px 0',
-        }}>
-          <a href="/test-websocket" style={{ display: 'block', padding: '6px 20px', color: '#222', textDecoration: 'none', fontSize: 15 }}>🧪 WebSocket Test</a>
-          <a href="/live-control" style={{ display: 'block', padding: '6px 20px', color: '#222', textDecoration: 'none', fontSize: 15 }}>🎛️ Live Control</a>
-          <a href="/scene-test" style={{ display: 'block', padding: '6px 20px', color: '#222', textDecoration: 'none', fontSize: 15 }}>🧑‍💻 Test dev</a>
-        </div>
-      )}
-    </div>
-  );
-}
-
 import { FaBars, FaTimes } from 'react-icons/fa';
 import defaultLogo from '../assets/default-logo.png';
 import ObsFullIcon from '../icons/ObsFullIcon.jsx';
 import ObsMediaIcon from '../icons/ObsMediaIcon.jsx';
 import ObsTitrageIcon from '../icons/ObsTitrageIcon.jsx';
 
-export default function Sidebar({ children }) {
+function DevMenu() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ marginTop: 'auto', paddingBottom: 12 }}>
+      <button
+        onClick={() => setOpen(!open)}
+        style={{ width: '100%', padding: '8px 20px', border: 'none', background: 'none', color: '#666', fontSize: 15, textAlign: 'left', cursor: 'pointer' }}
+      >
+        🛠️ Dev
+      </button>
+      {open && (
+        <div>
+          <a href="/test-websocket" style={{ display: 'block', padding: '6px 20px', color: '#222', textDecoration: 'none', fontSize: 15 }}>🧪 WebSocket Test</a>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function Sidebar({ darkMode, toggleDarkMode }) {
   const [open, setOpen] = useState(true);
 
   return (
@@ -65,29 +49,50 @@ export default function Sidebar({ children }) {
             {open ? <FaTimes /> : <FaBars />}
           </button>
         </div>
+        
         {open && (
           <div className="sidebar-content">
-
-            <nav style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '0px', marginBottom: 32 }}>
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '24px', marginBottom: 32 }}>
               <a href="/" style={{ color: 'inherit', textDecoration: 'none', fontSize: '1.1em' }}>🏠 Accueil</a>
-              <a href="/" style={{ color: 'inherit', textDecoration: 'none' }}>📺 Programmes</a>
               
-              <div style={{ display: 'flex', flexDirection: 'row', gap: 12, marginTop: 32, justifyContent: 'center' }}>
-  <button title="Ouvrir OBS (media+titrage)" onClick={() => window.open('/obs', '_blank')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-    <ObsFullIcon style={{ width: 32, height: 32 }} />
-  </button>
-  <button title="Ouvrir OBS Media seul" onClick={() => window.open('/obs-media', '_blank')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-    <ObsMediaIcon style={{ width: 32, height: 32 }} />
-  </button>
-  <button title="Ouvrir OBS Titrage seul" onClick={() => window.open('/obs-titrage', '_blank')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-    <ObsTitrageIcon style={{ width: 32, height: 32 }} />
-  </button>
-</div>
-<div style={{ marginTop: 16 }}>
-  <DevMenu />
-</div>
+              <div>
+                <a href="/control" style={{ color: '#4F8CFF', textDecoration: 'none', fontSize: '1.1em', fontWeight: 500 }}>⚙️ Paramètres généraux</a>
+              </div>
+
+              <div style={{ height: 1, background: '#e1e1e1', margin: '8px 0' }} />
+              <a href="/" style={{ color: 'inherit', textDecoration: 'none' }}>📺 Programmes</a>
+
+              <div style={{ marginTop: 16, borderTop: '1px solid #eee', paddingTop: 16 }}>
+                <div style={{ fontSize: 13, color: '#666', marginBottom: 8, paddingLeft: 20 }}>Fenêtres OBS</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <button onClick={() => window.open('/obs', '_blank')} 
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 20px', color: '#222' }}>
+                    <ObsFullIcon style={{ width: 16, height: 16 }} />
+                    <span style={{ fontSize: 14 }}>Média + Titrage</span>
+                  </button>
+                  <button onClick={() => window.open('/obs-media', '_blank')}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 20px', color: '#222' }}>
+                    <ObsMediaIcon style={{ width: 16, height: 16 }} />
+                    <span style={{ fontSize: 14 }}>Média seul</span>
+                  </button>
+                  <button onClick={() => window.open('/obs-titrage', '_blank')}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 20px', color: '#222' }}>
+                    <ObsTitrageIcon style={{ width: 16, height: 16 }} />
+                    <span style={{ fontSize: 14 }}>Titrage seul</span>
+                  </button>
+                </div>
+              </div>
             </nav>
-            {children}
+
+            <div style={{ marginTop: 'auto', paddingBottom: 12 }}>
+              <button
+                onClick={toggleDarkMode}
+                style={{ width: '100%', padding: '8px 20px', border: 'none', background: 'none', color: '#666', fontSize: 15, textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+              >
+                {darkMode ? '☀️ Mode clair' : '🌙 Mode sombre'}
+              </button>
+              <DevMenu />
+            </div>
           </div>
         )}
       </div>
