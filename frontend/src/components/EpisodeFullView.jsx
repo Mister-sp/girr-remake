@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { getEpisodeDetails, getTopicsForEpisode, getMediaForTopic, updateTopic, deleteTopic, createMedia, createTopic, getPrograms } from '../services/api';
 import CustomMediaList from './CustomMediaList.jsx';
@@ -8,6 +8,7 @@ import { FaPencilAlt, FaPlay, FaChevronUp, FaChevronDown, FaPlus, FaPause } from
 import { MdCast, MdCastConnected } from 'react-icons/md';
 
 function EpisodeFullView() {
+  const navigate = useNavigate();
   const { programId, episodeId } = useParams();
   const [episode, setEpisode] = useState(null);
   const [program, setProgram] = useState(null); // Ajout pour stocker le programme
@@ -317,7 +318,25 @@ function EpisodeFullView() {
 
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: 24, position: 'relative' }}>
-      <h2>Épisode {episode.title}</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+        <h2 style={{ margin: 0 }}>Épisode {episode.title}</h2>
+        <button 
+          onClick={() => navigate(`/program/${programId}/episode/${episodeId}/present`)}
+          style={{ 
+            background: '#1976d2', 
+            color: 'white', 
+            border: 'none', 
+            borderRadius: 4, 
+            padding: '8px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            cursor: 'pointer'
+          }}
+        >
+          Mode présentateur
+        </button>
+      </div>
 
       <div style={{ background: '#222', color: '#fff', padding: 16, borderRadius: 8, marginBottom: 24 }}>
         <strong>{episode.title}</strong>

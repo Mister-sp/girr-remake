@@ -20,6 +20,8 @@ import EpisodeFullView from './components/EpisodeFullView.jsx';
 import Settings from './components/Settings.jsx';
 import ConnectedClients from './components/ConnectedClients';
 import HelpModal from './components/HelpModal';
+import PresenterView from './components/PresenterView';
+import { KeyBindingsProvider } from './components/KeyBindingsContext';
 
 function AppWithNavigation() {
   const navigate = useNavigate();
@@ -130,30 +132,35 @@ function AppWithNavigation() {
   };
 
   return (
-    <Routes>
-      <Route path="/obs" element={<ObsOutput />} />
-      <Route path="/obs-media" element={<ObsMediaOutput />} />
-      <Route path="/obs-titrage" element={<ObsTitrageOutput />} />
-      <Route path="*" element={
-        <>
-          <Sidebar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
-          <main className="main-content-scrollable" style={{ marginLeft: 220, padding: '24px 16px 80px 16px', background: darkMode ? '#181a1b' : '#f7f7fa' }}>
-            <Routes>
-              <Route path="/" element={<ProgramList onSelectProgram={handleSelectProgram} />} />
-              <Route path="/control" element={<LiveControl />} />
-              <Route path="/program/:programId/episodes" element={<EpisodeList onSelectEpisode={handleSelectEpisode} onBack={handleBackToPrograms} />} />
-              <Route path="/program/:programId/episode/:episodeId/topics" element={<TopicList onSelectTopic={handleSelectTopic} onBack={handleBackToEpisodes} />} />
-              <Route path="/program/:programId/episode/:episodeId" element={<EpisodeFullView />} />
-              <Route path="/program/:programId/episode/:episodeId/topic/:topicId" element={<CustomMediaList onBack={handleBackToTopics} />} />
-              <Route path="/test-websocket" element={<AppWebSocketTest />} />
-            </Routes>
-          </main>
-          <LiveControlFooter />
-          {/* Modal d'aide */}
-          <HelpModal open={showHelp} onClose={() => setShowHelp(false)} />
-        </>
-      } />
-    </Routes>
+    <KeyBindingsProvider>
+      <div style={{ display: 'flex', height: '100vh' }}>
+        <Routes>
+          <Route path="/obs" element={<ObsOutput />} />
+          <Route path="/obs-media" element={<ObsMediaOutput />} />
+          <Route path="/obs-titrage" element={<ObsTitrageOutput />} />
+          <Route path="/program/:programId/episode/:episodeId/present" element={<PresenterView />} />
+          <Route path="*" element={
+            <>
+              <Sidebar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+              <main className="main-content-scrollable" style={{ marginLeft: 220, padding: '24px 16px 80px 16px', background: darkMode ? '#181a1b' : '#f7f7fa' }}>
+                <Routes>
+                  <Route path="/" element={<ProgramList onSelectProgram={handleSelectProgram} />} />
+                  <Route path="/control" element={<LiveControl />} />
+                  <Route path="/program/:programId/episodes" element={<EpisodeList onSelectEpisode={handleSelectEpisode} onBack={handleBackToPrograms} />} />
+                  <Route path="/program/:programId/episode/:episodeId/topics" element={<TopicList onSelectTopic={handleSelectTopic} onBack={handleBackToEpisodes} />} />
+                  <Route path="/program/:programId/episode/:episodeId" element={<EpisodeFullView />} />
+                  <Route path="/program/:programId/episode/:episodeId/topic/:topicId" element={<CustomMediaList onBack={handleBackToTopics} />} />
+                  <Route path="/test-websocket" element={<AppWebSocketTest />} />
+                </Routes>
+              </main>
+              <LiveControlFooter />
+              {/* Modal d'aide */}
+              <HelpModal open={showHelp} onClose={() => setShowHelp(false)} />
+            </>
+          } />
+        </Routes>
+      </div>
+    </KeyBindingsProvider>
   );
 }
 
