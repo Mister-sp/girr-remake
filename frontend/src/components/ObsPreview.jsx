@@ -10,6 +10,36 @@ import ObsOutput from './ObsOutput';
  *   - ...props: toutes les props passées à ObsOutput
  */
 export default function ObsPreview({ width = 384, height = 216, ...props }) {
+  // Calcul responsive de la taille du preview
+  const [previewSize, setPreviewSize] = React.useState({ width, height });
+  
+  React.useEffect(() => {
+    function updatePreviewSize() {
+      const container = document.querySelector('#root');
+      if (!container) return;
+      
+      const maxWidth = container.clientWidth - 32; // Marge de 16px de chaque côté
+      const maxHeight = window.innerHeight * 0.4; // Max 40% de la hauteur de l'écran
+      
+      // Garde le ratio 16:9
+      const ratio = 16/9;
+      let newWidth = Math.min(maxWidth, width);
+      let newHeight = newWidth / ratio;
+      
+      // Si la hauteur dépasse, on recalcule depuis la hauteur
+      if (newHeight > maxHeight) {
+        newHeight = maxHeight;
+        newWidth = newHeight * ratio;
+      }
+      
+      setPreviewSize({ width: newWidth, height: newHeight });
+    }
+    
+    updatePreviewSize();
+    window.addEventListener('resize', updatePreviewSize);
+    return () => window.removeEventListener('resize', updatePreviewSize);
+  }, [width, height]);
+
   // État pour stocker les données de preview
   const [previewData, setPreviewData] = useState({
     title: '',
@@ -60,11 +90,11 @@ export default function ObsPreview({ width = 384, height = 216, ...props }) {
   const baseHeight = 1080;
 
   // Calcul de l'échelle pour maintenir le ratio 16:9
-  const containerRatio = width / height;
+  const containerRatio = previewSize.width / previewSize.height;
   const targetRatio = baseWidth / baseHeight; 
   const scale = containerRatio > targetRatio 
-    ? height / baseHeight
-    : width / baseWidth;
+    ? previewSize.height / baseHeight
+    : previewSize.width / baseWidth;
 
   // On s'assure que les props.current contiennent bien la valeur media=null si pas de média
   const mergedProps = {
@@ -80,8 +110,8 @@ export default function ObsPreview({ width = 384, height = 216, ...props }) {
   return (
     <div
       style={{
-        width,
-        height,
+        width: previewSize.width,
+        height: previewSize.height,
         backgroundColor: '#000',
         borderRadius: 6,
         overflow: 'hidden',

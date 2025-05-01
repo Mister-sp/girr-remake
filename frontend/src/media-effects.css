@@ -140,4 +140,59 @@
 :root {
   --transition-duration: 500ms;
   --transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+  --touch-target-size: 44px; /* Taille minimum recommandée pour les zones tactiles */
+  --touch-target-spacing: 8px;
+}
+
+/* Amélioration des zones tactiles */
+.media-controls {
+  display: grid;
+  gap: var(--touch-target-spacing);
+  padding: var(--touch-target-spacing);
+}
+
+.media-control-btn {
+  min-width: var(--touch-target-size);
+  min-height: var(--touch-target-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation; /* Optimisation tactile */
+}
+
+/* Adaptation mobile */
+@media (max-width: 320px) {
+  .media-container {
+    touch-action: pan-y pinch-zoom; /* Autorise le scroll vertical et le zoom */
+  }
+  
+  .media-controls {
+    position: sticky;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    padding: calc(var(--touch-target-spacing) + 4px);
+    border-radius: 12px 12px 0 0;
+    z-index: 100;
+  }
+}
+
+/* Adaptation tablette */
+@media (min-width: 321px) and (max-width: 768px) {
+  .media-controls {
+    grid-template-columns: repeat(auto-fit, minmax(var(--touch-target-size), 1fr));
+  }
+}
+
+/* Optimisations tactiles */
+@media (hover: none) {
+  .media-control-btn:active {
+    transform: scale(0.95);
+    transition: transform 0.1s;
+  }
+  
+  /* Désactive les effets hover qui peuvent gêner sur mobile */
+  .media-controls *:hover {
+    transform: none;
+  }
 }

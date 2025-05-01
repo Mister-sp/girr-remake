@@ -96,8 +96,19 @@ export default function ObsTitrageOutput() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const [isMobileView, setIsMobileView] = React.useState(false);
+  
+  React.useEffect(() => {
+    const checkMobileView = () => {
+      setIsMobileView(window.innerWidth <= 768);
+    };
+    checkMobileView();
+    window.addEventListener('resize', checkMobileView);
+    return () => window.removeEventListener('resize', checkMobileView);
+  }, []);
+  
   return (
-    <div className="obs-output-root" style={{
+    <div className={`obs-output-root${isMobileView ? ' mobile-view' : ''}`} style={{
       width: 1920,
       height: 1080,
       transform: `scale(${scale})`,
@@ -114,6 +125,48 @@ export default function ObsTitrageOutput() {
       boxSizing: 'border-box',
       zIndex: 99999,
     }}>
+      {/* Contrôles adaptés au mobile */}
+      <div className="titrage-controls" style={{
+        position: 'fixed',
+        bottom: isMobileView ? 0 : 'auto',
+        top: isMobileView ? 'auto' : 0,
+        left: 0,
+        right: 0,
+        background: 'rgba(0, 0, 0, 0.85)',
+        backdropFilter: 'blur(10px)',
+        padding: isMobileView ? '16px 12px' : '12px',
+        display: 'flex',
+        gap: '12px',
+        flexDirection: isMobileView ? 'column' : 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        borderRadius: isMobileView ? '16px 16px 0 0' : '0 0 16px 16px',
+        boxShadow: '0 2px 20px rgba(0,0,0,0.15)',
+      }}>
+        {/* Boutons de contrôle avec taille adaptée au tactile */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: isMobileView ? '1fr 1fr' : 'repeat(auto-fit, minmax(120px, 1fr))',
+          gap: '8px',
+          width: '100%',
+          maxWidth: isMobileView ? '100%' : '600px'
+        }}>
+          <button
+            className="control-button"
+            style={{
+              padding: isMobileView ? '16px' : '8px 16px',
+              fontSize: isMobileView ? '1.1rem' : '1rem',
+              minHeight: isMobileView ? '44px' : '36px',
+              touchAction: 'manipulation'
+            }}
+            onClick={handleTitleClick}
+          >
+            {current.title ? 'Masquer titre' : 'Afficher titre'}
+          </button>
+          {/* ...autres boutons avec les mêmes styles adaptés... */}
+        </div>
+      </div>
       {current.title && (
         <LowerThird
           title={current.title}

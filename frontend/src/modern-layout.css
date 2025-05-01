@@ -1,66 +1,43 @@
-.main-content-scrollable {body, #root {
-  height: 100vh;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-  height: calc(100vh - 80px); /* 80px = hauteur du footer */body, #root {
-  height: 100vh;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-  overflow-y: auto;body, #root {
-  height: 100vh;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-  min-height: 0;body, #root {
-  height: 100vh;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-}body, #root {
-  height: 100vh;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
 body, #root {
   height: 100vh;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  overscroll-behavior: none; /* Empêche le pull-to-refresh sur mobile */
 }
-@media (max-width: 700px) {body, #root {
-  height: 100vh;
+
+.main-content-scrollable {
+  flex: 1;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* Scroll fluide sur iOS */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); /* Support notch/dynamic island */
 }
-  .main-content-scrollable {body, #root {
-  height: 100vh;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
+
+/* Optimisations pour petits écrans */
+@media (max-width: 320px) {
+  .main-content-scrollable {
+    height: calc(100vh - 90px); /* Ajusté pour la petite barre de statut */
+    padding: 0.3rem;
+  }
+
+  /* Évite que le clavier virtuel ne perturbe le layout */
+  .virtual-keyboard-open .main-content-scrollable {
+    height: calc(100vh - 90px - var(--keyboard-height, 300px));
+  }
 }
-    height: calc(100vh - 110px); /* Footer + padding */body, #root {
-  height: 100vh;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
+
+/* Optimisations tablettes */
+@media (min-width: 321px) and (max-width: 768px) {
+  .main-content-scrollable {
+    height: calc(100vh - 100px);
+    padding: 0.5rem;
+  }
 }
-  }body, #root {
-  height: 100vh;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-}body, #root {
-  height: 100vh;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
+
+/* Performance scroll */
+@media (any-pointer: coarse) {
+  .main-content-scrollable {
+    scroll-behavior: auto; /* Désactive le scroll smooth sur touch pour plus de fluidité */
+  }
 }

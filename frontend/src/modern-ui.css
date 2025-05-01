@@ -8,6 +8,11 @@
   --grey: #e0e4ea;
   --text: #222;
   --radius: 14px;
+  /* Breakpoints principaux */
+  --bp-mobile: 320px;  /* Petits téléphones */
+  --bp-tablet: 768px;  /* Tablettes et grands téléphones */
+  --bp-laptop: 1024px; /* Petits laptops */
+  --bp-desktop: 1280px; /* Desktop et grands écrans */
 }
 body {
   background: var(--bg);
@@ -227,4 +232,92 @@ ul::-webkit-scrollbar-thumb, textarea::-webkit-scrollbar-thumb {
     flex-direction: column;
     gap: 0.7rem;
   }
+}
+
+/* Adaptation mobile (<= 320px) */
+@media (max-width: 320px) {
+  .sidebar {
+    width: 48px;
+    padding: 0.5rem 0.2rem;
+  }
+  #root {
+    margin-left: 48px;
+    padding: 0.3rem;
+  }
+  button, input[type="submit"] {
+    padding: 0.5em 0.8em;
+    font-size: 0.9rem;
+  }
+  input, textarea, select {
+    font-size: 0.9rem;
+    padding: 0.5em 0.8em;
+  }
+}
+
+/* Adaptation tablette (321px - 768px) */
+@media (min-width: 321px) and (max-width: 768px) {
+  .sidebar {
+    width: 60px;
+    padding: 0.7rem 0.3rem;
+  }
+  #root {
+    margin-left: 60px;
+    padding: 0.5rem;
+  }
+}
+
+/* Adaptation laptop (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .sidebar {
+    width: 140px;
+  }
+  #root {
+    margin-left: 140px;
+  }
+}
+
+/* Desktop et grands écrans (>1024px) */
+@media (min-width: 1025px) {
+  // ...existing code...
+}
+
+/* Optimisations pour appareils moins puissants */
+.low-performance {
+  --transition-duration: 0.2s; /* Animations plus courtes */
+  --media-transition-duration: 0.3s;
+  scroll-behavior: auto; /* Désactive le smooth scroll */
+}
+
+.low-performance .media-card img {
+  transform: translateZ(0); /* Force l'accélération matérielle */
+  will-change: transform; /* Optimise les animations */
+}
+
+.reduced-motion {
+  --transition-duration: 0s;
+  --media-transition-duration: 0s;
+}
+
+.reduced-motion * {
+  animation: none !important;
+  transition: none !important;
+}
+
+.touch-device .clickable,
+.touch-device button,
+.touch-device .media-card {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Optimisation du rendu des ombres */
+.low-performance .card,
+.low-performance .media-card,
+.low-performance .sidebar {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Ombre plus simple */
+}
+
+/* Désactive certains effets visuels sur les appareils moins puissants */
+.low-performance .media-controls *:hover {
+  transform: none;
 }
