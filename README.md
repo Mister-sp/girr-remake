@@ -73,6 +73,15 @@ L'application sera accessible sur `http://localhost:5173` (ou un autre port indi
 - Sidebar avec accès rapide aux fonctions principales
 - Raccourcis clavier pour les actions principales
 
+### Mode présentateur
+- Vue en grille (mode régie) pour accès rapide à tous les sujets
+- Aperçu des médias avec icônes par type (images, vidéos, liens)
+- Navigation précédent/suivant entre les sujets
+- Notes par sujet en temps réel
+- Raccourcis clavier personnalisables
+- Preview OBS intégrée
+- Interface sombre optimisée
+
 ### Overlays OBS
 - Lower third (titrage) personnalisable
 - Effets de transition sur les médias
@@ -124,7 +133,6 @@ Le composant `ObsPreview` permet une prévisualisation fidèle :
 - Effets de transition additionnels
 - Drag & drop optimisé
 - Tests automatisés
-- Mode présentateur plein écran
 
 ### Backend
 - Documentation API (Swagger)

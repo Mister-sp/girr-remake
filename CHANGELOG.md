@@ -14,6 +14,22 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 - Résolution du bug d'affichage des médias dans le preview lors du changement de titre
 - Correction de l'alignement du preview OBS dans le footer
 
+## [2025-05-01]
+### Ajouts
+- Mode présentateur avancé :
+  - Vue en grille (mode régie) avec accès rapide à tous les sujets
+  - Liste des médias avec aperçu du type (images, vidéos, liens)
+  - Navigation précédent/suivant pour les sujets
+  - Notes par sujet
+  - Raccourcis clavier personnalisables
+  - Preview OBS intégrée
+  - Interface sombre optimisée
+
+### Optimisations
+- Refonte complète du mode présentateur
+- Amélioration de la gestion des médias
+- Raccourcis clavier plus ergonomiques
+
 ## [2025-04-23]
 ### Ajouts et améliorations
 - Harmonisation du branding FREMEN dans toute l'application (sidebar, README, logo, etc.)
