@@ -3,6 +3,53 @@ const router = express.Router();
 const { store, getCurrentScene, setCurrentScene, saveStore } = require('../data/store');
 const { getIO } = require('../websocket');
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Scene:
+ *       type: object
+ *       properties:
+ *         currentTopic:
+ *           type: object
+ *           description: Topic actuellement affiché
+ *         currentMedia:
+ *           type: object
+ *           description: Media actuellement affiché
+ *         displayState:
+ *           type: string
+ *           enum: [hidden, visible]
+ *           description: État d'affichage de la scène
+ */
+
+/**
+ * @swagger
+ * /api/scene:
+ *   get:
+ *     summary: Récupère l'état actuel de la scène
+ *     tags: [Scene]
+ *     responses:
+ *       200:
+ *         description: État actuel de la scène
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Scene'
+ *   
+ *   put:
+ *     summary: Met à jour l'état de la scène
+ *     tags: [Scene]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Scene'
+ *     responses:
+ *       200:
+ *         description: État de la scène mis à jour avec succès
+ */
+
 // GET current scene
 router.get('/', (req, res) => {
   const scene = getCurrentScene();

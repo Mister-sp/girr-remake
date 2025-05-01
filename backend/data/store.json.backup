@@ -123,10 +123,5 @@
     "slideDistance": 40,
     "zoomScale": 0.8,
     "rotateAngle": -10
-  },
-  "backupSettings": {
-    "maxBackups": 5,
-    "intervalHours": 2,
-    "enabled": true
   }
 }

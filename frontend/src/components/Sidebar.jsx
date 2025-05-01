@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { FaBars, FaTimes } from 'react-icons/fa';
+import { FaBars, FaTimes, FaCog } from 'react-icons/fa';
 import { FiHelpCircle } from 'react-icons/fi';
+import { NavLink } from 'react-router-dom';
 import defaultLogo from '../assets/default-logo.png';
 import ObsFullIcon from '../icons/ObsFullIcon.jsx';
 import ObsMediaIcon from '../icons/ObsMediaIcon.jsx';
@@ -57,7 +58,10 @@ export default function Sidebar({ darkMode, toggleDarkMode, onHelpClick }) {
               <a href="/" style={{ color: 'inherit', textDecoration: 'none', fontSize: '1.1em' }}>🏠 Accueil</a>
               
               <div>
-                <a href="/control" style={{ color: '#4F8CFF', textDecoration: 'none', fontSize: '1.1em', fontWeight: 500 }}>⚙️ Paramètres généraux</a>
+                <NavLink to="/control" style={{ color: '#4F8CFF', textDecoration: 'none', fontSize: '1.1em', fontWeight: 500 }} className={({ isActive }) => isActive ? 'active' : ''}>
+                  <FaCog style={{ fontSize: 18 }} />
+                  <span>Paramètres</span>
+                </NavLink>
               </div>
 
               <div style={{ height: 1, background: '#e1e1e1', margin: '8px 0' }} />
@@ -105,6 +109,13 @@ export default function Sidebar({ darkMode, toggleDarkMode, onHelpClick }) {
 
               <DevMenu />
             </nav>
+
+            <div className="icon-group" style={{ marginBottom: 12 }}>
+              <a href="/settings" title="Paramètres" className="icon-button">
+                <span className="icon">⚙️</span>
+                Paramètres
+              </a>
+            </div>
 
             <div style={{ marginTop: 'auto', paddingBottom: 12 }}>
               <button

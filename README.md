@@ -65,6 +65,52 @@ L'application sera accessible sur `http://localhost:5173` (ou un autre port indi
 - Upload et gestion des logos par programme
 - Prévisualisation des vidéos YouTube
 
+### Gestion des paramètres globaux
+- Interface unifiée pour tous les paramètres
+- Export/Import de configuration complet
+  - Sauvegarde de tous les paramètres (programmes, épisodes, sujets, médias)
+  - Import avec validation des données
+  - Import depuis l'ancien GIRR (à tester) avec conversion automatique
+  - Gestion automatique des IDs pour éviter les conflits
+  - Interface intuitive dans la section Paramètres
+- Système de backup automatique
+  - Sauvegarde automatique configurable (intervalle personnalisable)
+  - Conservation paramétrable des anciennes sauvegardes
+  - Rotation automatique des sauvegardes
+  - Création manuelle de sauvegardes
+  - Interface de restauration des sauvegardes
+  - Activation/désactivation des sauvegardes automatiques
+- Gestion des effets de transition
+  - Personnalisation des effets d'apparition/disparition
+  - Application en temps réel
+  - Preview intégré
+- Raccourcis clavier optimisés
+  - 'L' pour accéder rapidement aux paramètres
+  - Aide contextuelle avec tous les raccourcis ('?')
+
+### Barre de statut
+- Aperçu OBS en temps réel
+- Statut des connexions WebSocket
+- Compteur de clients connectés
+- Boutons d'accès rapide aux fenêtres OBS
+- Indicateurs de statut pour chaque type de sortie
+
+### Documentation et Développement
+- Documentation API interactive avec Swagger (/api-docs)
+  - Description complète de tous les endpoints
+  - Interface de test intégrée
+  - Schémas de données détaillés
+- Système de logging avancé
+  - Logs séparés pour les erreurs et informations
+  - Format JSON pour une meilleure analyse
+  - Niveaux de log configurables
+  - Rotation automatique des fichiers de log
+- Export/Import des configurations
+  - Sauvegarde complète des données
+  - Import avec validation
+  - Gestion automatique des IDs
+  - Interface utilisateur intuitive
+
 ### Interface moderne
 - Design responsive avec affichage en cartes
 - Modals et formulaires intuitifs
@@ -126,6 +172,16 @@ Le composant `ObsPreview` permet une prévisualisation fidèle :
 - Synchronisation temps réel
 - Performances optimisées
 
+### Système de backup
+Le système de backup automatique assure la sécurité des données :
+- Sauvegardes périodiques configurables (intervalle minimum : 30 minutes)
+- Conservation paramétrable du nombre de sauvegardes (1 à ∞)
+- Format JSON standardisé pour les sauvegardes
+- Rotation automatique des anciennes sauvegardes
+- Restauration possible vers n'importe quelle sauvegarde
+- Validation des données lors de la restauration
+- Stockage local dans le dossier `backend/data/backups`
+
 ## Roadmap
 
 ### Frontend
@@ -135,11 +191,9 @@ Le composant `ObsPreview` permet une prévisualisation fidèle :
 - Tests automatisés
 
 ### Backend
-- Documentation API (Swagger)
-- Logger avancé
 - Optimisation performances
-- Export/Import des configurations
-- System de backup automatique
+- Support des sauvegardes distantes (cloud)
+- API pour les sauvegardes externes
 
 ### Infrastructure
 - CI/CD complet

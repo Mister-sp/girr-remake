@@ -105,16 +105,6 @@
       "order": 1
     }
   ],
-  "nextProgramId": 14,
-  "nextEpisodeId": 6,
-  "nextTopicId": 7,
-  "nextMediaId": 3,
-  "currentScene": {
-    "name": "Début",
-    "lastChanged": "2025-04-30T11:22:55.641Z",
-    "mediaAppearEffect": "slide",
-    "mediaDisappearEffect": "slide"
-  },
   "transitionSettings": {
     "appearEffect": "fade",
     "disappearEffect": "fade",
@@ -125,8 +115,10 @@
     "rotateAngle": -10
   },
   "backupSettings": {
-    "maxBackups": 5,
-    "intervalHours": 2,
+    "maxBackups": 10,
+    "intervalHours": 1,
     "enabled": true
-  }
+  },
+  "backupDate": "2025-05-01T20:56:59.853Z",
+  "version": "1.0.0"
 }

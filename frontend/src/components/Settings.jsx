@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getTransitionSettings, updateTransitionSettings } from '../services/api';
+import { getTransitionSettings, updateTransitionSettings, exportConfig, importConfig } from '../services/api';
 import './media-effects.css';
 
 function Settings() {
@@ -15,6 +15,7 @@ function Settings() {
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState('');
 
   useEffect(() => {
     loadSettings();
@@ -40,15 +41,64 @@ function Settings() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
+    setError(null);
     try {
       await updateTransitionSettings(settings);
-      setError(null);
+      setSuccess('Paramètres sauvegardés avec succès');
+      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      console.error('Erreur lors de la sauvegarde des paramètres:', err);
-      setError('Impossible de sauvegarder les paramètres');
+      setError('Erreur lors de la sauvegarde des paramètres');
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleExport = async () => {
+    try {
+      const response = await exportConfig();
+      const blob = response.data;
+      // Pour lire le blob
+      const reader = new FileReader();
+      reader.onload = () => {
+        const jsonStr = reader.result;
+        const jsonBlob = new Blob([jsonStr], { type: 'application/json' });
+        const url = window.URL.createObjectURL(jsonBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'fremen-config.json';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        setSuccess('Configuration exportée avec succès');
+        setTimeout(() => setSuccess(''), 3000);
+      };
+      reader.readAsText(blob);
+    } catch (err) {
+      console.error('Erreur lors de l\'export:', err);
+      setError('Erreur lors de l\'export de la configuration');
+    }
+  };
+
+  const handleImport = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const config = JSON.parse(e.target.result);
+        await importConfig(config);
+        setSuccess('Configuration importée avec succès');
+        setTimeout(() => setSuccess(''), 3000);
+        // Recharger la page pour voir les changements
+        window.location.reload();
+      } catch (err) {
+        console.error('Erreur lors de l\'import:', err);
+        setError('Erreur lors de l\'import de la configuration');
+      }
+    };
+    reader.readAsText(file);
   };
 
   // Prévisualisation avec les effets actuels
@@ -126,6 +176,57 @@ function Settings() {
           {error}
         </div>
       )}
+      {success && (
+        <div style={{
+          backgroundColor: '#e8f5e9',
+          color: '#2e7d32',
+          padding: '10px',
+          borderRadius: '4px',
+          marginBottom: '20px'
+        }}>
+          {success}
+        </div>
+      )}
+
+      <div style={{marginBottom: '40px', padding: '20px', border: '1px solid #ddd', borderRadius: '8px'}}>
+        <h3 style={{marginTop: 0}}>Export/Import de la configuration</h3>
+        <div style={{display: 'flex', gap: '20px', marginBottom: '20px'}}>
+          <button
+            onClick={handleExport}
+            style={{
+              padding: '10px 20px',
+              background: '#4CAF50',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Exporter la configuration
+          </button>
+          <div>
+            <input
+              type="file"
+              accept=".json"
+              onChange={handleImport}
+              style={{display: 'none'}}
+              id="import-config"
+            />
+            <label
+              htmlFor="import-config"
+              style={{
+                padding: '10px 20px',
+                background: '#2196F3',
+                color: 'white',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Importer une configuration
+            </label>
+          </div>
+        </div>
+      </div>
 
       <form onSubmit={handleSubmit}>
         <div style={{marginBottom: '20px'}}>

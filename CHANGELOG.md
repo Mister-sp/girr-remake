@@ -6,6 +6,41 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 ### Ajouts et améliorations
+- Ajout de l'import depuis l'ancien GIRR (à tester) :
+  - Conversion automatique du format ancien vers le nouveau
+  - Import des programmes, épisodes, sujets et médias
+  - Gestion des IDs pour éviter les conflits
+  - Configuration par défaut des effets visuels
+  - Interface dédiée dans les paramètres
+  - Message de confirmation avec statistiques d'import
+- Système de backup automatique configurable :
+  - Configuration de l'intervalle entre les sauvegardes
+  - Définition du nombre maximum de sauvegardes à conserver
+  - Activation/désactivation des sauvegardes automatiques
+  - Interface de gestion dans les paramètres
+  - Rotation automatique des anciennes sauvegardes
+  - Sauvegarde manuelle à la demande
+- Refonte complète de l'interface de paramètres :
+  - Renommage de LiveControl en Settings pour plus de clarté
+  - Ajout d'une section export/import de configuration
+  - Interface unifiée pour les paramètres globaux
+  - Nouveau raccourci 'L' pour accéder aux paramètres
+- Correction de la fonctionnalité d'export/import :
+  - Export avec tous les paramètres (programmes, épisodes, sujets, médias, transitions)
+  - Import avec validation des données
+  - Gestion des IDs lors de l'import pour éviter les conflits
+  - Headers de téléchargement corrigés
+- Renommage de LiveControlFooter en StatusBar pour plus de clarté
+- Export/Import des configurations complet
+  - Export de toutes les données (programmes, épisodes, sujets, médias)
+  - Import avec validation des données
+  - Interface utilisateur dans les paramètres
+  - Gestion des IDs lors de l'import
+- Documentation API complète avec Swagger (interface interactive disponible sur /api-docs)
+- Implémentation d'un système de logging avancé avec Winston
+  - Logs séparés pour les erreurs et les informations générales
+  - Format JSON pour une meilleure analyse
+  - Niveaux de log configurables
 - ObsPreview corrigé pour afficher correctement le preview dans le footer
 - Gestion améliorée des médias dans le preview (disparition correcte)
 - Correction des conflits de variables dans ObsOutput

@@ -10,6 +10,69 @@ const { store, deleteEpisodeCascade } = require('../data/store');
 // NE PLUS UTILISER LES ROUTES IMBRIQUEES ICI - FAIT DANS SERVER.JS
 // router.use('/:episodeId/topics', topicRoutes);
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Episode:
+ *       type: object
+ *       required:
+ *         - title
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: ID unique de l'épisode
+ *         title:
+ *           type: string
+ *           description: Titre de l'épisode
+ *         description:
+ *           type: string
+ *           description: Description de l'épisode
+ */
+
+/**
+ * @swagger
+ * /api/programs/{programId}/episodes:
+ *   get:
+ *     summary: Récupère tous les épisodes d'un programme
+ *     tags: [Episodes]
+ *     parameters:
+ *       - in: path
+ *         name: programId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du programme
+ *     responses:
+ *       200:
+ *         description: Liste des épisodes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Episode'
+ *   post:
+ *     summary: Crée un nouvel épisode
+ *     tags: [Episodes]
+ *     parameters:
+ *       - in: path
+ *         name: programId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du programme
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Episode'
+ *     responses:
+ *       201:
+ *         description: Épisode créé avec succès
+ */
+
 // GET /api/programs/:programId/episodes - Récupérer tous les épisodes d'un programme
 router.get('/', (req, res) => {
   const programId = parseInt(req.params.programId);

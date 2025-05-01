@@ -25,6 +25,49 @@ const fs = require('fs');
 // NE PLUS UTILISER LES ROUTES IMBRIQUEES ICI - FAIT DANS SERVER.JS
 // router.use('/:programId/episodes', episodeRoutes);
 
+/**
+ * @swagger
+ * /api/programs:
+ *   get:
+ *     summary: Récupère tous les programmes
+ *     tags: [Programmes]
+ *     responses:
+ *       200:
+ *         description: Liste des programmes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                   title:
+ *                     type: string
+ *                   description:
+ *                     type: string
+ *   post:
+ *     summary: Crée un nouveau programme
+ *     tags: [Programmes]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Programme créé avec succès
+ */
+
 // GET /api/programs - Récupérer tous les programmes
 router.get('/', (req, res) => {
   res.json(store.programs);

@@ -63,4 +63,8 @@ export const deleteMedia = (programId, episodeId, topicId, mediaId) =>
 export const getTransitionSettings = () => apiClient.get('/settings/transitions');
 export const updateTransitionSettings = (settings) => apiClient.post('/settings/transitions', settings);
 
+// Fonctions pour l'export/import des configurations
+export const exportConfig = () => apiClient.get('/settings/export', { responseType: 'blob' });
+export const importConfig = (configData) => apiClient.post('/settings/import', configData);
+
 export default apiClient;

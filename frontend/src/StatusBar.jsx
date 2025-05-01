@@ -3,7 +3,7 @@ import defaultLogo from './assets/default-logo.js';
 import ObsPreview from './components/ObsPreview';
 import { connectWebSocket, getConnectedClients, getBroadcastChannel, cleanup } from './services/websocket';
 
-export default function LiveControlFooter() {
+export default function StatusBar() {
   const [currentInfo, setCurrentInfo] = useState({
     programTitle: '',
     programLogo: '',

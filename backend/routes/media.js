@@ -3,6 +3,94 @@ const express = require('express');
 const router = express.Router({ mergeParams: true });
 const { store, deleteTopicCascade } = require('../data/store'); // Importer store directement
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Media:
+ *       type: object
+ *       required:
+ *         - type
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: ID unique du média
+ *         type:
+ *           type: string
+ *           enum: [image, video, iframe]
+ *           description: Type de média
+ *         url:
+ *           type: string
+ *           description: URL du média
+ *         duration:
+ *           type: integer
+ *           description: Durée d'affichage en secondes
+ *         position:
+ *           type: integer
+ *           description: Position dans la liste des médias
+ */
+
+/**
+ * @swagger
+ * /api/programs/{programId}/episodes/{episodeId}/topics/{topicId}/media:
+ *   get:
+ *     summary: Récupère tous les médias d'un topic
+ *     tags: [Media]
+ *     parameters:
+ *       - in: path
+ *         name: programId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: episodeId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: topicId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Liste des médias
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Media'
+ *   post:
+ *     summary: Ajoute un nouveau média
+ *     tags: [Media]
+ *     parameters:
+ *       - in: path
+ *         name: programId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: episodeId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: topicId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Media'
+ *     responses:
+ *       201:
+ *         description: Média ajouté avec succès
+ */
+
 // GET tous les médias pour un sujet spécifique (TRIÉS PAR ORDRE)
 router.get('/', (req, res) => {
   const { programId, episodeId, topicId } = req.params;

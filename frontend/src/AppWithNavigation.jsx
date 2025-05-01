@@ -13,11 +13,10 @@ import ObsOutput from './components/ObsOutput';
 import ObsMediaOutput from './components/ObsMediaOutput';
 import ObsTitrageOutput from './components/ObsTitrageOutput';
 import AppWebSocketTest from './AppWebSocketTest';
-import LiveControl from './LiveControl.jsx';
-import LiveControlFooter from './LiveControlFooter.jsx';
+import Settings from './Settings.jsx';
+import StatusBar from './StatusBar.jsx';
 import Sidebar from './components/Sidebar.jsx';
 import EpisodeFullView from './components/EpisodeFullView.jsx';
-import Settings from './components/Settings.jsx';
 import ConnectedClients from './components/ConnectedClients';
 import HelpModal from './components/HelpModal';
 import PresenterView from './components/PresenterView';
@@ -42,7 +41,7 @@ function AppWithNavigation() {
 
   // Raccourcis clavier globaux
   useHotkeys('h', () => navigate('/'), { description: 'Retour à l\'accueil' });
-  useHotkeys('l', () => navigate('/control'), { description: 'Mode contrôle live' });
+  useHotkeys('l', () => navigate('/control'), { description: 'Accéder aux paramètres' });
   useHotkeys('escape', () => {
     if (location.pathname !== '/') {
       navigate(-1);
@@ -51,7 +50,13 @@ function AppWithNavigation() {
   useHotkeys('d', toggleDarkMode, { description: 'Basculer le mode sombre' });
   useHotkeys('shift+n', () => setShowModal(true), { description: 'Nouveau programme/épisode/sujet' });
   useHotkeys('/', () => document.querySelector('input[type="text"]')?.focus(), { description: 'Focus sur le champ de recherche' });
-  useHotkeys('shift+p', () => navigate('/control'), { description: 'Ouvrir la preview' });
+  useHotkeys('p', () => {
+    const currentPath = location.pathname;
+    if (currentPath.includes('/program/') && currentPath.includes('/episode/')) {
+      const presentPath = currentPath + '/present';
+      navigate(presentPath);
+    }
+  }, { description: 'Mode présentation' });
   useHotkeys('shift+t', () => {
     const topicTitle = selectedTopicTitle;
     if (topicTitle) {
@@ -145,7 +150,7 @@ function AppWithNavigation() {
               <main className="main-content-scrollable" style={{ marginLeft: 220, padding: '24px 16px 80px 16px', background: darkMode ? '#181a1b' : '#f7f7fa' }}>
                 <Routes>
                   <Route path="/" element={<ProgramList onSelectProgram={handleSelectProgram} />} />
-                  <Route path="/control" element={<LiveControl />} />
+                  <Route path="/control" element={<Settings />} />
                   <Route path="/program/:programId/episodes" element={<EpisodeList onSelectEpisode={handleSelectEpisode} onBack={handleBackToPrograms} />} />
                   <Route path="/program/:programId/episode/:episodeId/topics" element={<TopicList onSelectTopic={handleSelectTopic} onBack={handleBackToEpisodes} />} />
                   <Route path="/program/:programId/episode/:episodeId" element={<EpisodeFullView />} />
@@ -153,7 +158,7 @@ function AppWithNavigation() {
                   <Route path="/test-websocket" element={<AppWebSocketTest />} />
                 </Routes>
               </main>
-              <LiveControlFooter />
+              <StatusBar />
               {/* Modal d'aide */}
               <HelpModal open={showHelp} onClose={() => setShowHelp(false)} />
             </>

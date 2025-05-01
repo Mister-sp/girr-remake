@@ -7,6 +7,84 @@ const mediaRoutes = require('./media');
 // Importer le store
 const { store, deleteTopicCascade } = require('../data/store');
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Topic:
+ *       type: object
+ *       required:
+ *         - title
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: ID unique du topic
+ *         title:
+ *           type: string
+ *           description: Titre du topic
+ *         duration:
+ *           type: integer
+ *           description: Durée en secondes
+ *         color:
+ *           type: string
+ *           description: Couleur du topic (format hex)
+ *         status:
+ *           type: string
+ *           enum: [pending, active, done]
+ *           description: État du topic
+ */
+
+/**
+ * @swagger
+ * /api/programs/{programId}/episodes/{episodeId}/topics:
+ *   get:
+ *     summary: Récupère tous les topics d'un épisode
+ *     tags: [Topics]
+ *     parameters:
+ *       - in: path
+ *         name: programId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: episodeId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Liste des topics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Topic'
+ *   post:
+ *     summary: Crée un nouveau topic
+ *     tags: [Topics]
+ *     parameters:
+ *       - in: path
+ *         name: programId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: episodeId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Topic'
+ *     responses:
+ *       201:
+ *         description: Topic créé avec succès
+ */
+
 // GET /api/programs/:programId/episodes/:episodeId/topics - Récupérer tous les sujets d'un épisode
 router.get('/', (req, res) => {
   const programId = parseInt(req.params.programId);

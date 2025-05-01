@@ -16,7 +16,11 @@ export default function HelpModal({ open, onClose }) {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 16 }}>
               <kbd style={{ background: '#eee', padding: '2px 6px', borderRadius: 4, fontSize: 14 }}>L</kbd>
-              <span>Mode contrôle live</span>
+              <span>Accéder aux paramètres</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 16 }}>
+              <kbd style={{ background: '#eee', padding: '2px 6px', borderRadius: 4, fontSize: 14 }}>P</kbd>
+              <span>Mode présentation</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 16 }}>
               <kbd style={{ background: '#eee', padding: '2px 6px', borderRadius: 4, fontSize: 14 }}>Échap</kbd>
@@ -55,12 +59,12 @@ export default function HelpModal({ open, onClose }) {
               <span>Nouveau programme/épisode/sujet</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 16 }}>
-              <kbd style={{ background: '#eee', padding: '2px 6px', borderRadius: 4, fontSize: 14 }}>Shift + P</kbd>
-              <span>Ouvrir la preview</span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 16 }}>
               <kbd style={{ background: '#eee', padding: '2px 6px', borderRadius: 4, fontSize: 14 }}>?</kbd>
               <span>Afficher cette aide</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 16 }}>
+              <kbd style={{ background: '#eee', padding: '2px 6px', borderRadius: 4, fontSize: 14 }}>D</kbd>
+              <span>Mode sombre</span>
             </div>
           </div>
         </section>
