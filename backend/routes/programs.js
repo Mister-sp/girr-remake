@@ -1,172 +1,166 @@
-const express = require('express');
-const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-
-// Configurer multer pour stocker les logos dans /public/logos
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, '../public/logos'));
-  },
-  filename: function (req, file, cb) {
-    const ext = path.extname(file.originalname);
-    const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1E9) + ext;
-    cb(null, uniqueName);
-  }
-});
-const upload = multer({ storage });
-
-// Importer les routes imbriquées
-const episodeRoutes = require('./episodes');
-// Importer le store
-const { store, saveStore, deleteProgramCascade } = require('../data/store');
-const fs = require('fs');
-
-// NE PLUS UTILISER LES ROUTES IMBRIQUEES ICI - FAIT DANS SERVER.JS
-// router.use('/:programId/episodes', episodeRoutes);
-
 /**
- * @swagger
- * /api/programs:
- *   get:
- *     summary: Récupère tous les programmes
- *     tags: [Programmes]
- *     responses:
- *       200:
- *         description: Liste des programmes
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: string
- *                   title:
- *                     type: string
- *                   description:
- *                     type: string
- *   post:
- *     summary: Crée un nouveau programme
- *     tags: [Programmes]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - title
- *             properties:
- *               title:
- *                 type: string
- *               description:
- *                 type: string
- *     responses:
- *       201:
- *         description: Programme créé avec succès
+ * Routes de gestion des programmes.
+ * @module routes/programs
  */
 
-// GET /api/programs - Récupérer tous les programmes
+const express = require('express');
+const router = express.Router();
+const { store, saveStore, deleteProgramCascade } = require('../data/store');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs').promises;
+const logger = require('../config/logger');
+
+// Configuration de multer pour les logos
+const storage = multer.diskStorage({
+  destination: './public/logos',
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, `logo-${uniqueSuffix}${path.extname(file.originalname)}`);
+  }
+});
+
+const upload = multer({ storage });
+
+/**
+ * Liste tous les programmes.
+ * 
+ * @name GET /api/programs
+ * @function
+ * @memberof module:routes/programs
+ * @returns {Array} Liste des programmes
+ */
 router.get('/', (req, res) => {
   res.json(store.programs);
 });
 
-// POST /api/programs - Créer un nouveau programme
-router.post('/', upload.single('logo'), (req, res) => {
-  console.log('POST /api/programs req.body:', req.body);
-  console.log('POST /api/programs req.file:', req.file);
-  let logoUrl = '';
-  if (req.file) {
-    logoUrl = `/logos/${req.file.filename}`;
-  }
-  const newProgram = { 
-    id: store.nextProgramId++,
-    title: req.body.title || 'Nouveau Programme',
-    description: req.body.description || '',
-    logoUrl,
-    logoEffect: req.body.logoEffect || 'none',
-    logoEffectIntensity: req.body.logoEffectIntensity ? Number(req.body.logoEffectIntensity) : 5,
-    logoPosition: req.body.logoPosition || 'top-right',
-    logoSize: req.body.logoSize ? Number(req.body.logoSize) : 80,
-    // Ajout des effets de transition
-    mediaAppearEffect: req.body.mediaAppearEffect || 'fade',
-    mediaDisappearEffect: req.body.mediaDisappearEffect || 'fade'
-  };
-  store.programs.push(newProgram);
-  saveStore();
-  res.status(201).json(newProgram);
-});
-
-// GET /api/programs/:id - Récupérer un programme par ID
+/**
+ * Récupère un programme par son ID.
+ * 
+ * @name GET /api/programs/:id
+ * @function
+ * @memberof module:routes/programs
+ * @param {number} id - ID du programme
+ * @returns {Object} Programme trouvé
+ */
 router.get('/:id', (req, res) => {
   const program = store.programs.find(p => p.id === parseInt(req.params.id));
   if (!program) {
-    return res.status(404).send('Programme non trouvé.');
+    return res.status(404).json({ message: 'Programme non trouvé' });
   }
   res.json(program);
 });
 
-// PUT /api/programs/:id - Mettre à jour un programme par ID
-router.put('/:id', upload.single('logo'), (req, res) => {
-  const programId = parseInt(req.params.id);
-  const programIndex = store.programs.findIndex(p => p.id === programId);
-  if (programIndex === -1) {
-    return res.status(404).send('Programme non trouvé.');
+/**
+ * Crée un nouveau programme.
+ * 
+ * @name POST /api/programs
+ * @function
+ * @memberof module:routes/programs
+ * @param {Object} req.body - Données du programme
+ * @param {string} req.body.title - Titre du programme
+ * @param {string} [req.body.description] - Description du programme
+ * @param {File} [req.files.logo] - Fichier logo
+ * @returns {Object} Programme créé
+ */
+router.post('/', upload.single('logo'), async (req, res) => {
+  try {
+    const program = {
+      id: store.nextProgramId++,
+      title: req.body.title,
+      description: req.body.description || '',
+      logoUrl: req.file ? `/logos/${req.file.filename}` : null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    store.programs.push(program);
+    await saveStore();
+    
+    logger.info(`Programme créé: ${program.title} (ID: ${program.id})`);
+    res.status(201).json(program);
+  } catch (err) {
+    logger.error('Erreur création programme:', err);
+    res.status(500).json({ message: 'Erreur création programme' });
   }
-
-  let logoUrl = store.programs[programIndex].logoUrl;
-  if (req.file) {
-    if (logoUrl) {
-      // Supprimer l'ancien logo s'il existe
-      const oldLogoPath = path.join(__dirname, '../public', logoUrl);
-      try { if (fs.existsSync(oldLogoPath)) fs.unlinkSync(oldLogoPath); } catch(e) {}
-    }
-    logoUrl = `/logos/${req.file.filename}`;
-  }
-
-  const updatedProgram = { 
-    ...store.programs[programIndex],
-    title: req.body.title !== undefined ? req.body.title : store.programs[programIndex].title,
-    description: req.body.description !== undefined ? req.body.description : store.programs[programIndex].description,
-    logoUrl,
-    logoEffect: req.body.logoEffect !== undefined ? req.body.logoEffect : store.programs[programIndex].logoEffect || 'none',
-    logoEffectIntensity: req.body.logoEffectIntensity !== undefined ? Number(req.body.logoEffectIntensity) : store.programs[programIndex].logoEffectIntensity || 5,
-    logoPosition: req.body.logoPosition !== undefined ? req.body.logoPosition : store.programs[programIndex].logoPosition || 'top-right',
-    logoSize: req.body.logoSize !== undefined ? Number(req.body.logoSize) : store.programs[programIndex].logoSize || 80,
-    // Ajout des effets de transition
-    mediaAppearEffect: req.body.mediaAppearEffect !== undefined ? req.body.mediaAppearEffect : store.programs[programIndex].mediaAppearEffect || 'fade',
-    mediaDisappearEffect: req.body.mediaDisappearEffect !== undefined ? req.body.mediaDisappearEffect : store.programs[programIndex].mediaDisappearEffect || 'fade'
-  };
-
-  // Assurer que l'ID n'est pas modifié
-  updatedProgram.id = programId;
-  store.programs[programIndex] = updatedProgram;
-  saveStore();
-  res.json(updatedProgram);
 });
 
-// DELETE /api/programs/:id - Supprimer un programme par ID (avec cascade)
-router.delete('/:id', (req, res) => {
-  const programId = parseInt(req.params.id);
-  const programIndex = store.programs.findIndex(p => p.id === programId);
-  if (programIndex === -1) {
-    return res.status(404).send('Programme non trouvé.');
-  }
-  const deletedProgramData = { ...store.programs[programIndex] }; // Copie avant suppression
-  // Supprimer le fichier logo si présent
-  if (deletedProgramData.logoUrl) {
-    const logoPath = path.join(__dirname, '../public', deletedProgramData.logoUrl);
-    try {
-      if (fs.existsSync(logoPath)) fs.unlinkSync(logoPath);
-    } catch (e) {
-      console.error('Erreur suppression logo:', e);
+/**
+ * Met à jour un programme.
+ * 
+ * @name PUT /api/programs/:id
+ * @function
+ * @memberof module:routes/programs
+ * @param {number} id - ID du programme
+ * @param {Object} req.body - Données à mettre à jour
+ * @returns {Object} Programme mis à jour
+ */
+router.put('/:id', upload.single('logo'), async (req, res) => {
+  try {
+    const programId = parseInt(req.params.id);
+    const program = store.programs.find(p => p.id === programId);
+    
+    if (!program) {
+      return res.status(404).json({ message: 'Programme non trouvé' });
     }
+
+    // Supprimer l'ancien logo si un nouveau est fourni
+    if (req.file && program.logoUrl) {
+      const oldLogoPath = path.join(__dirname, '../public', program.logoUrl);
+      await fs.unlink(oldLogoPath).catch(() => {});
+    }
+
+    // Mettre à jour les champs
+    Object.assign(program, {
+      title: req.body.title || program.title,
+      description: req.body.description || program.description,
+      logoUrl: req.file ? `/logos/${req.file.filename}` : program.logoUrl,
+      updatedAt: new Date().toISOString()
+    });
+
+    await saveStore();
+    
+    logger.info(`Programme mis à jour: ${program.title} (ID: ${program.id})`);
+    res.json(program);
+  } catch (err) {
+    logger.error('Erreur mise à jour programme:', err);
+    res.status(500).json({ message: 'Erreur mise à jour programme' });
   }
-  // Utiliser la fonction de suppression en cascade du store
-  deleteProgramCascade(programId);
-  res.json(deletedProgramData); // Renvoyer les données du programme supprimé
+});
+
+/**
+ * Supprime un programme.
+ * 
+ * @name DELETE /api/programs/:id
+ * @function
+ * @memberof module:routes/programs
+ * @param {number} id - ID du programme
+ * @returns {Object} Message de confirmation
+ */
+router.delete('/:id', async (req, res) => {
+  try {
+    const programId = parseInt(req.params.id);
+    const program = store.programs.find(p => p.id === programId);
+    
+    if (!program) {
+      return res.status(404).json({ message: 'Programme non trouvé' });
+    }
+
+    // Supprimer le logo si présent
+    if (program.logoUrl) {
+      const logoPath = path.join(__dirname, '../public', program.logoUrl);
+      await fs.unlink(logoPath).catch(() => {});
+    }
+
+    // Supprimer le programme et ses dépendances
+    deleteProgramCascade(programId);
+    
+    logger.info(`Programme supprimé: ${program.title} (ID: ${program.id})`);
+    res.json({ message: 'Programme supprimé' });
+  } catch (err) {
+    logger.error('Erreur suppression programme:', err);
+    res.status(500).json({ message: 'Erreur suppression programme' });
+  }
 });
 
 module.exports = router;

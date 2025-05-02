@@ -1,29 +1,35 @@
+/**
+ * Composant de sortie principale pour OBS.
+ * @module components/ObsOutput
+ */
+
 import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import LowerThird from './LowerThird';
 import matrixBg from '../assets/default-logo.js';
 import { connectWebSocket } from '../services/websocket';
 
-// Utilitaire pour extraire l'ID YouTube depuis une URL (classique, embed ou courte)
-function extractYoutubeId(url) {
-  if (!url) return '';
-  // Gère tous les formats possibles (watch, embed, youtu.be, shorts, etc.)
-  const regExp = /(?:youtube\.com\/(?:.*v=|.*\/embed\/|.*\/shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
-  const match = url.match(regExp);
-  if (match && match[1]) return match[1];
-  // Cas fallback : si l’URL contient v=ID dans les query params
-  try {
-    const urlObj = new URL(url, window.location.origin);
-    if (urlObj.searchParams.has('v')) return urlObj.searchParams.get('v');
-  } catch (e) {}
-  return '';
-}
-
-// Blague React pour les devs curieux :
-// Pourquoi les développeurs React aiment-ils les hooks ?
-// Parce qu’ils ne supportaient plus d’être classés !
-
-export default function ObsOutput({ previewMode = false, current: propsCurrent, mediaDisplayed: propsMedia }) {
+/**
+ * Gère l'affichage complet pour OBS avec média et lower third.
+ * 
+ * @component
+ * @param {Object} props
+ * @param {boolean} [props.previewMode=false] - Mode preview (dans le footer)
+ * @param {Object} props.current - État actuel à afficher
+ * @param {Object} props.current.title - Titre actuel
+ * @param {Object} [props.current.subtitle] - Sous-titre actuel
+ * @param {string} [props.current.logoUrl] - URL du logo
+ * @param {Object} [props.mediaDisplayed] - Média actuellement affiché
+ * @param {string} props.mediaDisplayed.type - Type de média (image, youtube, etc)
+ * @param {string} props.mediaDisplayed.url - URL du média
+ * @param {Object} [props.transitionSettings] - Paramètres de transition personnalisés
+ */
+export default function ObsOutput({
+  previewMode = false,
+  current: propsCurrent,
+  mediaDisplayed: propsMedia,
+  transitionSettings: propsTransitions
+}) {
   // Synchronisation multi-onglets OBS (BroadcastChannel)
   const obsSyncChannel = useRef(previewMode ? null : new BroadcastChannel('obs-sync'));
   

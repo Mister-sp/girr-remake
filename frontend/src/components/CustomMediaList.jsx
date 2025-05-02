@@ -1,118 +1,182 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { getMediaForTopic } from '../services/api';
+/**
+ * Composant de gestion de la liste des médias.
+ * @module components/CustomMediaList
+ */
 
-function getYouTubeId(url) {
-  if (!url) return null;
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-  const match = url.match(regExp);
-  return (match && match[2].length === 11) ? match[2] : null;
-}
+import React, { useState, useEffect } from 'react';
+import { updateMediaOrder, deleteMedia } from '../services/api';
+import ConfirmModal from './ConfirmModal';
+import { usePerformance } from './PerformanceProvider';
 
-function CustomMediaList({ programId: propProgramId, episodeId: propEpisodeId, topicId: propTopicId, topicTitle, programLogo }) {
-  const params = useParams();
-  const programId = propProgramId || params.programId;
-  const episodeId = propEpisodeId || params.episodeId;
-  const topicId = propTopicId || params.topicId;
+/**
+ * Liste de médias réordonnables avec prévisualisation.
+ * 
+ * @component
+ * @param {Object} props
+ * @param {Array} props.mediaItems - Liste des médias
+ * @param {Function} props.onMediaClick - Callback lors du clic sur un média
+ * @param {Function} props.onMediaUpdate - Callback après mise à jour
+ * @param {number} props.programId - ID du programme parent
+ * @param {number} props.episodeId - ID de l'épisode parent
+ * @param {number} props.topicId - ID du sujet parent
+ * @param {boolean} [props.allowReorder=true] - Autoriser le réordonnement
+ * @param {boolean} [props.allowDelete=true] - Autoriser la suppression
+ */
+export default function CustomMediaList({
+  mediaItems,
+  onMediaClick,
+  onMediaUpdate,
+  programId,
+  episodeId,
+  topicId,
+  allowReorder = true,
+  allowDelete = true
+}) {
+  const { debounce } = usePerformance();
+  const [items, setItems] = useState(mediaItems);
+  const [draggedItem, setDraggedItem] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
 
-  const [mediaItems, setMediaItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
+  // Mettre à jour la liste quand les props changent
   useEffect(() => {
-    async function loadMedia() {
-      if (!programId || !episodeId || !topicId) return;
-      try {
-        setLoading(true);
-        const response = await getMediaForTopic(programId, episodeId, topicId);
-        setMediaItems(response.data);
-        setError(null);
-      } catch (err) {
-        setError('Impossible de charger les médias.');
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadMedia();
-  }, [programId, episodeId, topicId]);
+    setItems(mediaItems);
+  }, [mediaItems]);
 
-  if (!programId || !episodeId || !topicId) {
-    return <div>IDs manquants pour afficher les médias.</div>;
-  }
-  if (loading) {
-    return <div>Chargement des médias...</div>;
-  }
-  if (error) {
-    return <div style={{ color: 'red' }}>{error}</div>;
-  }
-  if (!mediaItems.length) {
-    return <div>Aucun média pour ce sujet.</div>;
-  }
-
-  // Handler pour envoyer le média à OBS
-  const handleCast = (media) => {
-    // TODO: envoyer via WebSocket à OBS
-    // Exemple: sendToOBS({ title: topicTitle, media, logoUrl: programLogo })
-    alert(`Cast média: ${media.type}`);
+  /**
+   * Gère le début du drag and drop.
+   * @param {Event} e - Event dragstart
+   * @param {Object} item - Item en cours de drag
+   */
+  const handleDragStart = (e, item) => {
+    setDraggedItem(item);
+    e.dataTransfer.effectAllowed = 'move';
+    e.target.style.opacity = '0.5';
   };
-  // Handler pour envoyer le titrage à OBS
-  const handleTitrage = () => {
-    // TODO: envoyer via WebSocket à OBS
-    // Exemple: sendToOBS({ title: topicTitle, media: null, logoUrl: programLogo })
-    alert(`Titrage: ${topicTitle}`);
+
+  /**
+   * Met à jour l'ordre des médias.
+   * @param {Array} orderedItems - Liste réordonnée
+   */
+  const updateOrder = debounce(async (orderedItems) => {
+    try {
+      await updateMediaOrder(
+        programId,
+        episodeId,
+        topicId,
+        orderedItems.map(item => item.id)
+      );
+      onMediaUpdate();
+    } catch (err) {
+      console.error('Erreur lors de la mise à jour de l\'ordre:', err);
+    }
+  }, 500);
+
+  /**
+   * Gère le drop d'un média.
+   * @param {Event} e - Event drop
+   * @param {Object} overItem - Item sur lequel on drop
+   */
+  const handleDrop = (e, overItem) => {
+    e.preventDefault();
+    if (!draggedItem || !allowReorder) return;
+
+    const draggedIdx = items.findIndex(i => i.id === draggedItem.id);
+    const overIdx = items.findIndex(i => i.id === overItem.id);
+    if (draggedIdx === overIdx) return;
+
+    const newItems = [...items];
+    newItems.splice(draggedIdx, 1);
+    newItems.splice(overIdx, 0, draggedItem);
+    
+    setItems(newItems);
+    updateOrder(newItems);
+    setDraggedItem(null);
+  };
+
+  /**
+   * Supprime un média.
+   * @param {Object} item - Média à supprimer
+   */
+  const handleDelete = async (item) => {
+    try {
+      await deleteMedia(programId, episodeId, topicId, item.id);
+      onMediaUpdate();
+      setDeleteModalOpen(false);
+      setItemToDelete(null);
+    } catch (err) {
+      console.error('Erreur lors de la suppression:', err);
+    }
   };
 
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
-        <h2 style={{ margin: 0, flex: 1 }}>Médias du sujet "{topicTitle}"</h2>
-        <button onClick={handleTitrage} style={{ marginLeft: 10, background: '#388e3c', color: 'white', border: 'none', borderRadius: 4, padding: '8px 12px', fontWeight: 600 }}>Titrage</button>
-      </div>
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {mediaItems.map((media) => (
-          <li key={media.id} style={{ marginBottom: '20px', background: '#222', padding: '16px', borderRadius: '10px', display: 'flex', alignItems: 'center' }}>
-            <div style={{ flex: 1 }}>
-              {(() => {
-                switch (media.type) {
-                  case 'image':
-                    return <img src={media.content} alt={`Média ${media.id}`} style={{ maxWidth: '320px', maxHeight: '200px', display: 'block', margin: '8px 0' }} />;
-                  case 'video': {
-                    const videoId = getYouTubeId(media.content);
-                    if (videoId) {
-                      return <iframe width="320" height="180" src={`https://www.youtube.com/embed/${videoId}`} title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{marginTop: '8px'}}></iframe>;
-                    } else {
-                      return <a href={media.content} target="_blank" rel="noopener noreferrer">Voir la vidéo (lien externe)</a>;
-                    }
-                  }
-                  case 'audio':
-                    return <a href={media.content} target="_blank" rel="noopener noreferrer">Écouter l'audio</a>;
-                  case 'link':
-                    return <a href={media.content} target="_blank" rel="noopener noreferrer">{media.content}</a>;
-                  case 'url': {
-                    const url = media.content;
-                    if (/\.(jpg|jpeg|png|gif)$/i.test(url)) {
-                      return <img src={url} alt="media" style={{ maxWidth: '320px', maxHeight: '200px', display: 'block', margin: '8px 0' }} />;
-                    } else {
-                      const videoId = getYouTubeId(url);
-                      if (videoId) {
-                        return <iframe width="320" height="180" src={`https://www.youtube.com/embed/${videoId}`} title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{marginTop: '8px'}}></iframe>;
-                      } else {
-                        return <a href={url} target="_blank" rel="noopener noreferrer" style={{color:'#6cf',textDecoration:'underline'}}>Voir le média</a>;
-                      }
-                    }
-                  }
-                  case 'text':
-                  default:
-                    return <p style={{ margin: '5px 0', whiteSpace: 'pre-wrap' }}>{media.content}</p>;
-                }
-              })()}
+    <>
+      <div className="media-list">
+        {items.map((item) => (
+          <div
+            key={item.id}
+            className="media-item"
+            draggable={allowReorder}
+            onDragStart={(e) => handleDragStart(e, item)}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => handleDrop(e, item)}
+            onClick={() => onMediaClick(item)}
+          >
+            {/* Prévisualisation du média */}
+            <div className="media-preview">
+              {item.type === 'image' ? (
+                <img src={item.url} alt="" />
+              ) : item.type === 'youtube' ? (
+                <div className="youtube-preview">
+                  <i className="fab fa-youtube" />
+                </div>
+              ) : (
+                <div className="generic-preview">
+                  <i className="fas fa-link" />
+                </div>
+              )}
             </div>
-            <button onClick={() => handleCast(media)} style={{ marginLeft: 18, background: '#1976d2', color: 'white', border: 'none', borderRadius: 4, padding: '8px 12px', fontWeight: 600 }}>Cast</button>
-          </li>
+
+            {/* Conteneur du texte */}
+            <div className="media-info">
+              <div className="media-title">
+                {item.title || 'Sans titre'}
+              </div>
+              <div className="media-type">
+                {item.type}
+              </div>
+            </div>
+
+            {/* Actions */}
+            {allowDelete && (
+              <button
+                className="delete-button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setItemToDelete(item);
+                  setDeleteModalOpen(true);
+                }}
+                aria-label="Supprimer"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         ))}
-      </ul>
-    </div>
+      </div>
+
+      {/* Modal de confirmation de suppression */}
+      <ConfirmModal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setItemToDelete(null);
+        }}
+        onConfirm={() => handleDelete(itemToDelete)}
+        title="Supprimer le média"
+        message="Êtes-vous sûr de vouloir supprimer ce média ?"
+        isDangerous
+      />
+    </>
   );
 }
-
-export default CustomMediaList;

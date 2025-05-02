@@ -1,178 +1,148 @@
-const fs = require('fs').promises;
-const path = require('path');
-const { store, saveStore } = require('../data/store');
-const logger = require('./logger');
+/**
+ * Configuration et gestion des sauvegardes automatiques.
+ * @module config/backup
+ */
 
-// Configuration
-const BACKUP_DIR = path.join(__dirname, '../data/backups');
-const DEFAULT_CONFIG = {
-  maxBackups: 10,
-  intervalHours: 1,
-  enabled: true
+const fs = require('fs');
+const path = require('path');
+const logger = require('./logger');
+const { store, saveStore } = require('../data/store');
+
+/**
+ * Configuration des sauvegardes.
+ * @type {Object}
+ */
+const backupConfig = {
+  interval: 15 * 60 * 1000, // 15 minutes
+  maxBackups: 50,
+  backupDir: path.join(__dirname, '../data/backups')
 };
 
-// État interne
-let backupInterval = null;
+/**
+ * Initialise le système de sauvegardes.
+ * @async
+ * @returns {Promise<void>}
+ */
+async function setupBackup() {
+  // Créer le dossier de backup si nécessaire
+  if (!fs.existsSync(backupConfig.backupDir)) {
+    fs.mkdirSync(backupConfig.backupDir, { recursive: true });
+  }
 
-// Obtenir la configuration actuelle
-function getBackupConfig() {
-  return {
-    maxBackups: store.backupSettings?.maxBackups ?? DEFAULT_CONFIG.maxBackups,
-    intervalHours: store.backupSettings?.intervalHours ?? DEFAULT_CONFIG.intervalHours,
-    enabled: store.backupSettings?.enabled ?? DEFAULT_CONFIG.enabled
-  };
+  // Nettoyer les anciennes sauvegardes
+  await cleanOldBackups();
+
+  // Démarrer les sauvegardes automatiques
+  setInterval(createBackup, backupConfig.interval);
+  logger.info('Système de backup initialisé');
 }
 
-// Mettre à jour la configuration
-function updateBackupConfig(newConfig) {
-  store.backupSettings = {
-    ...getBackupConfig(),
-    ...newConfig
-  };
-  saveStore();
-  
-  // Redémarrer le backup automatique avec les nouveaux paramètres
-  if (backupInterval) {
-    clearInterval(backupInterval);
-    backupInterval = null;
-  }
-  
-  if (store.backupSettings.enabled) {
-    startAutoBackup();
-  }
-  
-  return store.backupSettings;
-}
-
-// Créer un backup avec la date dans le nom
+/**
+ * Crée une nouvelle sauvegarde.
+ * @async
+ * @returns {Promise<string>} Chemin du fichier de sauvegarde
+ */
 async function createBackup() {
   try {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const backupPath = path.join(BACKUP_DIR, `backup-${timestamp}.json`);
-    
-    // Créer l'objet de backup (même format que l'export)
-    const backupData = {
-      programs: store.programs || [],
-      episodes: store.episodes || [],
-      topics: store.topics || [],
-      mediaItems: store.mediaItems || [],
-      transitionSettings: store.transitionSettings || {},
-      backupSettings: store.backupSettings || DEFAULT_CONFIG,
-      backupDate: new Date().toISOString(),
-      version: '1.0.0'
-    };
+    const timestamp = new Date().toISOString().replace(/:/g, '-');
+    const backupPath = path.join(
+      backupConfig.backupDir,
+      `backup-${timestamp}.json`
+    );
 
-    // Écrire le fichier de backup
-    await fs.writeFile(backupPath, JSON.stringify(backupData, null, 2));
-    logger.info(`Backup créé avec succès: ${backupPath}`);
+    await fs.promises.writeFile(
+      backupPath,
+      JSON.stringify(store, null, 2)
+    );
 
-    // Nettoyer les anciens backups
-    await cleanOldBackups();
-  } catch (error) {
-    logger.error('Erreur lors de la création du backup:', error);
+    logger.info(`Backup créé: ${backupPath}`);
+    return backupPath;
+  } catch (err) {
+    logger.error('Erreur lors de la création du backup:', err);
+    throw err;
   }
 }
 
-// Supprimer les backups les plus anciens si on dépasse MAX_BACKUPS
+/**
+ * Supprime les anciennes sauvegardes.
+ * @async
+ * @returns {Promise<void>}
+ */
 async function cleanOldBackups() {
-  const config = getBackupConfig();
   try {
-    // Lister tous les fichiers de backup
-    const files = await fs.readdir(BACKUP_DIR);
-    const backupFiles = files.filter(f => f.startsWith('backup-') && f.endsWith('.json'));
-    
-    // Trier par date (du plus récent au plus ancien)
-    const sortedFiles = backupFiles.sort((a, b) => b.localeCompare(a));
-    
-    // Supprimer les fichiers en trop
-    const filesToDelete = sortedFiles.slice(config.maxBackups);
-    for (const file of filesToDelete) {
-      const filePath = path.join(BACKUP_DIR, file);
-      await fs.unlink(filePath);
-      logger.info(`Ancien backup supprimé: ${filePath}`);
+    const files = await fs.promises.readdir(backupConfig.backupDir);
+    const backupFiles = files
+      .filter(f => f.startsWith('backup-') && f.endsWith('.json'))
+      .map(f => ({
+        name: f,
+        path: path.join(backupConfig.backupDir, f),
+        time: fs.statSync(path.join(backupConfig.backupDir, f)).mtime
+      }))
+      .sort((a, b) => b.time - a.time);
+
+    // Garder seulement les N plus récents
+    if (backupFiles.length > backupConfig.maxBackups) {
+      const toDelete = backupFiles.slice(backupConfig.maxBackups);
+      for (const file of toDelete) {
+        await fs.promises.unlink(file.path);
+        logger.info(`Ancien backup supprimé: ${file.name}`);
+      }
     }
-  } catch (error) {
-    logger.error('Erreur lors du nettoyage des anciens backups:', error);
+  } catch (err) {
+    logger.error('Erreur lors du nettoyage des backups:', err);
   }
 }
 
-// Restaurer un backup spécifique
-async function restoreBackup(filename) {
-  try {
-    const backupPath = path.join(BACKUP_DIR, filename);
-    const backupContent = await fs.readFile(backupPath, 'utf8');
-    const backupData = JSON.parse(backupContent);
-
-    // Vérifier que le backup est valide
-    if (!backupData.programs || !backupData.episodes || !backupData.topics || !backupData.mediaItems) {
-      throw new Error('Format de backup invalide');
-    }
-
-    // Mettre à jour le store avec les données du backup
-    store.programs = backupData.programs;
-    store.episodes = backupData.episodes;
-    store.topics = backupData.topics;
-    store.mediaItems = backupData.mediaItems;
-    if (backupData.transitionSettings) {
-      store.transitionSettings = backupData.transitionSettings;
-    }
-
-    logger.info(`Backup restauré avec succès: ${filename}`);
-    return true;
-  } catch (error) {
-    logger.error(`Erreur lors de la restauration du backup ${filename}:`, error);
-    throw error;
-  }
-}
-
-// Lister tous les backups disponibles
+/**
+ * Liste les sauvegardes disponibles.
+ * @async
+ * @returns {Promise<Array>} Liste des fichiers de sauvegarde
+ */
 async function listBackups() {
   try {
-    const files = await fs.readdir(BACKUP_DIR);
+    const files = await fs.promises.readdir(backupConfig.backupDir);
     return files
       .filter(f => f.startsWith('backup-') && f.endsWith('.json'))
-      .sort((a, b) => b.localeCompare(a));
-  } catch (error) {
-    logger.error('Erreur lors de la liste des backups:', error);
+      .map(f => ({
+        name: f,
+        path: path.join(backupConfig.backupDir, f),
+        time: fs.statSync(path.join(backupConfig.backupDir, f)).mtime
+      }))
+      .sort((a, b) => b.time - a.time);
+  } catch (err) {
+    logger.error('Erreur lors de la liste des backups:', err);
     return [];
   }
 }
 
-// Initialisation : créer le dossier de backup s'il n'existe pas
-async function init() {
+/**
+ * Restaure une sauvegarde.
+ * @async
+ * @param {string} backupName - Nom du fichier de sauvegarde
+ * @returns {Promise<void>}
+ */
+async function restoreBackup(backupName) {
   try {
-    await fs.mkdir(BACKUP_DIR, { recursive: true });
-  } catch (error) {
-    if (error.code !== 'EEXIST') {
-      logger.error('Erreur lors de la création du dossier de backup:', error);
-    }
-  }
-}
+    const backupPath = path.join(backupConfig.backupDir, backupName);
+    const data = JSON.parse(await fs.promises.readFile(backupPath));
+    
+    // Créer une sauvegarde avant la restauration
+    await createBackup();
 
-// Démarrer le système de backup automatique
-function startAutoBackup() {
-  const config = getBackupConfig();
-  
-  if (!config.enabled) {
-    logger.info('Système de backup automatique désactivé');
-    return;
+    // Restaurer les données
+    Object.assign(store, data);
+    await saveStore();
+    
+    logger.info(`Backup restauré: ${backupName}`);
+  } catch (err) {
+    logger.error('Erreur lors de la restauration du backup:', err);
+    throw err;
   }
-
-  // Créer un backup immédiatement au démarrage
-  createBackup();
-  
-  // Puis créer un backup périodiquement
-  const intervalMs = config.intervalHours * 60 * 60 * 1000;
-  backupInterval = setInterval(createBackup, intervalMs);
-  logger.info(`Système de backup automatique démarré (intervalle: ${config.intervalHours}h)`);
 }
 
 module.exports = {
-  init,
-  startAutoBackup,
+  setupBackup,
   createBackup,
-  restoreBackup,
   listBackups,
-  getBackupConfig,
-  updateBackupConfig
+  restoreBackup
 };

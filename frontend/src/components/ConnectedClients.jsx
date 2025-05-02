@@ -1,13 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import { getConnectedClients, getCurrentClientId } from '../services/websocket';
+/**
+ * Composant affichant les clients connectés à l'application.
+ * @module components/ConnectedClients
+ */
 
-export default function ConnectedClients() {
-  const [clients, setClients] = useState(getConnectedClients());
-  const currentClientId = getCurrentClientId();
+import React, { useEffect, useState } from 'react';
+import { getConnectedClients } from '../services/websocket';
+
+/**
+ * Affiche la liste des clients connectés avec leur statut.
+ * 
+ * @component
+ * @param {Object} props
+ * @param {string} [props.className] - Classes CSS additionnelles
+ * @param {boolean} [props.showDetails=false] - Afficher les détails des clients
+ */
+export default function ConnectedClients({ 
+  className = '',
+  showDetails = false 
+}) {
+  const [clients, setClients] = useState([]);
 
   useEffect(() => {
+    // Initialiser avec les clients actuels
+    setClients(getConnectedClients());
+
+    // Écouter les mises à jour
     const handleClientsUpdate = (event) => {
-      setClients(event.detail.clients);
+      setClients(event.detail.clients || []);
     };
 
     window.addEventListener('clientsUpdate', handleClientsUpdate);
@@ -16,39 +35,36 @@ export default function ConnectedClients() {
     };
   }, []);
 
+  // Compter les clients par type
+  const obsCount = clients.filter(c => c.type?.includes('obs')).length;
+  const controlCount = clients.filter(c => c.type === 'control').length;
+
   return (
-    <div style={{ 
-      position: 'fixed', 
-      top: '10px', 
-      right: '10px',
-      background: 'rgba(0,0,0,0.8)',
-      padding: '10px',
-      borderRadius: '5px',
-      color: 'white',
-      fontSize: '12px',
-      zIndex: 1000,
-      display: 'none'  // On cache ce composant car il est remplacé par l'info dans le footer
-    }}>
-      <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-        {clients.map(client => (
-          <li key={client.id} style={{
-            display: 'flex',
-            alignItems: 'center',
-            marginBottom: '4px'
-          }}>
-            <span style={{
-              width: '8px',
-              height: '8px',
-              borderRadius: '50%',
-              background: client.id === currentClientId ? '#4CAF50' : '#2196F3',
-              marginRight: '8px'
-            }} />
-            <span>
-              {client.id === currentClientId ? 'Vous' : client.type || `Client ${client.id.slice(0, 6)}`}
-            </span>
-          </li>
-        ))}
-      </ul>
+    <div className={`connected-clients ${className}`}>
+      <div className="client-counts">
+        <span className="obs-count" title="Fenêtres OBS">
+          🎥 {obsCount}
+        </span>
+        <span className="control-count" title="Interfaces de contrôle">
+          🎮 {controlCount}
+        </span>
+      </div>
+
+      {showDetails && clients.length > 0 && (
+        <div className="client-details">
+          <h4>Clients connectés :</h4>
+          <ul>
+            {clients.map(client => (
+              <li key={client.id}>
+                {client.type === 'control' ? '🎮' : '🎥'} {client.type}
+                <span className="client-time">
+                  {new Date(client.lastActive).toLocaleTimeString()}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,81 +1,92 @@
-import React from 'react';
+/**
+ * Composant de lower third (titrage) pour OBS.
+ * @module components/LowerThird
+ */
 
+import React, { useEffect } from 'react';
+import './logo-effects.css';
+
+/**
+ * Affiche un lower third animé avec support de logo.
+ * 
+ * @component
+ * @param {Object} props
+ * @param {string} props.title - Titre principal
+ * @param {string} [props.subtitle] - Sous-titre
+ * @param {string} [props.logoUrl] - URL du logo
+ * @param {string} [props.transitionIn='fade'] - Animation d'entrée
+ * @param {string} [props.transitionOut='fade'] - Animation de sortie
+ * @param {string} [props.fontFamily='Inter'] - Police de caractères
+ * @param {string} [props.fontUrl] - URL de la police (Google Fonts)
+ * @param {number} [props.fontSize=32] - Taille de la police
+ * @param {string} [props.fontWeight='bold'] - Graisse de la police
+ * @param {string} [props.textColor='#FFFFFF'] - Couleur du texte
+ * @param {string} [props.backgroundColor='#181818'] - Couleur de fond
+ * @param {number} [props.backgroundOpacity=0.97] - Opacité du fond
+ * @param {boolean} [props.logoInLowerThird=false] - Afficher le logo dans le lower third
+ * @param {string} [props.logoPosition='left'] - Position du logo ('left', 'right')
+ */
 export default function LowerThird({
-  title, subtitle,
-  transitionIn = 'fade', transitionOut = 'slide',
-  fontFamily = 'Roboto', fontUrl, fontSize = 32, fontWeight = 700, fontStyle = 'normal', textDecoration = 'none',
-  textColor = '#fff', textStrokeColor = '#000', textStrokeWidth = 0,
-  backgroundColor = '#181818', backgroundOpacity = 0.97,
-  logoInLowerThird = false, logoPosition = 'left', logoUrl
+  title,
+  subtitle,
+  logoUrl,
+  transitionIn = 'fade',
+  transitionOut = 'fade',
+  fontFamily = 'Inter',
+  fontUrl,
+  fontSize = 32,
+  fontWeight = 'bold',
+  textColor = '#FFFFFF',
+  backgroundColor = '#181818',
+  backgroundOpacity = 0.97,
+  logoInLowerThird = false,
+  logoPosition = 'left'
 }) {
-  if (!title && !subtitle) return null;
-  // Inject Google Font dynamiquement si besoin
-  React.useEffect(() => {
+  // Charger la police Google Fonts si spécifiée
+  useEffect(() => {
     if (fontUrl) {
-      let link = document.getElementById('lt-live-font');
-      if (!link) {
-        link = document.createElement('link');
-        link.id = 'lt-live-font';
-        link.rel = 'stylesheet';
-        document.head.appendChild(link);
-      }
+      const link = document.createElement('link');
       link.href = fontUrl;
+      link.rel = 'stylesheet';
+      document.head.appendChild(link);
+      return () => document.head.removeChild(link);
     }
   }, [fontUrl]);
-  // Transitions CSS
-  const transitionStyle = transitionIn === 'slide' ? {animation:'slideIn 0.5s'} : transitionIn === 'fade' ? {animation:'fadeIn 0.5s'} : {};
-  // Couleur de fond avec opacité
-  const bgColor = backgroundColor + (backgroundOpacity<1?Math.round(backgroundOpacity*255).toString(16).padStart(2,'0'):'');
+
+  // Calculer les classes CSS pour les transitions
+  const transitionClass = `transition-${transitionIn}-in transition-${transitionOut}-out`;
+
   return (
-    <div style={{
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      bottom: 0,
-      width: '100%',
-      zIndex: 100,
-      pointerEvents: 'none',
-      margin: 0,
-      padding: 0,
-      ...transitionStyle
-    }}>
-      <div style={{
-        background: bgColor,
-        borderRadius: 0,
-        width: '100%',
-        height: 'auto',
-        padding: '16px 48px',
-        fontFamily, fontSize, fontWeight, fontStyle, textDecoration,
-        color: textColor, letterSpacing: 1.2,
-        boxShadow: '0 2px 32px #000a',
-        borderTop: '2px solid #fff',
-        borderBottom: '2px solid #fff',
-        borderLeft: 0,
-        borderRight: 0,
-        display: 'flex',
-        alignItems: 'center',
-        textAlign: 'left',
-        whiteSpace: 'pre-wrap',
-        margin: 0,
-        boxSizing: 'border-box',
-        WebkitTextStroke: textStrokeWidth>0?`${textStrokeWidth}px ${textStrokeColor}`:undefined
-      }}>
-        {logoInLowerThird && logoUrl && logoPosition==='left' && (
-          <img src={logoUrl} alt="logo" style={{height:48,width:48,objectFit:'contain',marginRight:16,borderRadius:8}} />
-        )}
-        <div>
-          {title && <div>{title}</div>}
-          {subtitle && <div style={{ fontSize: fontSize*0.7, fontWeight: 400, color: '#FFD166', marginTop: 4 }}>{subtitle}</div>}
-        </div>
-        {logoInLowerThird && logoUrl && logoPosition==='right' && (
-          <img src={logoUrl} alt="logo" style={{height:48,width:48,objectFit:'contain',marginLeft:16,borderRadius:8}} />
+    <div 
+      className={`lower-third ${transitionClass}`}
+      style={{
+        fontFamily,
+        fontSize,
+        fontWeight,
+        color: textColor,
+        '--bg-color': backgroundColor,
+        '--bg-opacity': backgroundOpacity
+      }}
+    >
+      {/* Conteneur du logo */}
+      {logoInLowerThird && logoUrl && (
+        <div 
+          className={`lower-third-logo ${logoPosition}`}
+          style={{
+            backgroundImage: `url(${
+              logoUrl.startsWith('http') ? logoUrl : `http://localhost:3001${logoUrl}`
+            })`
+          }}
+        />
+      )}
+
+      {/* Conteneur du texte */}
+      <div className="lower-third-text">
+        <div className="title">{title}</div>
+        {subtitle && (
+          <div className="subtitle">{subtitle}</div>
         )}
       </div>
-      {/* Styles de transition pour le lower third live */}
-      <style>{`
-        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-        @keyframes slideIn { from { transform:translateY(40px); opacity:0; } to { transform:translateY(0); opacity:1; } }
-      `}</style>
     </div>
   );
 }

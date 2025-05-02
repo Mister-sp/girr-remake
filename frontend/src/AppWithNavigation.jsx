@@ -24,6 +24,23 @@ import HelpModal from './components/HelpModal';
 import PresenterView from './components/PresenterView';
 import { KeyBindingsProvider } from './components/KeyBindingsContext';
 
+/**
+ * Composant principal avec navigation.
+ * @module AppWithNavigation
+ */
+
+/**
+ * Layout principal avec barre latérale et navigation.
+ * 
+ * Gère :
+ * - La navigation principale
+ * - Le routage des vues
+ * - La connexion WebSocket
+ * - Les modales d'aide et paramètres
+ * - La barre de statut
+ * 
+ * @component
+ */
 function AppWithNavigation() {
   const navigate = useNavigate();
   const location = useLocation();

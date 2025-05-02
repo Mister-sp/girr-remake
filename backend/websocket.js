@@ -1,101 +1,125 @@
-// websocket.js
-const http = require('http');
-const socketio = require('socket.io');
+/**
+ * Configuration et gestion des connexions WebSocket.
+ * @module websocket
+ */
+
+const { Server } = require('socket.io');
 const { wsConnectionsGauge } = require('./config/monitoring');
+const logger = require('./config/logger');
 
-let io;
-const connectedClients = new Map();
+let io = null;
+const clients = new Map();
 
-function updateObsStatus() {
-  const obsClients = Array.from(connectedClients.values()).filter(c => c.type?.includes('obs'));
-  const mediaActive = obsClients.some(c => c.type === 'obs-media' || c.type === 'obs-full');
-  const titrageActive = obsClients.some(c => c.type === 'obs-titrage' || c.type === 'obs-full');
-  
-  io.emit('obs:status', {
-    media: mediaActive,
-    titrage: titrageActive
-  });
-}
-
+/**
+ * Initialise le serveur WebSocket.
+ * @param {Object} server - Instance du serveur HTTP
+ */
 function initWebSocket(server) {
-  io = socketio(server, {
+  io = new Server(server, {
     cors: {
       origin: '*',
       methods: ['GET', 'POST']
     },
-    transports: ['polling', 'websocket'],
-    allowEIO3: true
+    path: '/socket.io'
   });
 
-  io.on('connection', (socket) => {
-    console.log('Nouvelle connexion WebSocket :', socket.id);
-    wsConnectionsGauge.inc(); // Incrémenter le compteur de connexions
-    
-    // Identifier le type de client basé sur le pathname
-    socket.on('register', ({ pathname }) => {
-      let type = 'control';
-      if (pathname === '/obs') type = 'obs-full';
-      else if (pathname === '/obs-media') type = 'obs-media';
-      else if (pathname === '/obs-titrage') type = 'obs-titrage';
-      
-      // Ajouter le client à notre Map
-      connectedClients.set(socket.id, {
-        id: socket.id,
-        type,
+  io.on('connection', socket => {
+    logger.info(`Client WebSocket connecté: ${socket.id}`);
+    wsConnectionsGauge.inc();
+
+    /**
+     * Configuration initiale du client.
+     * @param {Object} data - Données d'enregistrement
+     * @param {string} data.pathname - Chemin de la page
+     * @param {string} data.type - Type de client (control, obs, etc)
+     */
+    socket.on('register', (data) => {
+      const clientId = socket.id;
+      clients.set(clientId, {
+        id: clientId,
+        type: getClientType(data.pathname),
         lastActive: Date.now()
       });
 
-      // Informer tous les clients des connexions
-      io.emit('clients:update', {
-        count: connectedClients.size,
-        clients: Array.from(connectedClients.values())
+      // Envoyer l'état actuel au client
+      socket.emit('hello', {
+        clientId,
+        activeClients: Array.from(clients.values())
       });
 
-      // Mettre à jour le statut OBS
-      updateObsStatus();
+      // Notifier tous les clients de la mise à jour
+      broadcastClientsUpdate();
     });
 
-    socket.emit('hello', { 
-      msg: 'Connexion WebSocket réussie !',
-      clientId: socket.id,
-      activeClients: Array.from(connectedClients.values())
-    });
-
-    // RELAY obs:update avec timestamp
+    /**
+     * Mise à jour de l'affichage OBS.
+     * @param {Object} data - Données de mise à jour
+     */
     socket.on('obs:update', (data) => {
-      const timestamp = Date.now();
-      const enhancedData = {
+      // Ajouter l'ID du client source
+      const updateData = {
         ...data,
-        timestamp,
-        sourceClientId: socket.id
+        sourceClientId: socket.id,
+        timestamp: Date.now()
       };
-      console.log('[SOCKET.IO] Reçu obs:update de', socket.id, enhancedData);
-      io.emit('obs:update', enhancedData);
-      
-      // Mettre à jour le lastActive du client
-      const client = connectedClients.get(socket.id);
-      if (client) {
-        client.lastActive = timestamp;
-      }
+
+      // Logger la mise à jour
+      logger.info('Mise à jour OBS:', updateData);
+
+      // Broadcaster aux autres clients
+      socket.broadcast.emit('obs:update', updateData);
     });
 
-    // Gérer la déconnexion
+    // Déconnexion
     socket.on('disconnect', () => {
-      console.log('Déconnexion WebSocket :', socket.id);
-      wsConnectionsGauge.dec(); // Décrémenter le compteur de connexions
-      connectedClients.delete(socket.id);
-      io.emit('clients:update', {
-        count: connectedClients.size,
-        clients: Array.from(connectedClients.values())
-      });
-      updateObsStatus();
+      logger.info(`Client WebSocket déconnecté: ${socket.id}`);
+      clients.delete(socket.id);
+      wsConnectionsGauge.dec();
+      broadcastClientsUpdate();
     });
   });
 }
 
+/**
+ * Détermine le type de client basé sur le chemin.
+ * @param {string} pathname - Chemin de la page
+ * @returns {string} Type de client
+ * @private
+ */
+function getClientType(pathname) {
+  switch (pathname) {
+    case '/obs':
+      return 'obs-full';
+    case '/obs-media':
+      return 'obs-media';
+    case '/obs-titrage':
+      return 'obs-titrage';
+    default:
+      return 'control';
+  }
+}
+
+/**
+ * Notifie tous les clients de la mise à jour de la liste.
+ * @private
+ */
+function broadcastClientsUpdate() {
+  if (!io) return;
+  io.emit('clients:update', {
+    count: clients.size,
+    clients: Array.from(clients.values())
+  });
+}
+
+/**
+ * Obtient l'instance Socket.IO.
+ * @returns {Object|null} Instance Socket.IO
+ */
 function getIO() {
-  if (!io) throw new Error('WebSocket non initialisé');
   return io;
 }
 
-module.exports = { initWebSocket, getIO };
+module.exports = {
+  initWebSocket,
+  getIO
+};

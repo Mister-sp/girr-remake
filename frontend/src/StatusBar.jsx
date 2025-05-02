@@ -3,6 +3,25 @@ import defaultLogo from './assets/default-logo.js';
 import ObsPreview from './components/ObsPreview';
 import { connectWebSocket, getConnectedClients, getBroadcastChannel, cleanup } from './services/websocket';
 
+/**
+ * Barre d'état en bas de l'interface.
+ * 
+ * @component
+ * @description
+ * Affiche :
+ * - État des connexions WebSocket
+ * - Preview OBS miniature
+ * - Boutons d'ouverture des fenêtres OBS
+ * - Compteur de clients connectés
+ * - Logo et titre du programme actif
+ * 
+ * Les fenêtres OBS peuvent être ouvertes en :
+ * - Mode complet (média + titrage)
+ * - Mode média seul
+ * - Mode titrage seul
+ * 
+ * Utilise BroadcastChannel pour la synchronisation entre onglets.
+ */
 export default function StatusBar() {
   const [currentInfo, setCurrentInfo] = useState({
     programTitle: '',

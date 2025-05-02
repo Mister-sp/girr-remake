@@ -1,6 +1,12 @@
+/**
+ * Routes de gestion des paramètres de l'application.
+ * @module routes/settings
+ */
+
 const express = require('express');
 const router = express.Router();
 const { store, saveStore } = require('../data/store');
+const logger = require('../config/logger');
 const { getIO } = require('../websocket');
 
 // Initialiser le système de backup
@@ -108,7 +114,233 @@ backup.init().then(() => {
  *         description: Import réussi depuis l'ancien format
  */
 
-// GET /api/settings/transitions - Récupérer les paramètres de transition
+/**
+ * Récupère tous les paramètres.
+ * 
+ * @name GET /api/settings
+ * @function
+ * @memberof module:routes/settings
+ * @returns {Object} Paramètres de l'application
+ */
+router.get('/', (req, res) => {
+  res.json(store.settings || {});
+});
+
+/**
+ * Met à jour les paramètres.
+ * 
+ * @name PUT /api/settings
+ * @function
+ * @memberof module:routes/settings
+ * @param {Object} req.body - Nouveaux paramètres
+ * @param {Object} [req.body.obs] - Configuration OBS
+ * @param {Object} [req.body.ui] - Préférences d'interface
+ * @param {Object} [req.body.backup] - Configuration des sauvegardes
+ * @returns {Object} Paramètres mis à jour 
+ */
+router.put('/', async (req, res) => {
+  try {
+    // Fusionner avec les paramètres existants
+    store.settings = {
+      ...store.settings,
+      ...req.body,
+      updatedAt: new Date().toISOString()
+    };
+
+    await saveStore();
+    
+    logger.info('Paramètres mis à jour');
+    res.json(store.settings);
+  } catch (err) {
+    logger.error('Erreur mise à jour paramètres:', err);
+    res.status(500).json({ message: 'Erreur mise à jour paramètres' });
+  }
+});
+
+/**
+ * Récupère la configuration OBS.
+ * 
+ * @name GET /api/settings/obs
+ * @function
+ * @memberof module:routes/settings
+ * @returns {Object} Configuration OBS
+ */
+router.get('/obs', (req, res) => {
+  res.json(store.settings?.obs || {});
+});
+
+/**
+ * Met à jour la configuration OBS.
+ * 
+ * @name PUT /api/settings/obs
+ * @function
+ * @memberof module:routes/settings
+ * @param {Object} req.body - Nouvelle configuration OBS
+ * @param {string} [req.body.host] - Hôte du serveur OBS
+ * @param {number} [req.body.port] - Port du serveur OBS
+ * @param {string} [req.body.password] - Mot de passe de connexion
+ * @returns {Object} Configuration OBS mise à jour
+ */
+router.put('/obs', async (req, res) => {
+  try {
+    // S'assurer que les paramètres existent
+    if (!store.settings) store.settings = {};
+    
+    // Mettre à jour la config OBS
+    store.settings.obs = {
+      ...store.settings.obs,
+      ...req.body,
+      updatedAt: new Date().toISOString()
+    };
+
+    await saveStore();
+    
+    logger.info('Configuration OBS mise à jour');
+    res.json(store.settings.obs);
+  } catch (err) {
+    logger.error('Erreur mise à jour config OBS:', err);
+    res.status(500).json({ message: 'Erreur mise à jour config OBS' });
+  }
+});
+
+/**
+ * Récupère les préférences d'interface.
+ * 
+ * @name GET /api/settings/ui
+ * @function
+ * @memberof module:routes/settings
+ * @returns {Object} Préférences d'interface
+ */
+router.get('/ui', (req, res) => {
+  res.json(store.settings?.ui || {});
+});
+
+/**
+ * Met à jour les préférences d'interface.
+ * 
+ * @name PUT /api/settings/ui
+ * @function
+ * @memberof module:routes/settings
+ * @param {Object} req.body - Nouvelles préférences
+ * @param {string} [req.body.theme] - Thème d'interface
+ * @param {Object} [req.body.layout] - Disposition des éléments
+ * @param {Object} [req.body.shortcuts] - Raccourcis clavier
+ * @returns {Object} Préférences mises à jour
+ */
+router.put('/ui', async (req, res) => {
+  try {
+    // S'assurer que les paramètres existent
+    if (!store.settings) store.settings = {};
+    
+    // Mettre à jour les préférences UI
+    store.settings.ui = {
+      ...store.settings.ui,
+      ...req.body,
+      updatedAt: new Date().toISOString()
+    };
+
+    await saveStore();
+    
+    logger.info('Préférences UI mises à jour');
+    res.json(store.settings.ui);
+  } catch (err) {
+    logger.error('Erreur mise à jour préférences UI:', err);
+    res.status(500).json({ message: 'Erreur mise à jour préférences UI' });
+  }
+});
+
+/**
+ * Récupère la configuration des sauvegardes.
+ * 
+ * @name GET /api/settings/backup
+ * @function
+ * @memberof module:routes/settings
+ * @returns {Object} Configuration des sauvegardes
+ */
+router.get('/backup', (req, res) => {
+  res.json(store.settings?.backup || {});
+});
+
+/**
+ * Met à jour la configuration des sauvegardes.
+ * 
+ * @name PUT /api/settings/backup
+ * @function
+ * @memberof module:routes/settings
+ * @param {Object} req.body - Nouvelle configuration
+ * @param {boolean} [req.body.enabled] - Activer/désactiver les sauvegardes
+ * @param {number} [req.body.interval] - Intervalle en minutes
+ * @param {string} [req.body.directory] - Répertoire de sauvegarde
+ * @returns {Object} Configuration mise à jour
+ */
+router.put('/backup', async (req, res) => {
+  try {
+    // S'assurer que les paramètres existent
+    if (!store.settings) store.settings = {};
+    
+    // Mettre à jour la config de sauvegarde
+    store.settings.backup = {
+      ...store.settings.backup,
+      ...req.body,
+      updatedAt: new Date().toISOString()
+    };
+
+    await saveStore();
+    
+    logger.info('Configuration de sauvegarde mise à jour');
+    res.json(store.settings.backup);
+  } catch (err) {
+    logger.error('Erreur mise à jour config sauvegarde:', err);
+    res.status(500).json({ message: 'Erreur mise à jour config sauvegarde' });
+  }
+});
+
+/**
+ * Réinitialise les paramètres par défaut.
+ * 
+ * @name POST /api/settings/reset
+ * @function
+ * @memberof module:routes/settings
+ * @returns {Object} Paramètres par défaut
+ */
+router.post('/reset', async (req, res) => {
+  try {
+    // Paramètres par défaut
+    store.settings = {
+      obs: {
+        host: 'localhost',
+        port: 4444,
+        password: ''
+      },
+      ui: {
+        theme: 'light',
+        shortcuts: {}
+      },
+      backup: {
+        enabled: true,
+        interval: 5,
+        directory: './backups'
+      },
+      updatedAt: new Date().toISOString()
+    };
+
+    await saveStore();
+    
+    logger.info('Paramètres réinitialisés');
+    res.json(store.settings);
+  } catch (err) {
+    logger.error('Erreur réinitialisation paramètres:', err);
+    res.status(500).json({ message: 'Erreur réinitialisation paramètres' });
+  }
+});
+
+/**
+ * Obtient les paramètres de transition.
+ * @name GET/api/settings/transitions
+ * @function
+ * @memberof module:routes/settings
+ * @returns {Object} Paramètres de transition actuels
+ */
 router.get('/transitions', (req, res) => {
   res.json(store.transitionSettings || {
     appearEffect: 'fade',
@@ -121,7 +353,14 @@ router.get('/transitions', (req, res) => {
   });
 });
 
-// POST /api/settings/transitions - Mettre à jour les paramètres de transition
+/**
+ * Met à jour les paramètres de transition.
+ * @name POST/api/settings/transitions
+ * @function
+ * @memberof module:routes/settings
+ * @param {Object} req.body - Nouveaux paramètres
+ * @returns {Object} Paramètres mis à jour
+ */
 router.post('/transitions', (req, res) => {
   const { appearEffect, disappearEffect, duration, timing, slideDistance, zoomScale, rotateAngle } = req.body;
 
@@ -162,7 +401,13 @@ router.post('/transitions', (req, res) => {
   res.json(store.transitionSettings);
 });
 
-// GET /api/settings/export - Exporter toutes les configurations
+/**
+ * Exporte la configuration complète.
+ * @name GET/api/settings/export
+ * @function
+ * @memberof module:routes/settings
+ * @returns {Object} Configuration complète
+ */
 router.get('/export', (req, res) => {
   try {
     // Créer un objet d'export avec les données actuelles
@@ -186,7 +431,14 @@ router.get('/export', (req, res) => {
   }
 });
 
-// POST /api/settings/import - Importer des configurations
+/**
+ * Importe une configuration.
+ * @name POST/api/settings/import
+ * @function
+ * @memberof module:routes/settings
+ * @param {Object} req.body - Configuration à importer
+ * @returns {Object} Message de confirmation
+ */
 router.post('/import', (req, res) => {
   try {
     const importData = req.body;
@@ -234,7 +486,14 @@ router.post('/import', (req, res) => {
   }
 });
 
-// POST /api/settings/import-legacy - Importer des données depuis l'ancien format GIRR
+/**
+ * Importe des données depuis l'ancien format GIRR.
+ * @name POST/api/settings/import-legacy
+ * @function
+ * @memberof module:routes/settings
+ * @param {Object} req.body - Données au format ancien GIRR
+ * @returns {Object} Message de confirmation
+ */
 router.post('/import-legacy', (req, res) => {
   try {
     const legacyData = req.body;
@@ -352,7 +611,13 @@ router.post('/import-legacy', (req, res) => {
   }
 });
 
-// GET /api/settings/backups - Liste tous les backups disponibles
+/**
+ * Liste les backups disponibles.
+ * @name GET/api/settings/backups
+ * @function
+ * @memberof module:routes/settings
+ * @returns {Array} Liste des fichiers de backup
+ */
 router.get('/backups', async (req, res) => {
   try {
     const backups = await backup.listBackups();
@@ -362,7 +627,13 @@ router.get('/backups', async (req, res) => {
   }
 });
 
-// POST /api/settings/backups - Crée un backup manuel
+/**
+ * Crée un backup manuel.
+ * @name POST/api/settings/backups
+ * @function
+ * @memberof module:routes/settings
+ * @returns {Object} Informations sur le backup créé
+ */
 router.post('/backups', async (req, res) => {
   try {
     await backup.createBackup();
@@ -372,7 +643,14 @@ router.post('/backups', async (req, res) => {
   }
 });
 
-// POST /api/settings/backups/:filename/restore - Restaure un backup spécifique
+/**
+ * Restaure un backup spécifique.
+ * @name POST/api/settings/backups/:filename/restore
+ * @function
+ * @memberof module:routes/settings
+ * @param {string} req.params.filename - Nom du fichier de backup à restaurer
+ * @returns {Object} Message de confirmation
+ */
 router.post('/backups/:filename/restore', async (req, res) => {
   try {
     await backup.restoreBackup(req.params.filename);

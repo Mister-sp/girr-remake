@@ -1,3 +1,8 @@
+/**
+ * Serveur Express principal avec support WebSocket.
+ * @module server
+ */
+
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -8,6 +13,10 @@ const logger = require('./config/logger');
 const monitoring = require('./config/monitoring');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const multer = require('multer');
+const http = require('http');
+const { initWebSocket } = require('./websocket');
+const port = process.env.PORT || 3001;
 
 // Swagger configuration
 const swaggerOptions = {
@@ -33,10 +42,6 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
 // Exposer les logos en statique
 app.use('/logos', express.static(path.join(__dirname, 'public/logos')));
-const multer = require('multer');
-const http = require('http');
-const { initWebSocket } = require('./websocket');
-const port = process.env.PORT || 3001;
 
 // Configuration express-status-monitor
 app.use(statusMonitor);

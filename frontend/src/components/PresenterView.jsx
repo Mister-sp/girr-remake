@@ -6,6 +6,26 @@ import { useKeyBindings } from './KeyBindingsContext';
 import { getEpisodeDetails, getTopicsForEpisode, getMediaForTopic } from '../services/api';
 import { connectWebSocket } from '../services/websocket';
 
+/**
+ * Mode présentateur avec vue en grille et contrôles avancés.
+ * 
+ * @component
+ * @description
+ * Vue principale pour le présentateur avec :
+ * - Navigation entre les sujets (topics)
+ * - Vue en grille (mode régie)
+ * - Gestion des médias en temps réel
+ * - Notes par sujet
+ * - Preview OBS intégré
+ * - Raccourcis clavier
+ * - Plein écran
+ * 
+ * Utilise les hooks :
+ * - useParams : pour récupérer les IDs programme/épisode
+ * - useHotkeys : pour les raccourcis clavier
+ * - useKeyBindings : pour la configuration des touches
+ * - useState : pour la gestion d'état locale
+ */
 export default function PresenterView() {
   const { programId, episodeId } = useParams();
   const { keyBindings } = useKeyBindings();

@@ -1,14 +1,25 @@
+/**
+ * Routes de gestion des épisodes.
+ * @module routes/episodes
+ */
+
 const express = require('express');
-// `mergeParams: true` permet d'accéder à :programId depuis le routeur parent (programs.js)
-const router = express.Router({ mergeParams: true }); 
+const router = express.Router({ mergeParams: true });
+const multer = require('multer');
+const path = require('path');
+const { store, saveStore, deleteEpisodeCascade } = require('../data/store');
+const logger = require('../config/logger');
 
-// Importer les routes imbriquées
-const topicRoutes = require('./topics');
-// Importer le store
-const { store, deleteEpisodeCascade } = require('../data/store');
-
-// NE PLUS UTILISER LES ROUTES IMBRIQUEES ICI - FAIT DANS SERVER.JS
-// router.use('/:episodeId/topics', topicRoutes);
+// Configuration multer pour les logos d'épisodes
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, path.join(__dirname, '../public/logos')),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1E9) + ext;
+    cb(null, uniqueName);
+  }
+});
+const upload = multer({ storage });
 
 /**
  * @swagger
@@ -73,77 +84,167 @@ const { store, deleteEpisodeCascade } = require('../data/store');
  *         description: Épisode créé avec succès
  */
 
-// GET /api/programs/:programId/episodes - Récupérer tous les épisodes d'un programme
+/**
+ * Liste les épisodes d'un programme.
+ * 
+ * @name GET /api/programs/:programId/episodes
+ * @function
+ * @memberof module:routes/episodes
+ * @param {number} programId - ID du programme parent
+ * @returns {Array} Liste des épisodes
+ */
 router.get('/', (req, res) => {
   const programId = parseInt(req.params.programId);
-  const programEpisodes = store.episodes.filter(ep => ep.programId === programId);
-  res.json(programEpisodes);
+  const episodes = store.episodes.filter(e => e.programId === programId);
+  res.json(episodes);
 });
 
-// POST /api/programs/:programId/episodes - Créer un nouvel épisode pour un programme
-router.post('/', (req, res) => {
+/**
+ * Récupère un épisode par son ID.
+ * 
+ * @name GET /api/programs/:programId/episodes/:id
+ * @function
+ * @memberof module:routes/episodes
+ * @param {number} programId - ID du programme parent
+ * @param {number} id - ID de l'épisode
+ * @returns {Object} Épisode trouvé
+ */
+router.get('/:id', (req, res) => {
   const programId = parseInt(req.params.programId);
-  // Optionnel : Vérifier si le programme existe dans store.programs
-  const programExists = store.programs.some(p => p.id === programId);
-  if (!programExists) {
-      return res.status(404).send('Programme parent non trouvé.');
-  }
+  const episodeId = parseInt(req.params.id);
+  
+  const episode = store.episodes.find(e => 
+    e.id === episodeId && e.programId === programId
+  );
 
-  const newEpisode = {
-    id: store.nextEpisodeId++,
-    programId: programId,
-    number: req.body.number || 1, // Numéro d'épisode
-    title: req.body.title || 'Nouvel Épisode',
-    // Ajoutez d'autres champs pertinents (date, description, etc.)
-  };
-  store.episodes.push(newEpisode);
-  res.status(201).json(newEpisode);
-});
-
-// GET /api/programs/:programId/episodes/:episodeId - Récupérer un épisode spécifique
-router.get('/:episodeId', (req, res) => {
-  const programId = parseInt(req.params.programId);
-  const episodeId = parseInt(req.params.episodeId);
-  const episode = store.episodes.find(ep => ep.id === episodeId && ep.programId === programId);
   if (!episode) {
-    return res.status(404).send('Épisode non trouvé dans ce programme.');
+    return res.status(404).json({ message: 'Épisode non trouvé' });
   }
+
   res.json(episode);
 });
 
-// PUT /api/programs/:programId/episodes/:episodeId - Mettre à jour un épisode
-router.put('/:episodeId', (req, res) => {
-  const programId = parseInt(req.params.programId);
-  const episodeId = parseInt(req.params.episodeId);
-  const episodeIndex = store.episodes.findIndex(ep => ep.id === episodeId && ep.programId === programId);
-  if (episodeIndex === -1) {
-    return res.status(404).send('Épisode non trouvé dans ce programme.');
+/**
+ * Crée un nouvel épisode.
+ * 
+ * @name POST /api/programs/:programId/episodes
+ * @function
+ * @memberof module:routes/episodes
+ * @param {number} programId - ID du programme parent
+ * @param {Object} req.body - Données de l'épisode
+ * @param {string} req.body.title - Titre de l'épisode
+ * @param {string} [req.body.description] - Description de l'épisode
+ * @param {string} [req.body.recordingDate] - Date d'enregistrement
+ * @param {boolean} [req.body.isLive=false] - Si l'épisode est en direct
+ * @returns {Object} Épisode créé
+ */
+router.post('/', async (req, res) => {
+  try {
+    const programId = parseInt(req.params.programId);
+    
+    // Vérifier que le programme existe
+    const program = store.programs.find(p => p.id === programId);
+    if (!program) {
+      return res.status(404).json({ message: 'Programme parent non trouvé' });
+    }
+
+    const episode = {
+      id: store.nextEpisodeId++,
+      programId,
+      title: req.body.title,
+      description: req.body.description || '',
+      recordingDate: req.body.recordingDate || new Date().toISOString(),
+      isLive: req.body.isLive || false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    store.episodes.push(episode);
+    await saveStore();
+
+    logger.info(`Épisode créé: ${episode.title} (ID: ${episode.id}, Programme: ${program.title})`);
+    res.status(201).json(episode);
+  } catch (err) {
+    logger.error('Erreur création épisode:', err);
+    res.status(500).json({ message: 'Erreur création épisode' });
   }
-  const updatedEpisode = { 
-    ...store.episodes[episodeIndex], 
-    ...req.body 
-  };
-  // Assurer que les IDs ne sont pas modifiés par le body
-  updatedEpisode.id = episodeId;
-  updatedEpisode.programId = programId;
-  store.episodes[episodeIndex] = updatedEpisode;
-  res.json(updatedEpisode);
 });
 
-// DELETE /api/programs/:programId/episodes/:episodeId - Supprimer un épisode (avec cascade)
-router.delete('/:episodeId', (req, res) => {
-  const programId = parseInt(req.params.programId);
-  const episodeId = parseInt(req.params.episodeId);
-  const episodeIndex = store.episodes.findIndex(ep => ep.id === episodeId && ep.programId === programId);
-  if (episodeIndex === -1) {
-    return res.status(404).send('Épisode non trouvé dans ce programme.');
-  }
-  const deletedEpisodeData = { ...store.episodes[episodeIndex] }; // Copie avant suppression
+/**
+ * Met à jour un épisode.
+ * 
+ * @name PUT /api/programs/:programId/episodes/:id
+ * @function
+ * @memberof module:routes/episodes
+ * @param {number} programId - ID du programme parent
+ * @param {number} id - ID de l'épisode
+ * @param {Object} req.body - Données à mettre à jour
+ * @returns {Object} Épisode mis à jour
+ */
+router.put('/:id', async (req, res) => {
+  try {
+    const programId = parseInt(req.params.programId);
+    const episodeId = parseInt(req.params.id);
 
-  // Utiliser la fonction de suppression en cascade du store
-  deleteEpisodeCascade(episodeId, programId);
-  
-  res.json(deletedEpisodeData); // Renvoyer les données de l'épisode supprimé
+    const episode = store.episodes.find(e => 
+      e.id === episodeId && e.programId === programId
+    );
+
+    if (!episode) {
+      return res.status(404).json({ message: 'Épisode non trouvé' });
+    }
+
+    // Mettre à jour les champs
+    Object.assign(episode, {
+      title: req.body.title || episode.title,
+      description: req.body.description || episode.description,
+      recordingDate: req.body.recordingDate || episode.recordingDate,
+      isLive: req.body.isLive !== undefined ? req.body.isLive : episode.isLive,
+      updatedAt: new Date().toISOString()
+    });
+
+    await saveStore();
+
+    logger.info(`Épisode mis à jour: ${episode.title} (ID: ${episode.id})`);
+    res.json(episode);
+  } catch (err) {
+    logger.error('Erreur mise à jour épisode:', err);
+    res.status(500).json({ message: 'Erreur mise à jour épisode' });
+  }
+});
+
+/**
+ * Supprime un épisode.
+ * 
+ * @name DELETE /api/programs/:programId/episodes/:id
+ * @function
+ * @memberof module:routes/episodes
+ * @param {number} programId - ID du programme parent
+ * @param {number} id - ID de l'épisode
+ * @returns {Object} Message de confirmation
+ */
+router.delete('/:id', async (req, res) => {
+  try {
+    const programId = parseInt(req.params.programId);
+    const episodeId = parseInt(req.params.id);
+
+    const episode = store.episodes.find(e => 
+      e.id === episodeId && e.programId === programId
+    );
+
+    if (!episode) {
+      return res.status(404).json({ message: 'Épisode non trouvé' });
+    }
+
+    // Supprimer l'épisode et ses dépendances
+    deleteEpisodeCascade(episodeId, programId);
+
+    logger.info(`Épisode supprimé: ${episode.title} (ID: ${episode.id})`);
+    res.json({ message: 'Épisode supprimé' });
+  } catch (err) {
+    logger.error('Erreur suppression épisode:', err);
+    res.status(500).json({ message: 'Erreur suppression épisode' });
+  }
 });
 
 module.exports = router;

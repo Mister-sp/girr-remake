@@ -274,15 +274,16 @@ Le système de backup automatique assure la sécurité des données :
   - Expérience mobile améliorée
 
 ### Backend
-- Optimisation performances
+- Optimisation des performances
   - Mise en cache des requêtes fréquentes
   - Optimisation des requêtes WebSocket
   - Compression des payloads
   - Lazy loading des données historiques
-- Support des sauvegardes distantes (cloud)
-  - Intégration avec S3/Google Cloud Storage
-  - Synchronisation automatique
-  - Restauration depuis le cloud
+- Amélioration du système de stockage actuel
+  - Optimisation de la structure JSON
+  - Index pour recherches rapides
+  - Validation des données améliorée
+  - Backups automatiques plus robustes
 - API pour les sauvegardes externes
   - Endpoints REST pour la gestion des backups
   - Webhooks pour les notifications
@@ -299,19 +300,14 @@ Le système de backup automatique assure la sécurité des données :
   - Réplication des données
   - Failover automatique
   - Monitoring des performances
-- Base de données
-  - Migration vers une vraie base de données
-  - Support PostgreSQL/MongoDB
-  - Schémas et migrations
-  - Backups automatiques
 
 ### Sécurité
-- Authentification utilisateurs
-  - Support OAuth 2.0
-  - Rôles et permissions
-  - Sessions sécurisées
+- Authentification utilisateurs simple
+  - Système de login basique
+  - Gestion des sessions
+  - Protection des routes sensibles
 - Chiffrement des données sensibles
-- Audit logs
+- Logs d'audit basiques
 - Protection contre les attaques courantes
 
 ## License

@@ -1,4 +1,8 @@
-// src/services/websocket.js
+/**
+ * Service de gestion des connexions WebSocket.
+ * @module services/websocket
+ */
+
 import { io } from 'socket.io-client';
 
 let socket;
@@ -6,6 +10,10 @@ let clientId = null;
 const connectedClients = new Map();
 let broadcastChannel;
 
+/**
+ * Établit une connexion WebSocket avec le serveur.
+ * @returns {Object} Instance Socket.IO
+ */
 export function connectWebSocket() {
   if (!socket) {
     socket = io('http://localhost:3001', {
@@ -127,19 +135,34 @@ export function getSocket() {
   return socket;
 }
 
+/**
+ * Obtient l'ID du client actuel.
+ * @returns {string|null} ID du client
+ */
 export function getCurrentClientId() {
   return clientId;
 }
 
+/**
+ * Obtient la liste des clients connectés.
+ * @returns {Array} Liste des clients
+ */
 export function getConnectedClients() {
   return Array.from(connectedClients.values());
 }
 
+/**
+ * Obtient le canal de broadcast pour la synchronisation multi-onglets.
+ * @returns {BroadcastChannel|null} Canal de broadcast
+ */
 export function getBroadcastChannel() {
   return broadcastChannel;
 }
 
-// Cleanup function pour nettoyer les ressources
+/**
+ * Nettoie les ressources WebSocket.
+ * @returns {void}
+ */
 export function cleanup() {
   if (socket) {
     socket.disconnect();

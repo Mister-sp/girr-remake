@@ -1,142 +1,154 @@
 import React, { useState, useEffect } from 'react';
 
-// Composant d'aperçu média (image, YouTube, lien)
-function MediaPreview({ url }) {
-  if (!url) return null;
-  const isImage = /\.(jpeg|jpg|png|gif|webp|bmp)$/i.test(url);
-  const isYoutube = /(?:youtu.be\/|youtube.com\/(?:embed\/|v\/|watch\?v=))([\w-]{11})/.exec(url);
-  if (isImage) {
-    return <img src={url} alt="aperçu" style={{ maxWidth: 80, maxHeight: 60, borderRadius: 4, background: '#222' }} />;
-  }
-  if (isYoutube) {
-    return (
-      <iframe
-        width="90"
-        height="60"
-        src={`https://www.youtube.com/embed/${isYoutube[1]}`}
-        frameBorder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-        title="Aperçu vidéo"
-        style={{ borderRadius: 4, background: '#222' }}
-      />
-    );
-  }
-  return <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: '#FFD166', fontSize: 13 }}>{url}</a>;
-}
-
-
-function EditTopicModal({
-  open, onClose, topic, onUpdate, onDelete, onAddMedia, mediaItems = [], onUpdateMedia, onDeleteMedia
+/**
+ * Modal pour créer ou éditer un sujet.
+ * 
+ * @component
+ * @param {Object} props
+ * @param {boolean} props.isOpen - Si le modal est ouvert
+ * @param {Function} props.onClose - Callback de fermeture
+ * @param {Function} props.onSave - Callback après sauvegarde
+ * @param {Object} [props.topic] - Sujet à éditer (undefined pour création)
+ * @param {number} props.programId - ID du programme parent
+ * @param {number} props.episodeId - ID de l'épisode parent
+ */
+export default function EditTopicModal({
+  isOpen,
+  onClose,
+  onSave,
+  topic,
+  programId,
+  episodeId
 }) {
-  console.log('MODAL RENDU', open, topic);
-  const [editingId, setEditingId] = useState(null);
-  const [title, setTitle] = useState(topic.title || '');
-  const [script, setScript] = useState(topic.script || '');
-  const [mediaUrl, setMediaUrl] = useState('');
-  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    script: '',
+    duration: 0
+  });
+  const [error, setError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Synchronise le formulaire avec le sujet à éditer
+  // Initialiser le formulaire avec les données du sujet
   useEffect(() => {
-    setTitle(topic.title || '');
-    setScript(topic.script || '');
-  }, [topic]);
+    if (topic) {
+      setFormData({
+        title: topic.title || '',
+        script: topic.script || '',
+        duration: topic.duration || 0
+      });
+    } else {
+      setFormData({
+        title: '',
+        script: '',
+        duration: 0
+      });
+    }
+  }, [topic, isOpen]);
 
-  if (!open) return null;
-
-  const handleUpdate = async () => {
-    setSaving(true);
-    await onUpdate({ ...topic, title, script });
-    setSaving(false);
-    onClose();
+  /**
+   * Met à jour le formulaire avec debounce.
+   * @param {string} field - Champ à mettre à jour
+   * @param {string|number} value - Nouvelle valeur
+   */
+  const handleFieldChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
-  const handleAddMedia = async () => {
-    if (!mediaUrl.trim()) return;
-    setSaving(true);
-    await onAddMedia(mediaUrl);
-    setMediaUrl('');
-    setSaving(false);
+  /**
+   * Sauvegarde le sujet.
+   * @param {Event} e - Event submit
+   */
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setIsSaving(true);
+
+    try {
+      if (topic) {
+        // Mode édition
+        await updateTopic(programId, episodeId, topic.id, formData);
+      } else {
+        // Mode création
+        await createTopic(programId, episodeId, formData);
+      }
+      onSave();
+      onClose();
+    } catch (err) {
+      setError(err.message || 'Erreur lors de la sauvegarde');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
     <div className="modal-overlay">
       <div className="modal-card">
-        <h2>Modifier le sujet</h2>
-        <label style={{ marginTop: 12 }}>Titre</label>
-        <input
-          type="text"
-          value={title}
-          onChange={e => setTitle(e.target.value)}
-          style={{ width: '100%', marginBottom: 12 }}
-          autoFocus
-        />
-        <label>Script</label>
-        <textarea
-          value={script}
-          onChange={e => setScript(e.target.value)}
-          style={{ width: '100%', minHeight: 90, marginBottom: 12 }}
-        />
-        {/* Liste des médias existants */}
-        {mediaItems.length > 0 && (
-          <div style={{ marginBottom: 16 }}>
-            <label>Médias existants</label>
-            <ul style={{ listStyle: 'none', padding: 0 }}>
-              {mediaItems.map(media => {
-                return (
-                  <li key={media.id} style={{ marginBottom: 12 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <div style={{ flex: 1 }}>
-                        <MediaPreview url={media.content} type={media.type} />
-                      </div>
-                      <button
-                        onClick={() => setEditingId(media.id)}
-                        style={{ background: '#444', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 10px', marginRight: 4 }}
-                      >Modifier</button>
-                      <button
-                        onClick={() => onDeleteMedia && onDeleteMedia(media.id)}
-                        style={{ background: '#b71c1c', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 10px' }}
-                      >Supprimer</button>
-                    </div>
-                    {editingId === media.id && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, marginLeft: 30 }}>
-                        <input
-                          type="text"
-                          defaultValue={media.content}
-                          style={{ flex: 1, background: '#181a1b', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 6 }}
-                          onBlur={e => {
-                            if (e.target.value !== media.content && onUpdateMedia) onUpdateMedia(media.id, e.target.value);
-                            setEditingId(null);
-                          }}
-                          autoFocus
-                        />
-                        <button onClick={() => setEditingId(null)} style={{ background: '#888', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 10px' }}>Annuler</button>
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+        <h2>{topic ? 'Modifier le sujet' : 'Nouveau sujet'}</h2>
+        <form onSubmit={handleSubmit} className="topic-form">
+          {error && (
+            <div className="error-message">
+              {error}
+            </div>
+          )}
+
+          <div className="form-group">
+            <label htmlFor="title">Titre *</label>
+            <input
+              type="text"
+              id="title"
+              value={formData.title}
+              onChange={e => handleFieldChange('title', e.target.value)}
+              required
+              maxLength={100}
+              placeholder="Titre du sujet"
+            />
           </div>
-        )}
-        <label>Ajouter un média (URL)</label>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-          <input
-            type="text"
-            value={mediaUrl}
-            onChange={e => setMediaUrl(e.target.value)}
-            placeholder="https://..."
-            style={{ flex: 1 }}
-          />
-          <button onClick={handleAddMedia} disabled={saving || !mediaUrl.trim()}>Ajouter</button>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
-          <button onClick={onDelete} style={{ color: 'white', background: '#b71c1c' }}>Supprimer</button>
-          <div>
-            <button onClick={onClose} style={{ marginRight: 8 }}>Annuler</button>
-            <button onClick={handleUpdate} disabled={saving} style={{ background: '#880e4f', color: 'white' }}>Mettre à jour</button>
+
+          <div className="form-group">
+            <label htmlFor="script">Script/Notes</label>
+            <textarea
+              id="script"
+              value={formData.script}
+              onChange={e => handleFieldChange('script', e.target.value)}
+              rows={5}
+              placeholder="Notes ou script du sujet"
+            />
           </div>
-        </div>
+
+          <div className="form-group">
+            <label htmlFor="duration">
+              Durée (minutes)
+            </label>
+            <input
+              type="number"
+              id="duration"
+              value={formData.duration}
+              onChange={e => handleFieldChange('duration', parseInt(e.target.value) || 0)}
+              min={0}
+              max={180}
+            />
+          </div>
+
+          <div className="modal-actions">
+            <button
+              type="button"
+              onClick={onClose}
+              className="cancel-button"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              className="save-button"
+              disabled={isSaving || !formData.title.trim()}
+            >
+              {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
+            </button>
+          </div>
+        </form>
       </div>
       <style>{`
         .modal-overlay {
@@ -154,5 +166,3 @@ function EditTopicModal({
     </div>
   );
 }
-
-export default EditTopicModal;
