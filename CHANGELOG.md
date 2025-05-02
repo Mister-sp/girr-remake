@@ -7,6 +7,14 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Système de monitoring complet :
+  - Dashboard temps réel sur `/status`
+  - Métriques Prometheus sur `/metrics`
+  - Healthcheck sur `/health`
+  - Monitoring des connexions WebSocket
+  - Compteurs pour les topics et médias
+  - Métriques de performance HTTP
+  - Logs structurés avec Morgan et Winston
 - Containerisation complète de l'application avec Docker :
   - Configuration multi-conteneurs avec docker-compose
   - Conteneur frontend avec support hot-reload
@@ -14,6 +22,15 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
   - Volumes pour les backups et les logs
   - Documentation Docker dans le README
   - Ports exposés : 5173 (frontend) et 3001 (backend)
+- Scripts d'installation et désinstallation automatisée :
+  - Support Windows (PowerShell) et Linux/Mac (Bash)
+  - Installation des dépendances frontend et backend
+  - Configuration automatique des fichiers .env
+  - Création des dossiers nécessaires
+  - Configuration des hooks git
+  - Désinstallation propre avec nettoyage complet
+  - Scripts robustes avec gestion d'erreurs
+  - Compatible avec les systèmes CI/CD
 
 ### Fixed
 - Correction du mode sombre qui ne s'appliquait pas correctement sur la sidebar et la statusbar

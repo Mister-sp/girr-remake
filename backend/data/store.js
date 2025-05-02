@@ -8,7 +8,12 @@ const STORE_PATH = path.join(__dirname, 'store.json');
 let store;
 try {
   if (fs.existsSync(STORE_PATH)) {
-    store = JSON.parse(fs.readFileSync(STORE_PATH, 'utf-8'));
+    let content = fs.readFileSync(STORE_PATH, 'utf-8');
+    // Supprimer le BOM s'il est présent
+    if (content.charCodeAt(0) === 0xFEFF) {
+      content = content.slice(1);
+    }
+    store = JSON.parse(content);
   } else {
     store = {
       programs: [], 

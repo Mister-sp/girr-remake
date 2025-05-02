@@ -21,6 +21,38 @@ Le projet est composé de deux parties principales :
 
 ## Installation
 
+### Installation Automatisée
+Le projet inclut des scripts d'installation automatisée :
+
+#### Windows (PowerShell)
+```bash
+.\install.ps1
+```
+
+#### Linux/Mac (Bash)
+```bash
+chmod +x install.sh
+./install.sh
+```
+
+Les scripts effectuent automatiquement :
+- Vérification de Node.js
+- Création des dossiers nécessaires (logos, backups, logs)
+- Installation des dépendances frontend et backend
+- Configuration des fichiers .env
+- Installation des hooks git
+
+Pour désinstaller :
+```bash
+# Windows
+.\uninstall.ps1
+
+# Linux/Mac
+./uninstall.sh
+```
+
+### Installation Manuelle
+
 1. Clonez le dépôt :
 ```bash
 git clone [URL_DU_REPO]
@@ -125,6 +157,21 @@ L'application sera accessible sur `http://localhost:5173` (ou un autre port indi
   - Description complète de tous les endpoints
   - Interface de test intégrée
   - Schémas de données détaillés
+- Système de monitoring complet
+  - Dashboard temps réel sur `/status`
+    - Utilisation CPU et mémoire
+    - Statistiques des requêtes HTTP
+    - Temps de réponse moyen
+    - État du serveur en temps réel
+  - Métriques Prometheus sur `/metrics`
+    - Métriques système (CPU, mémoire, processus)
+    - Compteurs personnalisés (topics, médias)
+    - Statistiques WebSocket
+    - Durée des requêtes HTTP
+  - Endpoint santé sur `/health`
+    - État du serveur
+    - Uptime
+    - Timestamp
 - Système de logging avancé
   - Logs séparés pour les erreurs et informations
   - Format JSON pour une meilleure analyse
@@ -228,14 +275,44 @@ Le système de backup automatique assure la sécurité des données :
 
 ### Backend
 - Optimisation performances
+  - Mise en cache des requêtes fréquentes
+  - Optimisation des requêtes WebSocket
+  - Compression des payloads
+  - Lazy loading des données historiques
 - Support des sauvegardes distantes (cloud)
+  - Intégration avec S3/Google Cloud Storage
+  - Synchronisation automatique
+  - Restauration depuis le cloud
 - API pour les sauvegardes externes
+  - Endpoints REST pour la gestion des backups
+  - Webhooks pour les notifications
+  - Documentation OpenAPI
 
 ### Infrastructure
 - CI/CD complet
-- Monitoring
+  - Pipeline GitHub Actions
+  - Tests automatiques
+  - Déploiement automatique
+  - Gestion des environnements (dev/staging/prod)
 - Haute disponibilité
-- Scripts d'installation automatisée
+  - Load balancing
+  - Réplication des données
+  - Failover automatique
+  - Monitoring des performances
+- Base de données
+  - Migration vers une vraie base de données
+  - Support PostgreSQL/MongoDB
+  - Schémas et migrations
+  - Backups automatiques
+
+### Sécurité
+- Authentification utilisateurs
+  - Support OAuth 2.0
+  - Rôles et permissions
+  - Sessions sécurisées
+- Chiffrement des données sensibles
+- Audit logs
+- Protection contre les attaques courantes
 
 ## License
 

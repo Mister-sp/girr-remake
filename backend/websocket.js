@@ -1,6 +1,7 @@
 // websocket.js
 const http = require('http');
 const socketio = require('socket.io');
+const { wsConnectionsGauge } = require('./config/monitoring');
 
 let io;
 const connectedClients = new Map();
@@ -28,6 +29,7 @@ function initWebSocket(server) {
 
   io.on('connection', (socket) => {
     console.log('Nouvelle connexion WebSocket :', socket.id);
+    wsConnectionsGauge.inc(); // Incrémenter le compteur de connexions
     
     // Identifier le type de client basé sur le pathname
     socket.on('register', ({ pathname }) => {
@@ -80,6 +82,7 @@ function initWebSocket(server) {
     // Gérer la déconnexion
     socket.on('disconnect', () => {
       console.log('Déconnexion WebSocket :', socket.id);
+      wsConnectionsGauge.dec(); // Décrémenter le compteur de connexions
       connectedClients.delete(socket.id);
       io.emit('clients:update', {
         count: connectedClients.size,

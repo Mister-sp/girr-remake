@@ -2,6 +2,7 @@ console.log("media.js chargé");
 const express = require('express');
 const router = express.Router({ mergeParams: true });
 const { store, deleteTopicCascade } = require('../data/store'); // Importer store directement
+const { mediaCounter } = require('../config/monitoring');
 
 /**
  * @swagger
@@ -135,6 +136,7 @@ router.post('/', (req, res) => {
     order: maxOrder + 1
   };
   store.mediaItems.push(newMedia); // Correction: Utiliser mediaItems
+  mediaCounter.inc(); // Incrémenter le compteur de médias
   console.log('Nouveau média ajouté:', newMedia);
   res.status(201).json(newMedia);
 });

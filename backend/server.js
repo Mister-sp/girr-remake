@@ -1,8 +1,11 @@
 const express = require('express');
 const cors = require('cors');
+const morgan = require('morgan');
+const statusMonitor = require('express-status-monitor')();
 const app = express();
 const path = require('path');
 const logger = require('./config/logger');
+const monitoring = require('./config/monitoring');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 
@@ -34,6 +37,36 @@ const multer = require('multer');
 const http = require('http');
 const { initWebSocket } = require('./websocket');
 const port = process.env.PORT || 3001;
+
+// Configuration express-status-monitor
+app.use(statusMonitor);
+
+// Morgan logging middleware
+app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
+
+// Middleware de monitoring des requêtes
+app.use(monitoring.measureRequestDuration);
+
+// Route pour les métriques Prometheus
+app.get('/metrics', async (req, res) => {
+    try {
+        res.set('Content-Type', monitoring.register.contentType);
+        const metrics = await monitoring.register.metrics();
+        res.end(metrics);
+    } catch (err) {
+        logger.error('Erreur lors de la génération des métriques:', err);
+        res.status(500).send(err.message);
+    }
+});
+
+// Route pour le healthcheck
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        uptime: process.uptime(),
+        timestamp: Date.now()
+    });
+});
 
 // Middleware de logging pour toutes les requêtes
 app.use((req, res, next) => {
@@ -81,8 +114,20 @@ app.use('/api/settings', settingsRoutes);
 
 // Démarrage du serveur
 const server = http.createServer(app);
+
+// Dans la section WebSocket
 initWebSocket(server);
+
+// Collecter les métriques initiales
+monitoring.wsConnectionsGauge.set(0);
+monitoring.topicsCounter.inc(0);
+monitoring.mediaCounter.inc(0);
+
 server.listen(port, () => {
   console.log(`Serveur backend démarré sur http://localhost:${port}`);
   console.log(`WebSocket disponible sur le même port`);
+  console.log(`Monitoring disponible sur:`);
+  console.log(`- Status: http://localhost:${port}/status`);
+  console.log(`- Metrics: http://localhost:${port}/metrics`);
+  console.log(`- Health: http://localhost:${port}/health`);
 });

@@ -52,6 +52,18 @@
       "logoEffect": "none",
       "logoPosition": "top-right",
       "logoSize": 80
+    },
+    {
+      "id": 14,
+      "title": "Programme Test",
+      "description": "",
+      "logoUrl": "",
+      "logoEffect": "none",
+      "logoEffectIntensity": 5,
+      "logoPosition": "top-right",
+      "logoSize": 80,
+      "mediaAppearEffect": "fade",
+      "mediaDisappearEffect": "fade"
     }
   ],
   "episodes": [
@@ -105,12 +117,12 @@
       "order": 1
     }
   ],
-  "nextProgramId": 14,
+  "nextProgramId": 15,
   "nextEpisodeId": 6,
   "nextTopicId": 7,
   "nextMediaId": 3,
   "currentScene": {
-    "name": "Début",
+    "name": "DÃ©but",
     "lastChanged": "2025-04-30T11:22:55.641Z",
     "mediaAppearEffect": "slide",
     "mediaDisappearEffect": "slide"
@@ -123,10 +135,5 @@
     "slideDistance": 40,
     "zoomScale": 0.8,
     "rotateAngle": -10
-  },
-  "backupSettings": {
-    "maxBackups": 5,
-    "intervalHours": 2,
-    "enabled": true
   }
 }

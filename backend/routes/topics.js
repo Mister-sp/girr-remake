@@ -6,6 +6,7 @@ const router = express.Router({ mergeParams: true });
 const mediaRoutes = require('./media');
 // Importer le store
 const { store, deleteTopicCascade } = require('../data/store');
+const { topicsCounter } = require('../config/monitoring');
 
 /**
  * @swagger
@@ -114,6 +115,7 @@ router.post('/', (req, res) => {
     // Ajoutez d'autres champs (ex: startTime, endTime)
   };
   store.topics.push(newTopic);
+  topicsCounter.inc(); // Incrémenter le compteur de topics
   res.status(201).json(newTopic);
 });
 

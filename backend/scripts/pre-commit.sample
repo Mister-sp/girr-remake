@@ -1,0 +1,45 @@
+#!/bin/sh
+
+# Vérifie si des fichiers sont en staging
+if git diff --cached --quiet; then
+    echo "Aucun fichier à commiter"
+    exit 0
+fi
+
+# Variables de couleur
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+echo "🔍 Vérification du code..."
+
+# Vérifier le backend
+cd backend || exit 1
+if [ -f "package.json" ]; then
+    echo "📝 Lint backend..."
+    npm run lint
+    if [ $? -ne 0 ]; then
+        echo "${RED}❌ Erreurs de lint dans le backend${NC}"
+        exit 1
+    fi
+fi
+
+# Vérifier le frontend
+cd ../frontend || exit 1
+if [ -f "package.json" ]; then
+    echo "📝 Lint frontend..."
+    npm run lint
+    if [ $? -ne 0 ]; then
+        echo "${RED}❌ Erreurs de lint dans le frontend${NC}"
+        exit 1
+    fi
+fi
+
+# Vérifier qu'il n'y a pas de secrets ou mots de passe
+if git diff --cached -U0 | grep -i "password\|secret\|key" > /dev/null; then
+    echo "${RED}❌ Possible fuite de secrets détectée. Vérifiez votre code.${NC}"
+    exit 1
+fi
+
+echo "${GREEN}✅ Vérifications réussies${NC}"
+exit 0
