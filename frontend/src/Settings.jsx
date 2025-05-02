@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
+import ThemeCustomizer from './components/ThemeCustomizer';
 
 const TRANSITION_EFFECTS = [
   { label: 'Fondu', value: 'fade' },
@@ -342,6 +343,11 @@ export default function Settings() {
         <span style={{fontSize: 14, color: 'var(--text-light)'}}>
           {wsConnected ? 'Connecté au serveur' : 'Déconnecté du serveur'}
         </span>
+      </div>
+
+      <div style={{...cardStyle, marginBottom: 20}}>
+        <h2 style={{marginTop: 0, marginBottom: 24, color: 'var(--text)'}}>Personnalisation de l'interface</h2>
+        <ThemeCustomizer />
       </div>
 
       <div style={{...cardStyle, marginBottom: 20}}>

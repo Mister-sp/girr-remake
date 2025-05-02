@@ -5,6 +5,16 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Unreleased]
+
+### Fixed
+- Correction du mode sombre qui ne s'appliquait pas correctement sur la sidebar et la statusbar
+- Uniformisation de l'implémentation du mode sombre à travers l'application
+- Amélioration de la cohérence visuelle entre les différents composants en mode sombre
+
+### Changed
+- Modification de la classe CSS pour le mode sombre de `dark-theme` à `dark` pour une meilleure cohérence
+- Optimisation des variables CSS pour le thème sombre
+
 ### Ajouts et améliorations
 - Ajout de l'import depuis l'ancien GIRR (à tester) :
   - Conversion automatique du format ancien vers le nouveau

@@ -1,0 +1,35 @@
+/* Variables de thème globales */
+:root {
+  /* Couleurs personnalisables */
+  --primary: var(--user-primary, #4F8CFF);
+  --accent: var(--user-accent, #FFD166);
+  
+  /* Mode clair par défaut */
+  --background: #f6f8fa;
+  --card-bg: #ffffff;
+  --text: #222222;
+  --text-light: #8b8fa0;
+  --border: #e0e4ea;
+  --input-bg: var(--card-bg);
+  --sidebar-bg: var(--card-bg);
+  --statusbar-bg: var(--card-bg);
+  
+  /* Valeurs communes */
+  --radius: 8px;
+  --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Thème sombre */
+body.dark {
+  color-scheme: dark;
+  
+  /* Mode sombre */
+  --background: #181e2a;
+  --card-bg: #232b3b;
+  --text: #f6f8fa;
+  --text-light: #8b8fa0;
+  --border: #2d3545;
+  --input-bg: var(--background);
+  --sidebar-bg: #1b2332;
+  --statusbar-bg: var(--background);
+}

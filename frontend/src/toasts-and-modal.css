@@ -31,25 +31,28 @@
 }
 
 /* Modal styles */
-.confirm-modal {
+.confirm-modal, .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.25);
+  background: rgba(0,0,0,0.45);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10001;
 }
-.confirm-modal .modal-content {
-  background: var(--white);
+
+.confirm-modal .modal-content,
+.modal-card {
+  background: var(--card-bg);
   color: var(--text);
   border-radius: var(--radius);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  box-shadow: var(--card-shadow);
   padding: 2.2rem 2rem 1.5rem 2rem;
   max-width: 380px;
   min-width: 260px;
   text-align: center;
 }
+
 .confirm-modal .modal-content button {
   margin: 0 0.7em;
   min-width: 90px;
@@ -58,32 +61,58 @@
 /* Button hover/focus/active improvements */
 button, input[type="submit"] {
   transition: background 0.2s, box-shadow 0.2s, color 0.2s, transform 0.13s;
-  box-shadow: 0 1px 5px rgba(79,140,255,0.07);
+  box-shadow: var(--card-shadow);
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
 }
+
 button:hover, input[type="submit"]:hover {
-  background: var(--accent);
-  color: var(--primary-dark);
+  background: var(--primary);
+  color: white;
   box-shadow: 0 2px 12px rgba(79,140,255,0.15);
-  transform: translateY(-2px) scale(1.05);
+  transform: translateY(-2px) scale(1.02);
+  border-color: var(--primary);
 }
+
 button:focus, input[type="submit"]:focus {
   outline: 2px solid var(--accent);
   box-shadow: 0 0 0 3px #ffd16655;
 }
 
-/* Card and input transitions */
-section.card, input, textarea, select {
+/* Modal inputs and textareas */
+.modal-card input, 
+.modal-card textarea,
+.modal-card select {
+  background: var(--input-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.modal-card input:focus,
+.modal-card textarea:focus,
+.modal-card select:focus {
+  outline: 2px solid var(--primary);
+  border-color: var(--primary);
+}
+
+/* Card transitions */
+.card {
   transition: background 0.23s, box-shadow 0.23s, border 0.23s, color 0.23s;
 }
 section.card {
-  box-shadow: 0 8px 32px rgba(79,140,255,0.10);
+  box-shadow: var(--card-shadow);
 }
 
 /* Drag & drop elevation */
 li[draggable="true"], .dragging {
   box-shadow: 0 6px 24px rgba(79,140,255,0.18) !important;
   z-index: 10;
-  background: #fafdff;
+  background: var(--bg-lighter);
   border: 1.5px solid var(--primary-dark);
 }
 body.dark li[draggable="true"], body.dark .dragging {
@@ -104,4 +133,16 @@ body.dark li[draggable="true"], body.dark .dragging {
   .sidebar .brand {
     font-size: 1.25rem;
   }
+}
+
+/* Keyboard shortcut keys */
+kbd.shortcut-key {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 14px;
+  font-family: 'Monaco', 'Consolas', monospace;
+  box-shadow: 0 2px 0 var(--border);
 }

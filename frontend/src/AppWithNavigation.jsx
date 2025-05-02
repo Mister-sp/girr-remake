@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import { Route, Routes, useNavigate, useLocation } from 'react-router-dom';
 import { ToastProvider } from './components/ToastProvider.jsx';
 import { useHotkeys } from 'react-hotkeys-hook';
+import { ThemeProvider } from './components/ThemeContext';
 import './modern-ui.css';
 import './toasts-and-modal.css';
 import './modern-layout.css';
+import './theme.css';
 import ProgramList from './components/ProgramList.jsx';
 import EpisodeList from './components/EpisodeList';
 import TopicList from './components/TopicList';
@@ -30,11 +32,34 @@ function AppWithNavigation() {
   const [darkMode, setDarkMode] = useState(() => {
     const stored = localStorage.getItem('darkMode');
     if (stored !== null) return stored === 'true';
-    // Use system preference by default
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
-  const toggleDarkMode = () => setDarkMode((d) => !d);
+  // Appliquer le thème
+  useEffect(() => {
+    document.body.classList.toggle('dark', darkMode);
+    localStorage.setItem('darkMode', darkMode.toString());
+
+    // Mettre à jour la prop root de la meta tag theme-color
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', darkMode ? '#181e2a' : '#f6f8fa');
+    }
+  }, [darkMode]);
+
+  // Écouter les changements de préférence système
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e) => {
+      if (localStorage.getItem('darkMode') === null) {
+        setDarkMode(e.matches);
+      }
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  const toggleDarkMode = () => setDarkMode(prev => !prev);
 
   // Help modal state
   const [showHelp, setShowHelp] = useState(false);
@@ -69,15 +94,6 @@ function AppWithNavigation() {
 
   // Ajout du raccourci ? pour l'aide
   useHotkeys('?', () => setShowHelp(true), { description: 'Afficher l\'aide' });
-
-  useEffect(() => {
-    if (darkMode) {
-      document.body.classList.add('dark');
-    } else {
-      document.body.classList.remove('dark');
-    }
-    localStorage.setItem('darkMode', darkMode);
-  }, [darkMode]);
 
   // États pour la navigation Programme -> Épisode -> Sujet -> Média
   const [selectedProgramId, setSelectedProgramId] = useState(null);
@@ -146,7 +162,7 @@ function AppWithNavigation() {
           <Route path="/program/:programId/episode/:episodeId/present" element={<PresenterView />} />
           <Route path="*" element={
             <>
-              <Sidebar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+              <Sidebar darkMode={darkMode} toggleDarkMode={toggleDarkMode} onHelpClick={() => setShowHelp(true)} />
               <main className="main-content-scrollable" style={{ marginLeft: 220, padding: '24px 16px 80px 16px', background: darkMode ? '#181a1b' : '#f7f7fa' }}>
                 <Routes>
                   <Route path="/" element={<ProgramList onSelectProgram={handleSelectProgram} />} />
@@ -171,9 +187,11 @@ function AppWithNavigation() {
 
 export default function AppWithNavigationWrapper() {
   return (
-    <ToastProvider>
-      <ConnectedClients />
-      <AppWithNavigation />
-    </ToastProvider>
+    <ThemeProvider>
+      <ToastProvider>
+        <ConnectedClients />
+        <AppWithNavigation />
+      </ToastProvider>
+    </ThemeProvider>
   );
 }

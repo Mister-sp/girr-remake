@@ -111,8 +111,14 @@ L'application sera accessible sur `http://localhost:5173` (ou un autre port indi
   - Gestion automatique des IDs
   - Interface utilisateur intuitive
 
-### Interface moderne
+### Interface moderne et personnalisable
 - Design responsive avec affichage en cartes
+- Mode sombre/clair avec transition fluide :
+  - Détection automatique des préférences système
+  - Basculement manuel via le bouton dans la sidebar
+  - Raccourci clavier 'D' pour changer rapidement de thème
+  - Persistance du choix utilisateur
+  - Variables CSS optimisées pour une expérience visuelle cohérente
 - Modals et formulaires intuitifs
 - Navigation claire et épurée
 - Footer avec preview OBS intégré
@@ -185,7 +191,6 @@ Le système de backup automatique assure la sécurité des données :
 ## Roadmap
 
 ### Frontend
-- Mode sombre / thème personnalisable
 - Effets de transition additionnels
 - Drag & drop optimisé
 - Tests automatisés
