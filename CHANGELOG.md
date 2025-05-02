@@ -6,6 +6,15 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Added
+- Containerisation complète de l'application avec Docker :
+  - Configuration multi-conteneurs avec docker-compose
+  - Conteneur frontend avec support hot-reload
+  - Conteneur backend avec persistance des données
+  - Volumes pour les backups et les logs
+  - Documentation Docker dans le README
+  - Ports exposés : 5173 (frontend) et 3001 (backend)
+
 ### Fixed
 - Correction du mode sombre qui ne s'appliquait pas correctement sur la sidebar et la statusbar
 - Uniformisation de l'implémentation du mode sombre à travers l'application

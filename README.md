@@ -41,6 +41,31 @@ npm install
 cd ..
 ```
 
+## Installation avec Docker
+
+L'application peut être lancée facilement avec Docker :
+
+1. Assurez-vous d'avoir [Docker Desktop](https://www.docker.com/products/docker-desktop/) installé
+
+2. Lancez l'application avec Docker Compose :
+```bash
+docker compose up
+```
+
+L'application sera accessible sur :
+- Frontend : http://localhost:5173
+- Backend : http://localhost:3001
+
+Pour reconstruire les images (après modification du code) :
+```bash
+docker compose up --build
+```
+
+Pour arrêter l'application :
+```bash
+docker compose down
+```
+
 ## Lancement
 
 1. Lancez le serveur backend (depuis le dossier `backend/`) :
@@ -210,7 +235,6 @@ Le système de backup automatique assure la sécurité des données :
 - CI/CD complet
 - Monitoring
 - Haute disponibilité
-- Docker compose pour déploiement rapide
 - Scripts d'installation automatisée
 
 ## License

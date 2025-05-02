@@ -44,3 +44,12 @@ backend/public/logos/*
 
 # Vite
 .vite/
+
+# Docker
+.docker/
+docker-compose.override.yml
+*.env
+backend/data/backups/*
+!backend/data/backups/.gitkeep
+backend/logs/*
+!backend/logs/.gitkeep
