@@ -277,12 +277,12 @@ router.delete('/:id', async (req, res) => {
         res.json({ message: 'Épisode supprimé avec succès' });
     } else {
         logger.warn(`Tentative de suppression de l'épisode ${episodeId} échouée après l'avoir trouvé.`);
-        res.status(500).json({ message: 'Erreur lors de la suppression de l'épisode dans le store' });
+        res.status(500).json({ message: "Erreur lors de la suppression de l'épisode dans le store" });
     }
 
   } catch (err) {
     logger.error(`Erreur suppression épisode ${req.params.id}:`, err);
-    res.status(500).json({ message: 'Erreur serveur lors de la suppression de l'épisode' });
+    res.status(500).json({ message: "Erreur serveur lors de la suppression de l'épisode" });
   }
 });
 

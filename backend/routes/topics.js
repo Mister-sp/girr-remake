@@ -308,20 +308,15 @@ router.put('/reorder', async (req, res) => {
     }).filter(Boolean); // Filtrer les nulls
 
     // Appliquer les mises à jour
-    // Note: addOrUpdateTopic sauvegarde à chaque appel, ce n'est pas idéal pour les perfs.
-    // Une fonction bulkUpdateTopicsOrder serait mieux.
     for (const updatedTopic of updates) {
         addOrUpdateTopic(updatedTopic); // Sauvegarde à chaque fois
     }
-    // Si on veut une seule sauvegarde, il faudrait modifier addOrUpdateTopic
-    // pour ne pas sauvegarder, et appeler saveStore() ici une seule fois.
-    // Pour l'instant, on garde la simplicité.
 
     logger.info(`Ordre des sujets mis à jour pour l'épisode ${episodeId}`);
     res.json({ message: 'Ordre mis à jour avec succès' });
   } catch (err) {
     logger.error(`Erreur mise à jour ordre sujets pour épisode ${req.params.episodeId}:`, err);
-    res.status(500).json({ message: 'Erreur lors de la mise à jour de l'ordre' });
+    res.status(500).json({ message: "Erreur lors de la mise à jour de l'ordre" });
   }
 });
 
