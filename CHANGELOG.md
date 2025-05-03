@@ -7,6 +7,18 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Optimisations backend majeures pour des performances améliorées :
+  - Mise en cache des requêtes fréquentes avec `node-cache`
+  - Optimisation des requêtes WebSocket avec compression `perMessageDeflate`
+  - Compression des payloads HTTP avec le middleware `compression`
+  - Lazy loading des données historiques avec système de pagination configurable
+  - Index en mémoire pour recherches instantanées (utilisation de `Map`)
+  - Validation des données renforcée dans toutes les routes API
+  - Backups automatiques horodatés avec rotation des anciens fichiers
+  - Récupération progressive en cas de corruption des données
+  - Système de sauvegarde automatique dans les fonctions de modification
+  - Configuration centralisée pour la pagination et les backups
+
 - Système de monitoring complet :
   - Dashboard temps réel sur `/status`
   - Métriques Prometheus sur `/metrics`

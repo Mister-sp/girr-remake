@@ -8,9 +8,18 @@ const router = express.Router({ mergeParams: true });
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
-const { store, saveStore } = require('../data/store');
+const {
+  getTopicById,
+  getMediaItemById,
+  addOrUpdateMediaItem,
+  deleteMediaItem,
+  getNextMediaId,
+  getMediaByTopicId
+} = require('../data/store');
 const { mediaCounter } = require('../config/monitoring');
 const logger = require('../config/logger');
+// <-- Ajouté: Import du module de pagination -->
+const { paginateData } = require('../config/pagination');
 
 // Configuration multer pour les fichiers média
 const storage = multer.diskStorage({
@@ -117,28 +126,46 @@ const upload = multer({
  */
 
 /**
- * Liste les médias d'un sujet.
- * 
+ * Liste les médias d'un sujet avec support de pagination.
+ *
  * @name GET /api/programs/:programId/episodes/:episodeId/topics/:topicId/media
  * @function
  * @memberof module:routes/media
  * @param {number} programId - ID du programme parent
  * @param {number} episodeId - ID de l'épisode parent
  * @param {number} topicId - ID du sujet parent
- * @returns {Array} Liste des médias
+ * @returns {Array} Liste des médias paginée
  */
 router.get('/', (req, res) => {
   const programId = parseInt(req.params.programId);
   const episodeId = parseInt(req.params.episodeId);
   const topicId = parseInt(req.params.topicId);
 
-  const media = store.mediaItems.filter(m => 
-    m.programId === programId && 
-    m.episodeId === episodeId &&
-    m.topicId === topicId
-  );
+  // <-- Ajouté: Support de pagination -->
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || undefined;
+  const sortBy = req.query.sortBy || undefined;
+  const sortDirection = req.query.sortDirection || undefined;
 
-  res.json(media);
+  // Vérifier que le topic existe et appartient au bon programme/épisode
+  const topic = getTopicById(topicId);
+  if (!topic || topic.programId !== programId || topic.episodeId !== episodeId) {
+      return res.status(404).json({ message: 'Sujet parent non trouvé pour ce programme/épisode' });
+  }
+
+  // Récupérer tous les médias du sujet
+  const allMedia = getMediaByTopicId(topicId);
+  
+  // Appliquer la pagination
+  const result = paginateData(allMedia, {
+    page,
+    pageSize,
+    type: 'mediaItems',
+    sortBy,
+    sortDirection
+  });
+  
+  res.json(result);
 });
 
 /**
@@ -159,15 +186,11 @@ router.get('/:id', (req, res) => {
   const topicId = parseInt(req.params.topicId);
   const mediaId = parseInt(req.params.id);
 
-  const media = store.mediaItems.find(m => 
-    m.id === mediaId &&
-    m.programId === programId && 
-    m.episodeId === episodeId &&
-    m.topicId === topicId
-  );
+  // <-- Modifié: Utiliser getMediaItemById et vérifier les IDs parents -->
+  const media = getMediaItemById(mediaId);
 
-  if (!media) {
-    return res.status(404).json({ message: 'Média non trouvé' });
+  if (!media || media.programId !== programId || media.episodeId !== episodeId || media.topicId !== topicId) {
+    return res.status(404).json({ message: 'Média non trouvé pour ce sujet/épisode/programme' });
   }
 
   res.json(media);
@@ -195,18 +218,18 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     const episodeId = parseInt(req.params.episodeId);
     const topicId = parseInt(req.params.topicId);
 
-    // Vérifier que le sujet parent existe
-    const topic = store.topics.find(t => 
-      t.id === topicId &&
-      t.programId === programId &&
-      t.episodeId === episodeId
-    );
-    if (!topic) {
-      return res.status(404).json({ message: 'Sujet parent non trouvé' });
+    // <-- Modifié: Vérifier que le sujet existe avec getTopicById -->
+    const topic = getTopicById(topicId);
+    if (!topic || topic.programId !== programId || topic.episodeId !== episodeId) {
+      return res.status(404).json({ message: 'Sujet parent non trouvé pour ce programme/épisode' });
     }
 
-    const media = {
-      id: store.nextMediaId++,
+    // Déterminer l'ordre (position) du nouveau média
+    const existingMedia = getMediaByTopicId(topicId);
+    const newOrder = existingMedia.length;
+
+    const newMedia = {
+      id: getNextMediaId(),
       programId,
       episodeId,
       topicId,
@@ -215,18 +238,16 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       mimeType: req.file.mimetype,
       size: req.file.size,
       url: `/media/${req.file.filename}`,
+      order: newOrder, // Position à la fin de la liste par défaut
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
 
-    store.mediaItems.push(media);
-    await saveStore();
+    // <-- Modifié: Utiliser addOrUpdateMediaItem (qui sauvegarde et met à jour le compteur) -->
+    await addOrUpdateMediaItem(newMedia);
 
-    // Incrémenter le compteur de médias
-    mediaCounter.inc();
-
-    logger.info(`Média uploadé: ${media.originalName} (ID: ${media.id}, Sujet: ${topic.title})`);
-    res.status(201).json(media);
+    logger.info(`Média uploadé: ${newMedia.originalName} (ID: ${newMedia.id}, Sujet: ${topic.title})`);
+    res.status(201).json(newMedia);
   } catch (err) {
     logger.error('Erreur upload média:', err);
     res.status(500).json({ message: 'Erreur upload média' });
@@ -253,30 +274,31 @@ router.put('/:id', async (req, res) => {
     const topicId = parseInt(req.params.topicId);
     const mediaId = parseInt(req.params.id);
 
-    const media = store.mediaItems.find(m => 
-      m.id === mediaId &&
-      m.programId === programId && 
-      m.episodeId === episodeId &&
-      m.topicId === topicId
-    );
+    // <-- Modifié: Utiliser getMediaItemById et vérifier les IDs parents -->
+    const existingMedia = getMediaItemById(mediaId);
 
-    if (!media) {
-      return res.status(404).json({ message: 'Média non trouvé' });
+    if (!existingMedia || existingMedia.programId !== programId || 
+        existingMedia.episodeId !== episodeId || existingMedia.topicId !== topicId) {
+      return res.status(404).json({ message: 'Média non trouvé pour ce sujet/épisode/programme' });
     }
 
-    // Mettre à jour les champs
-    Object.assign(media, {
-      title: req.body.title || media.title,
-      description: req.body.description || media.description,
-      updatedAt: new Date().toISOString()
-    });
+    // Créer l'objet mis à jour
+    const updatedMedia = {
+        ...existingMedia,
+        title: req.body.title !== undefined ? req.body.title : existingMedia.title,
+        description: req.body.description !== undefined ? req.body.description : existingMedia.description,
+        order: req.body.order !== undefined ? req.body.order : existingMedia.order,
+        // Possibilité d'ajouter d'autres champs ici selon besoin
+        updatedAt: new Date().toISOString()
+    };
 
-    await saveStore();
+    // <-- Modifié: Utiliser addOrUpdateMediaItem (qui sauvegarde) -->
+    await addOrUpdateMediaItem(updatedMedia);
 
-    logger.info(`Média mis à jour: ${media.originalName} (ID: ${media.id})`);
-    res.json(media);
+    logger.info(`Média mis à jour: ${updatedMedia.originalName || updatedMedia.url} (ID: ${updatedMedia.id})`);
+    res.json(updatedMedia);
   } catch (err) {
-    logger.error('Erreur mise à jour média:', err);
+    logger.error(`Erreur mise à jour média ${req.params.id}:`, err);
     res.status(500).json({ message: 'Erreur mise à jour média' });
   }
 });
@@ -300,121 +322,133 @@ router.delete('/:id', async (req, res) => {
     const topicId = parseInt(req.params.topicId);
     const mediaId = parseInt(req.params.id);
 
-    const media = store.mediaItems.find(m => 
-      m.id === mediaId &&
-      m.programId === programId && 
-      m.episodeId === episodeId &&
-      m.topicId === topicId
-    );
+    // <-- Modifié: Utiliser getMediaItemById pour vérifier l'existence et les IDs parents -->
+    const mediaToDelete = getMediaItemById(mediaId);
 
-    if (!media) {
-      return res.status(404).json({ message: 'Média non trouvé' });
+    if (!mediaToDelete || mediaToDelete.programId !== programId || 
+        mediaToDelete.episodeId !== episodeId || mediaToDelete.topicId !== topicId) {
+      return res.status(404).json({ message: 'Média non trouvé pour ce sujet/épisode/programme' });
     }
 
-    // Supprimer le fichier physique
-    const filePath = path.join(__dirname, '../public/media', media.filename);
-    await fs.unlink(filePath);
+    // Supprimer le fichier physique si c'est un upload et non une URL externe
+    if (mediaToDelete.filename) {
+        try {
+            const filePath = path.join(__dirname, '../public/media', mediaToDelete.filename);
+            await fs.unlink(filePath);
+            logger.info(`Fichier média supprimé: ${filePath}`);
+        } catch (fileErr) {
+            logger.warn(`Erreur lors de la suppression du fichier média ${mediaToDelete.filename}:`, fileErr);
+            // On continue même si le fichier ne peut pas être supprimé
+        }
+    }
 
-    // Supprimer l'entrée de la base
-    store.mediaItems = store.mediaItems.filter(m => m.id !== mediaId);
-    await saveStore();
+    // <-- Modifié: Utiliser deleteMediaItem (qui sauvegarde et met à jour le compteur) -->
+    const deleted = await deleteMediaItem(mediaId);
 
-    logger.info(`Média supprimé: ${media.originalName} (ID: ${media.id})`);
-    res.json({ message: 'Média supprimé' });
+    if (deleted) {
+        logger.info(`Média supprimé: ${mediaToDelete.originalName || mediaToDelete.url} (ID: ${mediaId})`);
+        res.json({ message: 'Média supprimé avec succès' });
+    } else {
+        logger.warn(`Tentative de suppression du média ${mediaId} échouée après l'avoir trouvé.`);
+        res.status(500).json({ message: 'Erreur lors de la suppression du média dans le store' });
+    }
   } catch (err) {
-    logger.error('Erreur suppression média:', err);
-    res.status(500).json({ message: 'Erreur suppression média' });
+    logger.error(`Erreur suppression média ${req.params.id}:`, err);
+    res.status(500).json({ message: 'Erreur serveur lors de la suppression du média' });
   }
 });
 
 // PUT /order - Mettre à jour l'ordre des médias
-router.put('/order', (req, res) => {
-  const { programId, episodeId, topicId } = req.params;
-  const orderedIds = req.body.orderedIds;
+router.put('/order', async (req, res) => {
+  try {
+    const { programId, episodeId, topicId } = req.params;
+    const { orderedIds } = req.body;
 
-  // Log complet de la requête reçue
-  console.log('--- Requête PUT /order reçue ---');
-  console.log('Params:', req.params);
-  console.log('Body:', req.body);
-  console.log('Etat du store AVANT:', JSON.stringify(store.mediaItems, null, 2));
-
-  if (!Array.isArray(orderedIds)) {
-    return res.status(400).json({ message: 'Le corps de la requête doit contenir un tableau orderedIds.' });
-  }
-
-  // Parser les IDs des paramètres d'URL ici une seule fois
-  const pId = parseInt(programId);
-  const eId = parseInt(episodeId);
-  const tId = parseInt(topicId);
-
-  // Vérifier si le parsing a fonctionné
-  if (isNaN(pId) || isNaN(eId) || isNaN(tId)) {
-      console.error(`Erreur: un des paramètres d'URL (programId=${programId}, episodeId=${episodeId}, topicId=${topicId}) n'est pas un nombre valide.`);
-      return res.status(400).json({ message: 'Paramètre ID invalide dans l\'URL.' });
-  }
-
-  // DEBUG: log du store avant filtrage
-  console.log('DEBUG: store.mediaItems AVANT filtrage:', JSON.stringify(store.mediaItems, null, 2));
-
-  // Sélectionner tous les médias du topic concerné
-  let topicMedia = store.mediaItems.filter(m =>
-    m.programId === pId &&
-    m.episodeId === eId &&
-    m.topicId === tId
-  );
-  if (topicMedia.length === 0) {
-    console.warn(`Aucun média trouvé pour programId=${pId}, episodeId=${eId}, topicId=${tId}`);
-    return res.status(404).json({ message: 'Aucun média trouvé pour ce topic.' });
-  }
-
-  // DEBUG LOGS
-  console.log('--- DEBUG /order ---');
-  console.log('orderedIds reçus:', orderedIds);
-  console.log('topicMedia trouvés:', JSON.stringify(topicMedia, null, 2));
-  console.log('store.mediaItems complet:', JSON.stringify(store.mediaItems, null, 2));
-
-  // Créer une map pour accès rapide
-  const mediaMap = new Map(topicMedia.map(item => [item.id, item]));
-
-  // Mettre à jour l'ordre pour ceux présents dans orderedIds
-  let updateCount = 0;
-  orderedIds.forEach((id, idx) => {
-    const currentId = parseInt(id);
-    if (isNaN(currentId)) {
-      console.warn(` - ID '${id}' dans le tableau n'est pas un nombre valide, ignoré.`);
-      return;
+    if (!Array.isArray(orderedIds)) {
+        return res.status(400).json({ message: 'Le corps de la requête doit contenir un tableau orderedIds.' });
     }
-    const mediaItem = mediaMap.get(currentId);
-    if (mediaItem) {
-      if (mediaItem.order !== idx) {
-        mediaItem.order = idx;
-        updateCount++;
-        console.log(` - Média ID ${currentId} mis à jour avec order = ${idx}`);
-      }
-    } else {
-      console.warn(` - Média ID ${currentId} (depuis orderedIds) non trouvé dans le topic ${tId}`);
-    }
-  });
 
-  // Les médias du topic non inclus dans orderedIds sont relégués à la fin (ordre croissant après ceux ordonnés)
-  const remainingMedia = topicMedia.filter(m => !orderedIds.includes(String(m.id)) && !orderedIds.includes(m.id));
-  remainingMedia.forEach((m, i) => {
-    const newOrder = orderedIds.length + i;
-    if (m.order !== newOrder) {
-      m.order = newOrder;
-      updateCount++;
-      console.log(` - Média ID ${m.id} (non ordonné explicitement) relégué à la fin avec order = ${newOrder}`);
-    }
-  });
+    // Parser les IDs des paramètres d'URL
+    const pId = parseInt(programId);
+    const eId = parseInt(episodeId);
+    const tId = parseInt(topicId);
 
-  console.log(`${updateCount} ordres de médias mis à jour.`);
-  console.log('Etat du store APRES:', JSON.stringify(store.mediaItems, null, 2));
-  res.status(204).send();
+    // Vérifier la validité des paramètres
+    if (isNaN(pId) || isNaN(eId) || isNaN(tId)) {
+        logger.error(`Paramètres d'URL invalides: programId=${programId}, episodeId=${episodeId}, topicId=${topicId}`);
+        return res.status(400).json({ message: 'Paramètre ID invalide dans l\'URL.' });
+    }
+
+    // Vérifier que le topic existe
+    const topic = getTopicById(tId);
+    if (!topic || topic.programId !== pId || topic.episodeId !== eId) {
+        return res.status(404).json({ message: 'Sujet non trouvé pour ce programme/épisode.' });
+    }
+
+    // Récupérer les médias du topic
+    const topicMedia = getMediaByTopicId(tId);
+    if (topicMedia.length === 0) {
+        logger.warn(`Aucun média trouvé pour programId=${pId}, episodeId=${eId}, topicId=${tId}`);
+        return res.status(404).json({ message: 'Aucun média trouvé pour ce sujet.' });
+    }
+
+    // Créer une map pour accès rapide
+    const mediaMap = new Map(topicMedia.map(item => [item.id, { ...item }]));
+
+    // Appliquer les changements d'ordre pour chaque ID dans orderedIds
+    for (let i = 0; i < orderedIds.length; i++) {
+        const id = parseInt(orderedIds[i]);
+        if (isNaN(id)) continue;
+
+        const mediaItem = mediaMap.get(id);
+        if (mediaItem && mediaItem.order !== i) {
+            // Créer une copie mise à jour avec le nouvel ordre
+            const updatedMedia = {
+                ...mediaItem,
+                order: i,
+                updatedAt: new Date().toISOString()
+            };
+            
+            // Mise à jour dans le store
+            await addOrUpdateMediaItem(updatedMedia);
+            logger.debug(`Ordre du média ID ${id} mis à jour: ${mediaItem.order} -> ${i}`);
+        }
+    }
+
+    // Les médias du topic non inclus dans orderedIds sont relégués à la fin
+    const missingMediaIds = Array.from(mediaMap.keys()).filter(id => 
+        !orderedIds.includes(id) && !orderedIds.includes(String(id))
+    );
+
+    for (let i = 0; i < missingMediaIds.length; i++) {
+        const id = missingMediaIds[i];
+        const mediaItem = mediaMap.get(id);
+        const newOrder = orderedIds.length + i;
+        
+        if (mediaItem && mediaItem.order !== newOrder) {
+            const updatedMedia = {
+                ...mediaItem,
+                order: newOrder,
+                updatedAt: new Date().toISOString()
+            };
+            
+            // Mise à jour dans le store
+            await addOrUpdateMediaItem(updatedMedia);
+            logger.debug(`Média ID ${id} (non ordonné explicitement) relégué avec ordre: ${mediaItem.order} -> ${newOrder}`);
+        }
+    }
+
+    logger.info(`Ordre des médias mis à jour pour le sujet ID ${tId}`);
+    res.status(204).send();
+  } catch (err) {
+    logger.error(`Erreur lors de la mise à jour de l'ordre des médias:`, err);
+    res.status(500).json({ message: 'Erreur serveur lors de la mise à jour de l\'ordre des médias' });
+  }
 });
 
 // Middleware de log placé tout en haut du fichier pour logger TOUTES les requêtes
 router.use((req, res, next) => {
-  console.log('Requête reçue sur /media :', req.method, req.originalUrl);
+  logger.debug(`Requête reçue sur /media : ${req.method} ${req.originalUrl}`);
   next();
 });
 

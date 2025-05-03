@@ -7,6 +7,8 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const statusMonitor = require('express-status-monitor')();
+const compression = require('compression'); // <-- Ajouté
+const NodeCache = require('node-cache'); // <-- Ajouté
 const app = express();
 const path = require('path');
 const logger = require('./config/logger');
@@ -44,6 +46,9 @@ initializeDefaultUser().catch(err => {
   logger.error('Erreur lors de l\'initialisation de l\'utilisateur par défaut:', err);
 });
 
+// Initialiser le cache (TTL de 5 minutes par défaut)
+const cache = new NodeCache({ stdTTL: 300 }); // <-- Ajouté
+
 const swaggerSpecs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
@@ -63,6 +68,7 @@ app.use(monitoring.measureRequestDuration);
 // Middleware CORS et JSON
 app.use(cors());
 app.use(express.json());
+app.use(compression()); // <-- Ajouté : Activer la compression pour toutes les routes
 
 // Route de test
 app.get('/', (req, res) => {
@@ -104,7 +110,27 @@ const apiTokensRoutes = require('./routes/apiTokens');
 app.use('/api/auth', authRoutes);
 
 // Toutes les autres routes API nécessitent une authentification
-app.use('/api/programs', authenticateToken, programRoutes);
+
+// Middleware de cache pour /api/programs
+const cacheMiddleware = (req, res, next) => {
+  const key = req.originalUrl;
+  const cachedResponse = cache.get(key);
+  if (cachedResponse) {
+    logger.info(`Cache hit for ${key}`);
+    return res.json(cachedResponse);
+  } else {
+    logger.info(`Cache miss for ${key}`);
+    // Remplacer res.json pour mettre en cache la réponse avant de l'envoyer
+    const originalJson = res.json;
+    res.json = (body) => {
+      cache.set(key, body);
+      originalJson.call(res, body);
+    };
+    next();
+  }
+}; // <-- Ajouté
+
+app.use('/api/programs', authenticateToken, cacheMiddleware, programRoutes); // <-- Modifié: Ajout du middleware de cache
 app.use('/api/programs/:programId/episodes', authenticateToken, episodeRoutes);
 app.use('/api/programs/:programId/episodes/:episodeId/topics', authenticateToken, topicRoutes);
 app.use('/api/programs/:programId/episodes/:episodeId/topics/:topicId/media', authenticateToken, mediaRoutes);

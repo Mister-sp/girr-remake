@@ -22,7 +22,24 @@ function initWebSocket(server) {
       origin: '*',
       methods: ['GET', 'POST']
     },
-    path: '/socket.io'
+    path: '/socket.io',
+    perMessageDeflate: { // <-- Ajouté : Activer la compression
+      zlibDeflateOptions: {
+        chunkSize: 1024,
+        memLevel: 7,
+        level: 3,
+      },
+      zlibInflateOptions: {
+        chunkSize: 10 * 1024,
+      },
+      // Other options settable:
+      clientNoContextTakeover: true, // Defaults to negotiated value.
+      serverNoContextTakeover: true, // Defaults to negotiated value.
+      serverMaxWindowBits: 10, // Defaults to negotiated value.
+      concurrencyLimit: 10, // Limits zlib concurrency for perf.
+      threshold: 1024, // Size (in bytes) below which messages
+                       // should not be compressed.
+    }
   });
 
   // Middleware d'authentification WebSocket

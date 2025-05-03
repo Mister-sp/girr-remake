@@ -152,6 +152,28 @@ L'application sera accessible sur `http://localhost:5173` (ou un autre port indi
 - Boutons d'accès rapide aux fenêtres OBS
 - Indicateurs de statut pour chaque type de sortie
 
+### Backend optimisé pour les performances
+- Mise en cache des requêtes fréquentes avec `node-cache`
+- Compression des payloads HTTP avec middleware `compression`
+- Optimisation des connexions WebSocket avec compression `perMessageDeflate`
+- Lazy loading des données historiques avec pagination configurable
+  - Pages et taille des pages personnalisables
+  - Tri flexible par différents champs
+  - Métadonnées de pagination dans les réponses API
+- Index en mémoire pour recherches instantanées
+  - Accès O(1) aux objets par ID grâce aux `Map` JavaScript
+  - Optimisation des recherches et filtres fréquents
+  - Regroupement intelligent des données liées
+- Validation des données renforcée
+  - Vérification complète des données entrantes dans chaque route
+  - Gestion des erreurs améliorée
+  - Feedback détaillé en cas d'anomalies
+- Système de sauvegarde optimisé
+  - Backups automatiques horodatés
+  - Rotation configurable des fichiers de sauvegarde
+  - Système de récupération progressive en cas de corruption
+  - Conservation paramétrable des anciennes sauvegardes
+
 ### Documentation et Développement
 - Documentation API interactive avec Swagger (/api-docs)
   - Description complète de tous les endpoints
@@ -281,6 +303,11 @@ Le système de backup automatique assure la sécurité des données :
 - Restauration possible vers n'importe quelle sauvegarde
 - Validation des données lors de la restauration
 - Stockage local dans le dossier `backend/data/backups`
+- Système de récupération progressive en cas de corruption
+  - Tentative de lecture du fichier principal
+  - Repli sur le fichier de sauvegarde
+  - Tentative de récupération depuis les backups datés
+  - Notification en cas d'échec de récupération
 
 ## Roadmap
 
@@ -296,16 +323,6 @@ Le système de backup automatique assure la sécurité des données :
   - Expérience mobile améliorée
 
 ### Backend
-- Optimisation des performances
-  - Mise en cache des requêtes fréquentes
-  - Optimisation des requêtes WebSocket
-  - Compression des payloads
-  - Lazy loading des données historiques
-- Amélioration du système de stockage actuel
-  - Optimisation de la structure JSON
-  - Index pour recherches rapides
-  - Validation des données améliorée
-  - Backups automatiques plus robustes
 - API pour les sauvegardes externes
   - Endpoints REST pour la gestion des backups
   - Webhooks pour les notifications

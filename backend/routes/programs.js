@@ -5,11 +5,19 @@
 
 const express = require('express');
 const router = express.Router();
-const { store, saveStore, deleteProgramCascade } = require('../data/store');
+const {
+  getAllPrograms,
+  getProgramById,
+  addOrUpdateProgram,
+  deleteProgramCascade,
+  getNextProgramId,
+  saveStore
+} = require('../data/store');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
 const logger = require('../config/logger');
+const { paginateData, calculatePagination } = require('../config/pagination');
 
 // Configuration de multer pour les logos
 const storage = multer.diskStorage({
@@ -23,15 +31,32 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 /**
- * Liste tous les programmes.
+ * Liste tous les programmes avec support de pagination.
  * 
  * @name GET /api/programs
  * @function
  * @memberof module:routes/programs
- * @returns {Array} Liste des programmes
+ * @returns {Array} Liste des programmes paginée
  */
 router.get('/', (req, res) => {
-  res.json(store.programs);
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || undefined;
+  const sortBy = req.query.sortBy || undefined;
+  const sortDirection = req.query.sortDirection || undefined;
+  
+  // Récupérer tous les programmes
+  const allPrograms = getAllPrograms();
+  
+  // Appliquer la pagination
+  const result = paginateData(allPrograms, {
+    page,
+    pageSize,
+    type: 'programs',
+    sortBy,
+    sortDirection
+  });
+  
+  res.json(result);
 });
 
 /**
@@ -44,7 +69,7 @@ router.get('/', (req, res) => {
  * @returns {Object} Programme trouvé
  */
 router.get('/:id', (req, res) => {
-  const program = store.programs.find(p => p.id === parseInt(req.params.id));
+  const program = getProgramById(parseInt(req.params.id));
   if (!program) {
     return res.status(404).json({ message: 'Programme non trouvé' });
   }
@@ -65,22 +90,29 @@ router.get('/:id', (req, res) => {
  */
 router.post('/', upload.single('logo'), async (req, res) => {
   try {
-    const program = {
-      id: store.nextProgramId++,
+    const newProgram = {
+      id: getNextProgramId(),
       title: req.body.title,
       description: req.body.description || '',
       logoUrl: req.file ? `/logos/${req.file.filename}` : null,
+      logoEffect: req.body.logoEffect || 'none',
+      logoPosition: req.body.logoPosition || 'top-right',
+      logoSize: parseInt(req.body.logoSize) || 80,
+      lowerThirdConfig: req.body.lowerThirdConfig ? JSON.parse(req.body.lowerThirdConfig) : undefined,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
 
-    store.programs.push(program);
+    addOrUpdateProgram(newProgram);
     await saveStore();
     
-    logger.info(`Programme créé: ${program.title} (ID: ${program.id})`);
-    res.status(201).json(program);
+    logger.info(`Programme créé: ${newProgram.title} (ID: ${newProgram.id})`);
+    res.status(201).json(newProgram);
   } catch (err) {
     logger.error('Erreur création programme:', err);
+    if (req.file) {
+        await fs.unlink(req.file.path).catch(unlinkErr => logger.error(`Échec suppression logo uploadé après erreur: ${req.file.filename}`, unlinkErr));
+    }
     res.status(500).json({ message: 'Erreur création programme' });
   }
 });
@@ -98,32 +130,46 @@ router.post('/', upload.single('logo'), async (req, res) => {
 router.put('/:id', upload.single('logo'), async (req, res) => {
   try {
     const programId = parseInt(req.params.id);
-    const program = store.programs.find(p => p.id === programId);
+    const existingProgram = getProgramById(programId);
     
-    if (!program) {
+    if (!existingProgram) {
+      if (req.file) {
+          await fs.unlink(req.file.path).catch(unlinkErr => logger.error(`Échec suppression logo uploadé pour programme inexistant: ${req.file.filename}`, unlinkErr));
+      }
       return res.status(404).json({ message: 'Programme non trouvé' });
     }
 
-    // Supprimer l'ancien logo si un nouveau est fourni
-    if (req.file && program.logoUrl) {
-      const oldLogoPath = path.join(__dirname, '../public', program.logoUrl);
-      await fs.unlink(oldLogoPath).catch(() => {});
+    let oldLogoPath = null;
+    if (req.file && existingProgram.logoUrl) {
+      oldLogoPath = path.join(__dirname, '../public', existingProgram.logoUrl);
     }
 
-    // Mettre à jour les champs
-    Object.assign(program, {
-      title: req.body.title || program.title,
-      description: req.body.description || program.description,
-      logoUrl: req.file ? `/logos/${req.file.filename}` : program.logoUrl,
-      updatedAt: new Date().toISOString()
-    });
+    const updatedProgram = {
+        ...existingProgram,
+        title: req.body.title !== undefined ? req.body.title : existingProgram.title,
+        description: req.body.description !== undefined ? req.body.description : existingProgram.description,
+        logoUrl: req.file ? `/logos/${req.file.filename}` : existingProgram.logoUrl,
+        logoEffect: req.body.logoEffect !== undefined ? req.body.logoEffect : existingProgram.logoEffect,
+        logoPosition: req.body.logoPosition !== undefined ? req.body.logoPosition : existingProgram.logoPosition,
+        logoSize: req.body.logoSize !== undefined ? parseInt(req.body.logoSize) : existingProgram.logoSize,
+        lowerThirdConfig: req.body.lowerThirdConfig ? JSON.parse(req.body.lowerThirdConfig) : existingProgram.lowerThirdConfig,
+        updatedAt: new Date().toISOString()
+    };
 
+    addOrUpdateProgram(updatedProgram);
     await saveStore();
+
+    if (oldLogoPath) {
+        await fs.unlink(oldLogoPath).catch(unlinkErr => logger.error(`Échec suppression ancien logo: ${oldLogoPath}`, unlinkErr));
+    }
     
-    logger.info(`Programme mis à jour: ${program.title} (ID: ${program.id})`);
-    res.json(program);
+    logger.info(`Programme mis à jour: ${updatedProgram.title} (ID: ${updatedProgram.id})`);
+    res.json(updatedProgram);
   } catch (err) {
-    logger.error('Erreur mise à jour programme:', err);
+    logger.error(`Erreur mise à jour programme ${req.params.id}:`, err);
+    if (req.file) {
+        await fs.unlink(req.file.path).catch(unlinkErr => logger.error(`Échec suppression logo uploadé après erreur MAJ: ${req.file.filename}`, unlinkErr));
+    }
     res.status(500).json({ message: 'Erreur mise à jour programme' });
   }
 });
@@ -140,26 +186,32 @@ router.put('/:id', upload.single('logo'), async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const programId = parseInt(req.params.id);
-    const program = store.programs.find(p => p.id === programId);
+    const programToDelete = getProgramById(programId);
     
-    if (!program) {
+    if (!programToDelete) {
       return res.status(404).json({ message: 'Programme non trouvé' });
     }
 
-    // Supprimer le logo si présent
-    if (program.logoUrl) {
-      const logoPath = path.join(__dirname, '../public', program.logoUrl);
-      await fs.unlink(logoPath).catch(() => {});
+    const logoPathToDelete = programToDelete.logoUrl
+        ? path.join(__dirname, '../public', programToDelete.logoUrl)
+        : null;
+
+    const deleted = deleteProgramCascade(programId);
+
+    if (deleted) {
+        if (logoPathToDelete) {
+            await fs.unlink(logoPathToDelete).catch(unlinkErr => logger.error(`Échec suppression logo lors de la suppression du programme: ${logoPathToDelete}`, unlinkErr));
+        }
+        logger.info(`Programme supprimé: ${programToDelete.title} (ID: ${programId})`);
+        res.json({ message: 'Programme supprimé avec succès' });
+    } else {
+         logger.warn(`Tentative de suppression du programme ${programId} échouée après l'avoir trouvé.`);
+         res.status(500).json({ message: 'Erreur lors de la suppression du programme dans le store' });
     }
 
-    // Supprimer le programme et ses dépendances
-    deleteProgramCascade(programId);
-    
-    logger.info(`Programme supprimé: ${program.title} (ID: ${program.id})`);
-    res.json({ message: 'Programme supprimé' });
   } catch (err) {
-    logger.error('Erreur suppression programme:', err);
-    res.status(500).json({ message: 'Erreur suppression programme' });
+    logger.error(`Erreur suppression programme ${req.params.id}:`, err);
+    res.status(500).json({ message: 'Erreur serveur lors de la suppression du programme' });
   }
 });
 
