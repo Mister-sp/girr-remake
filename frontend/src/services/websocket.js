@@ -4,6 +4,7 @@
  */
 
 import { io } from 'socket.io-client';
+import { AuthService } from './auth';
 
 let socket;
 let clientId = null;
@@ -20,7 +21,10 @@ export function connectWebSocket() {
       transports: ['polling', 'websocket'],
       reconnectionDelayMax: 10000,
       reconnectionAttempts: 10,
-      path: '/socket.io'
+      path: '/socket.io',
+      auth: {
+        token: AuthService.getToken()
+      }
     });
 
     // Initialiser le BroadcastChannel une seule fois
@@ -43,6 +47,9 @@ export function connectWebSocket() {
 
     socket.on('connect_error', (error) => {
       console.log('Erreur de connexion WebSocket:', error);
+      if (error.message === 'Authentification requise' || error.message === 'Token invalide') {
+        AuthService.logout(); // Déconnexion si le token est invalide
+      }
     });
 
     socket.on('hello', (data) => {

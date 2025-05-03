@@ -52,6 +52,18 @@
       "logoEffect": "none",
       "logoPosition": "top-right",
       "logoSize": 80
+    },
+    {
+      "id": 14,
+      "title": "Programme Test",
+      "description": "",
+      "logoUrl": "",
+      "logoEffect": "none",
+      "logoEffectIntensity": 5,
+      "logoPosition": "top-right",
+      "logoSize": 80,
+      "mediaAppearEffect": "fade",
+      "mediaDisappearEffect": "fade"
     }
   ],
   "episodes": [
@@ -105,16 +117,6 @@
       "order": 1
     }
   ],
-  "nextProgramId": 14,
-  "nextEpisodeId": 6,
-  "nextTopicId": 7,
-  "nextMediaId": 3,
-  "currentScene": {
-    "name": "Début",
-    "lastChanged": "2025-04-30T11:22:55.641Z",
-    "mediaAppearEffect": "slide",
-    "mediaDisappearEffect": "slide"
-  },
   "transitionSettings": {
     "appearEffect": "fade",
     "disappearEffect": "fade",
@@ -123,5 +125,24 @@
     "slideDistance": 40,
     "zoomScale": 0.8,
     "rotateAngle": -10
-  }
+  },
+  "nextProgramId": 15,
+  "nextEpisodeId": 6,
+  "nextTopicId": 7,
+  "nextMediaId": 3,
+  "currentScene": {
+    "name": "DÃ©but",
+    "lastChanged": "2025-04-30T11:22:55.641Z",
+    "mediaAppearEffect": "slide",
+    "mediaDisappearEffect": "slide"
+  },
+  "users": [
+    {
+      "id": 1,
+      "username": "admin",
+      "password": "$2b$10$r0CK8VVDk.wDqPIJBSJeNezs0jmh3zuxdmDZ6m6esVraug0xE2qyK",
+      "role": "admin",
+      "createdAt": "2025-05-03T13:33:23.971Z"
+    }
+  ]
 }

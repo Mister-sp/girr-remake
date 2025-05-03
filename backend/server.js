@@ -16,6 +16,8 @@ const swaggerUi = require('swagger-ui-express');
 const multer = require('multer');
 const http = require('http');
 const { initWebSocket } = require('./websocket');
+const { authenticateToken } = require('./middleware/auth');
+const { initializeDefaultUser } = require('./models/users');
 const port = process.env.PORT || 3001;
 
 // Swagger configuration
@@ -37,11 +39,17 @@ const swaggerOptions = {
   apis: ['./routes/*.js'],
 };
 
+// Initialiser l'utilisateur par défaut
+initializeDefaultUser().catch(err => {
+  logger.error('Erreur lors de l\'initialisation de l\'utilisateur par défaut:', err);
+});
+
 const swaggerSpecs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
 // Exposer les logos en statique
 app.use('/logos', express.static(path.join(__dirname, 'public/logos')));
+app.use('/media', express.static(path.join(__dirname, 'public/media')));
 
 // Configuration express-status-monitor
 app.use(statusMonitor);
@@ -52,35 +60,57 @@ app.use(morgan('combined', { stream: { write: message => logger.info(message.tri
 // Middleware de monitoring des requêtes
 app.use(monitoring.measureRequestDuration);
 
-// Route pour les métriques Prometheus
+// Middleware CORS et JSON
+app.use(cors());
+app.use(express.json());
+
+// Route de test
+app.get('/', (req, res) => {
+  res.send('Backend Girr Remake Fonctionne !');
+});
+
+// Route pour les métriques Prometheus (non protégée car utilisée par Prometheus)
 app.get('/metrics', async (req, res) => {
-    try {
-        res.set('Content-Type', monitoring.register.contentType);
-        const metrics = await monitoring.register.metrics();
-        res.end(metrics);
-    } catch (err) {
-        logger.error('Erreur lors de la génération des métriques:', err);
-        res.status(500).send(err.message);
-    }
+  try {
+    res.set('Content-Type', monitoring.register.contentType);
+    const metrics = await monitoring.register.metrics();
+    res.end(metrics);
+  } catch (err) {
+    logger.error('Erreur lors de la génération des métriques:', err);
+    res.status(500).send(err.message);
+  }
 });
 
-// Route pour le healthcheck
+// Route pour le healthcheck (non protégée car utilisée pour les vérifications de santé)
 app.get('/health', (req, res) => {
-    res.json({
-        status: 'ok',
-        uptime: process.uptime(),
-        timestamp: Date.now()
-    });
+  res.json({
+    status: 'ok',
+    uptime: process.uptime(),
+    timestamp: Date.now()
+  });
 });
 
-// Middleware de logging pour toutes les requêtes
-app.use((req, res, next) => {
-  logger.info(`${req.method} ${req.url}`, {
-    ip: req.ip,
-    userAgent: req.get('user-agent')
-  });
-  next();
-});
+// Importer les routes
+const authRoutes = require('./routes/auth');
+const programRoutes = require('./routes/programs');
+const episodeRoutes = require('./routes/episodes');
+const topicRoutes = require('./routes/topics');
+const mediaRoutes = require('./routes/media');
+const sceneRoutes = require('./routes/scene');
+const settingsRoutes = require('./routes/settings');
+const apiTokensRoutes = require('./routes/apiTokens');
+
+// Routes d'authentification (non protégées)
+app.use('/api/auth', authRoutes);
+
+// Toutes les autres routes API nécessitent une authentification
+app.use('/api/programs', authenticateToken, programRoutes);
+app.use('/api/programs/:programId/episodes', authenticateToken, episodeRoutes);
+app.use('/api/programs/:programId/episodes/:episodeId/topics', authenticateToken, topicRoutes);
+app.use('/api/programs/:programId/episodes/:episodeId/topics/:topicId/media', authenticateToken, mediaRoutes);
+app.use('/api/scene', authenticateToken, sceneRoutes);
+app.use('/api/settings', authenticateToken, settingsRoutes);
+app.use('/api/tokens', apiTokensRoutes); // Route pour la gestion des tokens API externes
 
 // Middleware d'erreur
 app.use((err, req, res, next) => {
@@ -92,35 +122,10 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Une erreur est survenue' });
 });
 
-// Middleware CORS et JSON
-app.use(cors());
-app.use(express.json());
-
-// Route de test
-app.get('/', (req, res) => {
-  res.send('Backend Girr Remake Fonctionne !');
-});
-
-// Importer les routes
-const programRoutes = require('./routes/programs');
-const episodeRoutes = require('./routes/episodes');
-const topicRoutes = require('./routes/topics');
-const mediaRoutes = require('./routes/media');
-const sceneRoutes = require('./routes/scene');
-const settingsRoutes = require('./routes/settings');
-
-// Utiliser les routes de l'API
-app.use('/api/programs', programRoutes);
-app.use('/api/programs/:programId/episodes', episodeRoutes);
-app.use('/api/programs/:programId/episodes/:episodeId/topics', topicRoutes);
-app.use('/api/programs/:programId/episodes/:episodeId/topics/:topicId/media', mediaRoutes);
-app.use('/api/scene', sceneRoutes);
-app.use('/api/settings', settingsRoutes);
-
 // Démarrage du serveur
 const server = http.createServer(app);
 
-// Dans la section WebSocket
+// Initialisation WebSocket
 initWebSocket(server);
 
 // Collecter les métriques initiales

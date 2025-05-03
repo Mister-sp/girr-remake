@@ -14,124 +14,33 @@ const apiClient = axios.create({
   },
 });
 
-/**
- * Gestion des erreurs API.
- * @param {Response} response - Réponse fetch
- * @returns {Promise} Données de la réponse ou erreur
- * @private
- */
-async function handleResponse(response) {
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || 'Erreur serveur');
+// Intercepteur pour ajouter le token aux requêtes
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('fremen_auth_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
-  return response.json();
-}
+);
 
-/**
- * Récupère les détails d'un programme.
- * @param {number} programId - ID du programme
- * @returns {Promise<Object>} Détails du programme
- */
-export async function getProgramDetails(programId) {
-  const response = await fetch(`${API_BASE}/programs/${programId}`);
-  return handleResponse(response);
-}
-
-/**
- * Crée un nouveau programme.
- * @param {Object} data - Données du programme
- * @param {File} [logoFile] - Fichier logo optionnel
- * @returns {Promise<Object>} Programme créé
- */
-export async function createProgram(data, logoFile) {
-  const formData = new FormData();
-  Object.entries(data).forEach(([key, value]) => {
-    formData.append(key, value);
-  });
-  if (logoFile) {
-    formData.append('logo', logoFile);
+// Intercepteur pour gérer les erreurs d'authentification
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      // Rediriger vers la page de connexion si le token est invalide ou expiré
+      localStorage.removeItem('fremen_auth_token');
+      localStorage.removeItem('fremen_user_data');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
   }
-  const response = await fetch(`${API_BASE}/programs`, {
-    method: 'POST',
-    body: formData
-  });
-  return handleResponse(response);
-}
-
-/**
- * Récupère les détails d'un épisode.
- * @param {number} programId - ID du programme parent
- * @param {number} episodeId - ID de l'épisode
- * @returns {Promise<Object>} Détails de l'épisode
- */
-export async function getEpisodeDetails(programId, episodeId) {
-  const response = await fetch(`${API_BASE}/programs/${programId}/episodes/${episodeId}`);
-  return handleResponse(response);
-}
-
-/**
- * Récupère les sujets d'un épisode.
- * @param {number} programId - ID du programme parent
- * @param {number} episodeId - ID de l'épisode
- * @returns {Promise<Array>} Liste des sujets
- */
-export async function getTopicsForEpisode(programId, episodeId) {
-  const response = await fetch(`${API_BASE}/programs/${programId}/episodes/${episodeId}/topics`);
-  return handleResponse(response);
-}
-
-/**
- * Récupère les médias d'un sujet.
- * @param {number} programId - ID du programme parent
- * @param {number} episodeId - ID de l'épisode parent
- * @param {number} topicId - ID du sujet
- * @returns {Promise<Array>} Liste des médias
- */
-export async function getMediaForTopic(programId, episodeId, topicId) {
-  const response = await fetch(`${API_BASE}/programs/${programId}/episodes/${episodeId}/topics/${topicId}/media`);
-  return handleResponse(response);
-}
-
-/**
- * Met à jour l'ordre des médias d'un sujet.
- * @param {number} programId - ID du programme parent
- * @param {number} episodeId - ID de l'épisode parent
- * @param {number} topicId - ID du sujet
- * @param {Array<number>} orderedIds - Liste ordonnée des IDs de médias
- * @returns {Promise<void>}
- */
-export async function updateMediaOrder(programId, episodeId, topicId, orderedIds) {
-  const response = await fetch(`${API_BASE}/programs/${programId}/episodes/${episodeId}/topics/${topicId}/media/order`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ orderedIds })
-  });
-  return handleResponse(response);
-}
-
-/**
- * Obtient les paramètres de transition.
- * @returns {Promise<Object>} Paramètres de transition
- */
-export async function getTransitionSettings() {
-  const response = await fetch(`${API_BASE}/settings/transitions`);
-  return handleResponse(response);
-}
-
-/**
- * Met à jour les paramètres de transition.
- * @param {Object} settings - Nouveaux paramètres
- * @returns {Promise<Object>} Paramètres mis à jour
- */
-export async function updateTransitionSettings(settings) {
-  const response = await fetch(`${API_BASE}/settings/transitions`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(settings)
-  });
-  return handleResponse(response);
-}
+);
 
 // Fonctions pour interagir avec l'API des programmes
 export const getPrograms = () => apiClient.get('/programs');
@@ -151,7 +60,7 @@ export const updateProgram = (id, programData) => {
   }
   return apiClient.put(`/programs/${id}`, programData);
 };
-export const deleteProgram = (id) => apiClient.delete(`/programs/${id}`); // Ajout de la fonction de suppression
+export const deleteProgram = (id) => apiClient.delete(`/programs/${id}`);
 
 // Fonctions pour interagir avec l'API des épisodes (imbriqués sous les programmes)
 export const getEpisodesForProgram = (programId) => apiClient.get(`/programs/${programId}/episodes`);

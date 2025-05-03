@@ -5,6 +5,8 @@
 
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import PrivateRoute from './components/PrivateRoute';
+import LoginPage from './components/LoginPage';
 import AppWithNavigation from './AppWithNavigation';
 import ObsOutput from './components/ObsOutput';
 import ObsMediaOutput from './components/ObsMediaOutput';
@@ -17,7 +19,8 @@ import './App.css';
  * Composant racine avec le routage et les providers.
  * 
  * Routes disponibles :
- * - / : Interface principale de contrôle
+ * - /login : Page de connexion
+ * - / : Interface principale de contrôle (protégée)
  * - /obs : Sortie OBS complète (média + titrage)
  * - /obs-media : Sortie OBS médias seuls
  * - /obs-titrage : Sortie OBS titrage seul
@@ -30,24 +33,43 @@ export default function App() {
       <KeyBindingsProvider>
         <BrowserRouter>
           <Routes>
-            {/* Interface principale */}
+            {/* Page de connexion */}
+            <Route path="/login" element={<LoginPage />} />
+
+            {/* Interface principale (protégée) */}
             <Route 
               path="/*" 
-              element={<AppWithNavigation />} 
+              element={
+                <PrivateRoute>
+                  <AppWithNavigation />
+                </PrivateRoute>
+              } 
             />
 
-            {/* Fenêtres OBS */}
+            {/* Fenêtres OBS (protégées) */}
             <Route 
               path="/obs" 
-              element={<ObsOutput />}
+              element={
+                <PrivateRoute>
+                  <ObsOutput />
+                </PrivateRoute>
+              }
             />
             <Route 
               path="/obs-media" 
-              element={<ObsMediaOutput />}
+              element={
+                <PrivateRoute>
+                  <ObsMediaOutput />
+                </PrivateRoute>
+              }
             />
             <Route 
               path="/obs-titrage" 
-              element={<ObsTitrageOutput />}
+              element={
+                <PrivateRoute>
+                  <ObsTitrageOutput />
+                </PrivateRoute>
+              }
             />
 
             {/* Redirection par défaut */}

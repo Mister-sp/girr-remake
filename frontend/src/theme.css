@@ -14,6 +14,14 @@
   --sidebar-bg: var(--card-bg);
   --statusbar-bg: var(--card-bg);
   
+  /* Authentication related colors */
+  --error-background: #fee2e2;
+  --error-text: #991b1b;
+  --input-background: #ffffff;
+  --border: #e5e7eb;
+  --primary-light: rgba(79, 70, 229, 0.2);
+  --disabled: #9ca3af;
+  
   /* Valeurs communes */
   --radius: 8px;
   --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);

@@ -31,6 +31,25 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
   - Désinstallation propre avec nettoyage complet
   - Scripts robustes avec gestion d'erreurs
   - Compatible avec les systèmes CI/CD
+- Système de sécurité et d'authentification :
+  - Authentification utilisateur basique avec tokens JWT
+  - Protection des routes API sensibles
+  - Protection des connexions WebSocket
+  - Compte administrateur par défaut (configurable via variables d'environnement)
+  - Hachage sécurisé des mots de passe avec bcrypt
+  - Rate limiting pour prévenir les attaques par force brute
+  - Interface de connexion utilisateur
+  - Bouton de déconnexion dans la sidebar
+  - Redirection automatique vers la page de connexion
+  - Expiration des tokens configurable
+- Chiffrement des données sensibles :
+  - Module de chiffrement centralisé utilisant AES-256
+  - Sécurisation des mots de passe OBS stockés
+  - Gestion cryptée des tokens d'API pour services externes (YouTube, Twitch, etc.)
+  - Protection des données sensibles lors des exports
+  - API dédiée pour la gestion sécurisée des tokens `/api/tokens`
+  - Masquage des informations sensibles dans les réponses API
+  - Clé de chiffrement configurable via variable d'environnement
 
 ### Fixed
 - Correction du mode sombre qui ne s'appliquait pas correctement sur la sidebar et la statusbar

@@ -217,6 +217,28 @@ L'application sera accessible sur `http://localhost:5173` (ou un autre port indi
 - Multi-clients (utilisation sur plusieurs appareils)
 - Feedback en temps réel (notifications)
 
+### Sécurité et authentification
+- Système d'authentification basique
+  - Authentification par token JWT
+  - Protection des routes sensibles
+  - Compte admin par défaut (configurable via variables d'environnement)
+  - Hachage sécurisé des mots de passe avec bcrypt
+- Protection des routes sensibles
+  - Middleware d'authentification pour toutes les routes API
+  - Protection des connexions WebSocket
+  - Redirection automatique vers la page de connexion
+- Sécurisation des données
+  - Rate limiting pour prévenir les attaques par force brute
+  - Sessions persistantes avec localStorage
+  - Déconnexion sécurisée
+  - Expiration automatique des tokens
+- Chiffrement des données sensibles
+  - Module de chiffrement centralisé avec AES-256
+  - Stockage sécurisé des mots de passe externes (OBS, etc.)
+  - Gestion cryptée des tokens d'API pour services externes
+  - Protection des exports de configuration
+  - Masquage des données sensibles dans l'interface utilisateur
+
 ## Déploiement
 
 Le projet inclut des configurations pour plusieurs plateformes cloud :
@@ -302,13 +324,8 @@ Le système de backup automatique assure la sécurité des données :
   - Monitoring des performances
 
 ### Sécurité
-- Authentification utilisateurs simple
-  - Système de login basique
-  - Gestion des sessions
-  - Protection des routes sensibles
-- Chiffrement des données sensibles
-- Logs d'audit basiques
-- Protection contre les attaques courantes
+- Logs d'audit avancés
+- Protection contre les attaques avancées
 
 ## License
 

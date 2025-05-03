@@ -6,6 +6,8 @@
 const { Server } = require('socket.io');
 const { wsConnectionsGauge } = require('./config/monitoring');
 const logger = require('./config/logger');
+const jwt = require('jsonwebtoken');
+const authConfig = require('./config/auth');
 
 let io = null;
 const clients = new Map();
@@ -23,8 +25,24 @@ function initWebSocket(server) {
     path: '/socket.io'
   });
 
+  // Middleware d'authentification WebSocket
+  io.use((socket, next) => {
+    const token = socket.handshake.auth.token;
+    if (!token) {
+      return next(new Error('Authentification requise'));
+    }
+
+    try {
+      const user = jwt.verify(token, authConfig.jwtSecret);
+      socket.user = user;
+      next();
+    } catch (err) {
+      return next(new Error('Token invalide'));
+    }
+  });
+
   io.on('connection', socket => {
-    logger.info(`Client WebSocket connecté: ${socket.id}`);
+    logger.info(`Client WebSocket connecté: ${socket.id} (User: ${socket.user.username})`);
     wsConnectionsGauge.inc();
 
     /**
@@ -38,6 +56,7 @@ function initWebSocket(server) {
       clients.set(clientId, {
         id: clientId,
         type: getClientType(data.pathname),
+        username: socket.user.username,
         lastActive: Date.now()
       });
 
@@ -56,10 +75,11 @@ function initWebSocket(server) {
      * @param {Object} data - Données de mise à jour
      */
     socket.on('obs:update', (data) => {
-      // Ajouter l'ID du client source
+      // Ajouter l'ID du client source et les infos utilisateur
       const updateData = {
         ...data,
         sourceClientId: socket.id,
+        username: socket.user.username,
         timestamp: Date.now()
       };
 
@@ -72,7 +92,7 @@ function initWebSocket(server) {
 
     // Déconnexion
     socket.on('disconnect', () => {
-      logger.info(`Client WebSocket déconnecté: ${socket.id}`);
+      logger.info(`Client WebSocket déconnecté: ${socket.id} (User: ${socket.user.username})`);
       clients.delete(socket.id);
       wsConnectionsGauge.dec();
       broadcastClientsUpdate();

@@ -12,11 +12,33 @@ const { store, saveStore } = require('../data/store');
  * Configuration des sauvegardes.
  * @type {Object}
  */
-const backupConfig = {
-  interval: 15 * 60 * 1000, // 15 minutes
-  maxBackups: 50,
-  backupDir: path.join(__dirname, '../data/backups')
+let backupConfig = {
+    interval: 15 * 60 * 1000, // 15 minutes
+    maxBackups: 50,
+    backupDir: path.join(__dirname, '../data/backups'),
+    enabled: true
 };
+
+/**
+ * Obtient la configuration actuelle des backups.
+ * @returns {Object} Configuration des backups
+ */
+function getBackupConfig() {
+    return { ...backupConfig };
+}
+
+/**
+ * Met à jour la configuration des backups.
+ * @param {Object} newConfig - Nouvelle configuration
+ * @returns {Object} Configuration mise à jour
+ */
+function updateBackupConfig(newConfig) {
+    backupConfig = {
+        ...backupConfig,
+        ...newConfig
+    };
+    return getBackupConfig();
+}
 
 /**
  * Initialise le système de sauvegardes.
@@ -144,5 +166,7 @@ module.exports = {
   setupBackup,
   createBackup,
   listBackups,
-  restoreBackup
+  restoreBackup,
+  getBackupConfig,
+  updateBackupConfig
 };

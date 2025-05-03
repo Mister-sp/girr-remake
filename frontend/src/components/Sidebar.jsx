@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { FaBars, FaTimes, FaMoon, FaSun } from 'react-icons/fa';
+import { FaBars, FaTimes, FaMoon, FaSun, FaSignOutAlt } from 'react-icons/fa';
 import { NavLink } from 'react-router-dom';
+import { AuthService } from '../services/auth';
 import defaultLogo from '../assets/default-logo.png';
 import ObsFullIcon from '../icons/ObsFullIcon.jsx';
 import ObsMediaIcon from '../icons/ObsMediaIcon.jsx';
@@ -27,6 +28,12 @@ function DevMenu() {
 
 export default function Sidebar({ darkMode, toggleDarkMode, onHelpClick }) {
   const [open, setOpen] = useState(true);
+  
+  const handleLogout = () => {
+    if (window.confirm('Voulez-vous vraiment vous déconnecter ?')) {
+      AuthService.logout();
+    }
+  };
 
   return (
     <>
@@ -99,6 +106,17 @@ export default function Sidebar({ darkMode, toggleDarkMode, onHelpClick }) {
                     <span>Mode sombre</span>
                   </>
                 )}
+              </button>
+              
+              <div className="nav-separator" />
+              
+              <button
+                onClick={handleLogout}
+                className="nav-link logout-button"
+                title="Se déconnecter"
+              >
+                <FaSignOutAlt style={{ fontSize: 16, color: '#f44336' }} />
+                <span style={{ color: '#f44336' }}>Déconnexion</span>
               </button>
             </nav>
 

@@ -8,11 +8,14 @@ const router = express.Router();
 const { store, saveStore } = require('../data/store');
 const logger = require('../config/logger');
 const { getIO } = require('../websocket');
+const encryption = require('../config/encryption');
 
 // Initialiser le système de backup
 const backup = require('../config/backup');
-backup.init().then(() => {
-  backup.startAutoBackup();
+backup.setupBackup().then(() => {
+  logger.info('Système de backup initialisé');
+}).catch(err => {
+  logger.error('Erreur initialisation system backup:', err);
 });
 
 /**
@@ -166,7 +169,16 @@ router.put('/', async (req, res) => {
  * @returns {Object} Configuration OBS
  */
 router.get('/obs', (req, res) => {
-  res.json(store.settings?.obs || {});
+  const obsConfig = store.settings?.obs || {};
+  
+  // Si un mot de passe chiffré existe, le remplacer par des asterisques dans la réponse
+  // pour la sécurité. Le client devra renvoyer le mot de passe pour le modifier.
+  if (obsConfig.encryptedPassword) {
+    obsConfig.password = '********';
+    delete obsConfig.encryptedPassword; // Ne pas exposer le mot de passe chiffré
+  }
+  
+  res.json(obsConfig);
 });
 
 /**
@@ -186,17 +198,36 @@ router.put('/obs', async (req, res) => {
     // S'assurer que les paramètres existent
     if (!store.settings) store.settings = {};
     
+    // Copier la requête pour éviter de modifier l'objet original
+    const obsSettings = { ...req.body };
+    
+    // Chiffrer le mot de passe s'il est fourni et n'est pas déjà des asterisques
+    if (obsSettings.password && obsSettings.password !== '********') {
+      obsSettings.encryptedPassword = encryption.encrypt(obsSettings.password);
+      delete obsSettings.password; // Supprimer le mot de passe en clair
+    } else if (obsSettings.password === '********') {
+      // Si le champ est inchangé (asterisques), conserver le mot de passe chiffré existant
+      delete obsSettings.password;
+    }
+    
     // Mettre à jour la config OBS
     store.settings.obs = {
       ...store.settings.obs,
-      ...req.body,
+      ...obsSettings,
       updatedAt: new Date().toISOString()
     };
 
     await saveStore();
     
+    // Générer une réponse sans exposer le mot de passe chiffré
+    const responseObj = { ...store.settings.obs };
+    if (responseObj.encryptedPassword) {
+      responseObj.password = '********';
+      delete responseObj.encryptedPassword;
+    }
+    
     logger.info('Configuration OBS mise à jour');
-    res.json(store.settings.obs);
+    res.json(responseObj);
   } catch (err) {
     logger.error('Erreur mise à jour config OBS:', err);
     res.status(500).json({ message: 'Erreur mise à jour config OBS' });
@@ -310,7 +341,7 @@ router.post('/reset', async (req, res) => {
       obs: {
         host: 'localhost',
         port: 4444,
-        password: ''
+        encryptedPassword: null // Utiliser encryptedPassword au lieu de password en clair
       },
       ui: {
         theme: 'light',
@@ -326,8 +357,15 @@ router.post('/reset', async (req, res) => {
 
     await saveStore();
     
+    // Préparer la réponse sans exposer les données sensibles
+    const responseObj = JSON.parse(JSON.stringify(store.settings));
+    if (responseObj.obs.encryptedPassword === null) {
+      responseObj.obs.password = '';
+      delete responseObj.obs.encryptedPassword;
+    }
+    
     logger.info('Paramètres réinitialisés');
-    res.json(store.settings);
+    res.json(responseObj);
   } catch (err) {
     logger.error('Erreur réinitialisation paramètres:', err);
     res.status(500).json({ message: 'Erreur réinitialisation paramètres' });
@@ -410,12 +448,23 @@ router.post('/transitions', (req, res) => {
  */
 router.get('/export', (req, res) => {
   try {
+    // Créer une copie profonde pour éviter de modifier l'original
+    const settings = JSON.parse(JSON.stringify(store.settings || {}));
+    
+    // Sécuriser les données sensibles dans l'export
+    if (settings.obs && settings.obs.encryptedPassword) {
+      // Remplacer le mot de passe chiffré par un indicateur
+      settings.obs.password = '[ENCRYPTED]';
+      delete settings.obs.encryptedPassword;
+    }
+    
     // Créer un objet d'export avec les données actuelles
     const exportData = {
       programs: store.programs || [],
       episodes: store.episodes || [],
       topics: store.topics || [],
       mediaItems: store.mediaItems || [],
+      settings: settings,
       transitionSettings: store.transitionSettings || {},
       exportDate: new Date().toISOString(),
       version: '1.0.0'

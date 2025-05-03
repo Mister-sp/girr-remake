@@ -5,6 +5,7 @@
 
 const winston = require('winston');
 const path = require('path');
+const fs = require('fs');
 
 /**
  * Configuration des niveaux de log personnalisés.
