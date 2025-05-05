@@ -18,7 +18,14 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
   - Récupération progressive en cas de corruption des données
   - Système de sauvegarde automatique dans les fonctions de modification
   - Configuration centralisée pour la pagination et les backups
-
+- Interface de gestion du mot de passe :
+  - Nouveau modal dédié au changement de mot de passe
+  - Validation de l'ancien mot de passe
+  - Vérification de correspondance du nouveau mot de passe
+  - Longueur minimale de 6 caractères
+  - Messages d'erreur clairs et précis
+  - Retour visuel lors du succès
+  - Protection des données sensibles
 - Système de monitoring complet :
   - Dashboard temps réel sur `/status`
   - Métriques Prometheus sur `/metrics`

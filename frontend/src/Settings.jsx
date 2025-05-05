@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import ThemeCustomizer from './components/ThemeCustomizer';
+import ChangePasswordModal from './components/ChangePasswordModal';
 
 const TRANSITION_EFFECTS = [
   { label: 'Fondu', value: 'fade' },
@@ -66,6 +67,7 @@ export default function Settings() {
     appearEffect: 'fade',
     disappearEffect: 'fade'
   });
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   useEffect(() => {
     // Initialiser la connexion WebSocket
@@ -333,6 +335,25 @@ export default function Settings() {
     <div style={{padding: '20px', maxWidth: 800, margin: '0 auto'}}>
       <h1 style={{marginBottom: 24, color: 'var(--text)'}}>Paramètres généraux</h1>
       
+      {/* Sécurité */}
+      <div style={{...cardStyle, marginBottom: 20}}>
+        <h2 style={{marginTop: 0, marginBottom: 24, color: 'var(--text)'}}>Sécurité</h2>
+        <button
+          onClick={() => setShowPasswordModal(true)}
+          style={{
+            padding: '10px 20px',
+            background: '#2196F3',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            width: '100%'
+          }}
+        >
+          Changer le mot de passe
+        </button>
+      </div>
+
       <div style={{display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16}}>
         <div style={{
           width: 8,
@@ -628,6 +649,11 @@ export default function Settings() {
           <div style={{textAlign:'center', color:'#4CAF50', fontWeight:500, fontSize:14, marginTop:12}}>{success}</div>
         )}
       </div>
+
+      <ChangePasswordModal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+      />
     </div>
   );
 }

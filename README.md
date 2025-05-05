@@ -40,7 +40,10 @@ Les scripts effectuent automatiquement :
 - Création des dossiers nécessaires (logos, backups, logs)
 - Installation des dépendances frontend et backend
 - Configuration des fichiers .env
+- Configuration du compte administrateur initial (vous serez invité à définir vos identifiants)
 - Installation des hooks git
+
+> **Important** : Pour des raisons de sécurité, il est fortement recommandé de définir vos propres identifiants lors de l'installation plutôt que d'utiliser ceux par défaut. Si vous n'avez pas défini d'identifiants pendant l'installation, vous pouvez les configurer via les variables d'environnement `ADMIN_USERNAME` et `ADMIN_PASSWORD` dans le fichier `.env` du backend.
 
 Pour désinstaller :
 ```bash
@@ -245,6 +248,7 @@ L'application sera accessible sur `http://localhost:5173` (ou un autre port indi
   - Protection des routes sensibles
   - Compte admin par défaut (configurable via variables d'environnement)
   - Hachage sécurisé des mots de passe avec bcrypt
+  - Interface de gestion du mot de passe dans les paramètres
 - Protection des routes sensibles
   - Middleware d'authentification pour toutes les routes API
   - Protection des connexions WebSocket
