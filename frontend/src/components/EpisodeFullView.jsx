@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { getEpisodeDetails, getTopicsForEpisode, getMediaForTopic, updateTopic, deleteTopic, createMedia, createTopic, getPrograms } from '../services/api';
+import { extractDataArray } from '../services/adapters'; // Importer l'adaptateur
 import CustomMediaList from './CustomMediaList.jsx';
 import EditTopicModal from './EditTopicModal';
 import { FaPencilAlt, FaPlay, FaChevronUp, FaChevronDown, FaPlus, FaPause } from 'react-icons/fa';
@@ -34,25 +35,35 @@ function EpisodeFullView() {
         // Récupération de l'épisode
         const episodeRes = await getEpisodeDetails(programId, episodeId);
         setEpisode(episodeRes.data);
+        
         // Récupération du programme associé
         try {
           const programRes = await getPrograms();
-          const found = programRes.data.find(p => String(p.id) === String(programId));
+          // Utiliser l'adaptateur pour extraire le tableau des programmes
+          const programsArray = extractDataArray(programRes);
+          const found = programsArray.find(p => String(p.id) === String(programId));
           setProgram(found || null);
         } catch (e) {
+          console.error("Erreur lors de la récupération du programme:", e);
           setProgram(null);
         }
+        
         // Récupération des topics
         const topicsRes = await getTopicsForEpisode(programId, episodeId);
-        setTopics(topicsRes.data);
+        // Utiliser l'adaptateur pour extraire le tableau des topics
+        const topicsArray = extractDataArray(topicsRes);
+        setTopics(topicsArray);
+        
         const mediaObj = {};
-        for (const topic of topicsRes.data) {
+        for (const topic of topicsArray) {
           const mediaRes = await getMediaForTopic(programId, episodeId, topic.id);
-          mediaObj[topic.id] = mediaRes.data;
+          // Utiliser l'adaptateur pour extraire le tableau des médias
+          mediaObj[topic.id] = extractDataArray(mediaRes);
         }
         setMediaByTopic(mediaObj);
         setError(null);
       } catch (err) {
+        console.error("Erreur lors du chargement des données:", err);
         setError("Impossible de charger les données de l'épisode.");
       } finally {
         setLoading(false);
@@ -65,13 +76,19 @@ function EpisodeFullView() {
     setLoading(true);
     try {
       const topicsRes = await getTopicsForEpisode(programId, episodeId);
-      setTopics(topicsRes.data);
+      // Utiliser l'adaptateur pour extraire le tableau des topics
+      const topicsArray = extractDataArray(topicsRes);
+      setTopics(topicsArray);
+      
       const mediaObj = {};
-      for (const topic of topicsRes.data) {
+      for (const topic of topicsArray) {
         const mediaRes = await getMediaForTopic(programId, episodeId, topic.id);
-        mediaObj[topic.id] = mediaRes.data;
+        // Utiliser l'adaptateur pour extraire le tableau des médias
+        mediaObj[topic.id] = extractDataArray(mediaRes);
       }
       setMediaByTopic(mediaObj);
+    } catch (err) {
+      console.error("Erreur lors du rechargement des données:", err);
     } finally {
       setLoading(false);
     }

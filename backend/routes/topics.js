@@ -111,31 +111,20 @@ router.get('/', (req, res) => {
   const programId = parseInt(req.params.programId);
   const episodeId = parseInt(req.params.episodeId);
 
-  // <-- Ajouté: Support de pagination -->
-  const page = parseInt(req.query.page) || 1;
-  const pageSize = parseInt(req.query.pageSize) || undefined;
-  const sortBy = req.query.sortBy || undefined;
-  const sortDirection = req.query.sortDirection || undefined;
-
   // Vérifier que l'épisode existe et appartient au bon programme
   const episode = getEpisodeById(episodeId);
   if (!episode || episode.programId !== programId) {
-      return res.status(404).json({ message: 'Épisode parent non trouvé pour ce programme' });
+    return res.sendError('Épisode parent non trouvé pour ce programme', { status: 404 });
   }
 
   // Récupérer tous les sujets de l'épisode
   const allTopics = getTopicsByEpisodeId(episodeId);
   
-  // Appliquer la pagination
-  const result = paginateData(allTopics, {
-    page,
-    pageSize,
+  // Utiliser la méthode standardisée pour envoyer une réponse paginée
+  res.sendPaginated(allTopics, {
     type: 'topics',
-    sortBy,
-    sortDirection
+    message: `${allTopics.length} sujets trouvés pour l'épisode ${episodeId}`
   });
-  
-  res.json(result);
 });
 
 /**
@@ -154,14 +143,15 @@ router.get('/:id', (req, res) => {
   const episodeId = parseInt(req.params.episodeId);
   const topicId = parseInt(req.params.id);
 
-  // <-- Modifié: Utiliser getTopicById et vérifier les IDs parents -->
   const topic = getTopicById(topicId);
 
   if (!topic || topic.programId !== programId || topic.episodeId !== episodeId) {
-    return res.status(404).json({ message: 'Sujet non trouvé pour cet épisode/programme' });
+    return res.sendError('Sujet non trouvé pour cet épisode/programme', { status: 404 });
   }
 
-  res.json(topic);
+  res.sendSuccess(topic, {
+    message: `Sujet ${topic.title} récupéré avec succès`
+  });
 });
 
 /**
@@ -184,17 +174,15 @@ router.post('/', async (req, res) => {
     const programId = parseInt(req.params.programId);
     const episodeId = parseInt(req.params.episodeId);
 
-    // <-- Modifié: Vérifier que l'épisode existe avec getEpisodeById -->
     const episode = getEpisodeById(episodeId);
     if (!episode || episode.programId !== programId) {
-      return res.status(404).json({ message: 'Épisode parent non trouvé pour ce programme' });
+      return res.sendError('Épisode parent non trouvé pour ce programme', { status: 404 });
     }
 
     // Calculer l'ordre basé sur les sujets existants pour cet épisode
     const currentTopics = getTopicsByEpisodeId(episodeId);
 
     const newTopic = {
-      // <-- Modifié: Utiliser getNextTopicId -->
       id: getNextTopicId(),
       programId,
       episodeId,
@@ -207,14 +195,20 @@ router.post('/', async (req, res) => {
       updatedAt: new Date().toISOString()
     };
 
-    // <-- Modifié: Utiliser addOrUpdateTopic (qui sauvegarde et met à jour le compteur) -->
     await addOrUpdateTopic(newTopic);
 
     logger.info(`Sujet créé: ${newTopic.title} (ID: ${newTopic.id}, Épisode: ${episode.title})`);
-    res.status(201).json(newTopic);
+    
+    res.sendSuccess(newTopic, {
+      message: `Sujet "${newTopic.title}" créé avec succès`,
+      status: 201
+    });
   } catch (err) {
     logger.error('Erreur création sujet:', err);
-    res.status(500).json({ message: 'Erreur création sujet' });
+    res.sendError('Erreur lors de la création du sujet', { 
+      status: 500,
+      details: err.message 
+    });
   }
 });
 
@@ -236,11 +230,10 @@ router.put('/:id', async (req, res) => {
     const episodeId = parseInt(req.params.episodeId);
     const topicId = parseInt(req.params.id);
 
-    // <-- Modifié: Utiliser getTopicById et vérifier les IDs parents -->
     const existingTopic = getTopicById(topicId);
 
     if (!existingTopic || existingTopic.programId !== programId || existingTopic.episodeId !== episodeId) {
-      return res.status(404).json({ message: 'Sujet non trouvé pour cet épisode/programme' });
+      return res.sendError('Sujet non trouvé pour cet épisode/programme', { status: 404 });
     }
 
     // Créer l'objet mis à jour
@@ -251,18 +244,23 @@ router.put('/:id', async (req, res) => {
         duration: req.body.duration !== undefined ? req.body.duration : existingTopic.duration,
         status: req.body.status !== undefined ? req.body.status : existingTopic.status,
         order: req.body.order !== undefined ? req.body.order : existingTopic.order,
-        script: req.body.script !== undefined ? req.body.script : existingTopic.script, // Ajout du champ script
+        script: req.body.script !== undefined ? req.body.script : existingTopic.script,
         updatedAt: new Date().toISOString()
     };
 
-    // <-- Modifié: Utiliser addOrUpdateTopic (qui sauvegarde) -->
     await addOrUpdateTopic(updatedTopic);
 
     logger.info(`Sujet mis à jour: ${updatedTopic.title} (ID: ${updatedTopic.id})`);
-    res.json(updatedTopic);
+    
+    res.sendSuccess(updatedTopic, {
+      message: `Sujet "${updatedTopic.title}" mis à jour avec succès`
+    });
   } catch (err) {
     logger.error(`Erreur mise à jour sujet ${req.params.id}:`, err);
-    res.status(500).json({ message: 'Erreur mise à jour sujet' });
+    res.sendError('Erreur lors de la mise à jour du sujet', {
+      status: 500,
+      details: err.message
+    });
   }
 });
 
@@ -284,39 +282,45 @@ router.put('/reorder', async (req, res) => {
     const { topicIds } = req.body;
 
     if (!Array.isArray(topicIds)) {
-        return res.status(400).json({ message: 'Le corps de la requête doit contenir un tableau topicIds' });
+      return res.sendError('Le corps de la requête doit contenir un tableau topicIds', { status: 400 });
     }
 
     // Vérifier que l'épisode existe
     const episode = getEpisodeById(episodeId);
     if (!episode || episode.programId !== programId) {
-      return res.status(404).json({ message: 'Épisode parent non trouvé pour ce programme' });
+      return res.sendError('Épisode parent non trouvé pour ce programme', { status: 404 });
     }
 
     // Mettre à jour l'ordre des sujets en utilisant les fonctions du store
-    // C'est moins performant que de modifier directement le store, mais plus sûr
-    // On pourrait optimiser en ajoutant une fonction dédiée dans store.js si nécessaire
     const updates = topicIds.map((id, index) => {
-        const topic = getTopicById(id);
-        if (topic && topic.episodeId === episodeId) {
-            // Créer une copie mise à jour
-            return { ...topic, order: index, updatedAt: new Date().toISOString() };
-        } else {
-            logger.warn(`Tentative de réorganisation d'un topic invalide (ID: ${id}) ou n'appartenant pas à l'épisode ${episodeId}`);
-            return null; // Ignorer les IDs invalides ou non correspondants
-        }
+      const topic = getTopicById(id);
+      if (topic && topic.episodeId === episodeId) {
+        // Créer une copie mise à jour
+        return { ...topic, order: index, updatedAt: new Date().toISOString() };
+      } else {
+        logger.warn(`Tentative de réorganisation d'un topic invalide (ID: ${id}) ou n'appartenant pas à l'épisode ${episodeId}`);
+        return null; // Ignorer les IDs invalides ou non correspondants
+      }
     }).filter(Boolean); // Filtrer les nulls
 
     // Appliquer les mises à jour
     for (const updatedTopic of updates) {
-        addOrUpdateTopic(updatedTopic); // Sauvegarde à chaque fois
+      await addOrUpdateTopic(updatedTopic); // Sauvegarde à chaque fois
     }
 
     logger.info(`Ordre des sujets mis à jour pour l'épisode ${episodeId}`);
-    res.json({ message: 'Ordre mis à jour avec succès' });
+    
+    // Renvoyer une réponse standardisée avec les IDs des sujets réordonnés
+    res.sendSuccess(
+      { updatedTopics: updates.map(t => t.id) }, 
+      { message: `Ordre de ${updates.length} sujets mis à jour avec succès` }
+    );
   } catch (err) {
     logger.error(`Erreur mise à jour ordre sujets pour épisode ${req.params.episodeId}:`, err);
-    res.status(500).json({ message: "Erreur lors de la mise à jour de l'ordre" });
+    res.sendError("Erreur lors de la mise à jour de l'ordre", {
+      status: 500,
+      details: err.message
+    });
   }
 });
 
@@ -337,27 +341,30 @@ router.delete('/:id', async (req, res) => {
     const episodeId = parseInt(req.params.episodeId);
     const topicId = parseInt(req.params.id);
 
-    // <-- Modifié: Utiliser getTopicById pour vérifier l'existence et les IDs parents -->
     const topicToDelete = getTopicById(topicId);
 
     if (!topicToDelete || topicToDelete.programId !== programId || topicToDelete.episodeId !== episodeId) {
-      return res.status(404).json({ message: 'Sujet non trouvé pour cet épisode/programme' });
+      return res.sendError('Sujet non trouvé pour cet épisode/programme', { status: 404 });
     }
 
-    // <-- Modifié: Utiliser deleteTopicCascade (prend juste topicId, gère la sauvegarde et le compteur) -->
     const deleted = await deleteTopicCascade(topicId);
 
     if (deleted) {
         logger.info(`Sujet supprimé: ${topicToDelete.title} (ID: ${topicId})`);
-        res.json({ message: 'Sujet supprimé avec succès' });
+        res.sendSuccess(
+          { deleted: true, id: topicId },
+          { message: `Sujet "${topicToDelete.title}" supprimé avec succès` }
+        );
     } else {
         logger.warn(`Tentative de suppression du sujet ${topicId} échouée après l'avoir trouvé.`);
-        res.status(500).json({ message: 'Erreur lors de la suppression du sujet dans le store' });
+        res.sendError('Erreur lors de la suppression du sujet dans le store', { status: 500 });
     }
-
   } catch (err) {
     logger.error(`Erreur suppression sujet ${req.params.id}:`, err);
-    res.status(500).json({ message: 'Erreur serveur lors de la suppression du sujet' });
+    res.sendError('Erreur serveur lors de la suppression du sujet', { 
+      status: 500,
+      details: err.message
+    });
   }
 });
 

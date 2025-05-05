@@ -72,9 +72,17 @@ function buildIndexes() {
   store.topics.forEach(t => topicsById.set(t.id, t));
   store.mediaItems.forEach(m => mediaItemsById.set(m.id, m));
 
-  // Mettre à jour les métriques Prometheus
-  topicsCounter.set(store.topics.length);
-  mediaCounter.set(store.mediaItems.length);
+  // Mettre à jour les métriques Prometheus avec vérification
+  try {
+    if (topicsCounter && typeof topicsCounter.set === 'function') {
+      topicsCounter.set(store.topics.length);
+    }
+    if (mediaCounter && typeof mediaCounter.set === 'function') {
+      mediaCounter.set(store.mediaItems.length);
+    }
+  } catch (err) {
+    logger.warn('Erreur lors de la mise à jour des métriques Prometheus:', err.message);
+  }
 }
 
 
@@ -324,7 +332,16 @@ async function addOrUpdateTopic(topic) { // <-- Modifié: async
     store.topics.push(topic);
   }
   topicsById.set(topic.id, topic);
-  topicsCounter.set(store.topics.length); // Mettre à jour métrique
+  
+  // Mettre à jour la métrique Prometheus avec vérification
+  try {
+    if (topicsCounter && typeof topicsCounter.set === 'function') {
+      topicsCounter.set(store.topics.length);
+    }
+  } catch (err) {
+    logger.warn('Erreur lors de la mise à jour de la métrique topicsCounter:', err.message);
+  }
+  
   await saveStore(); // <-- Ajouté
 }
 
@@ -336,7 +353,16 @@ async function addOrUpdateMediaItem(mediaItem) { // <-- Modifié: async
     store.mediaItems.push(mediaItem);
   }
   mediaItemsById.set(mediaItem.id, mediaItem);
-  mediaCounter.set(store.mediaItems.length); // Mettre à jour métrique
+  
+  // Mettre à jour la métrique Prometheus avec vérification
+  try {
+    if (mediaCounter && typeof mediaCounter.set === 'function') {
+      mediaCounter.set(store.mediaItems.length);
+    }
+  } catch (err) {
+    logger.warn('Erreur lors de la mise à jour de la métrique mediaCounter:', err.message);
+  }
+  
   await saveStore(); // <-- Ajouté
 }
 
@@ -344,11 +370,22 @@ async function deleteMediaItem(mediaId) { // <-- Modifié: async
     const initialLength = store.mediaItems.length;
     store.mediaItems = store.mediaItems.filter(m => m.id !== mediaId);
     const deleted = store.mediaItems.length < initialLength;
+    
     if (deleted) {
         mediaItemsById.delete(mediaId);
-        mediaCounter.set(store.mediaItems.length); // Mettre à jour métrique
-        await saveStore(); // <-- Ajouté
+        
+        // Mettre à jour la métrique Prometheus avec vérification
+        try {
+            if (mediaCounter && typeof mediaCounter.set === 'function') {
+                mediaCounter.set(store.mediaItems.length);
+            }
+        } catch (err) {
+            logger.warn('Erreur lors de la mise à jour de la métrique mediaCounter:', err.message);
+        }
+        
+        await saveStore();
     }
+    
     return deleted;
 }
 // <-- Fin Ajout -->

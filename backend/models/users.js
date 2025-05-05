@@ -9,13 +9,19 @@
  */
 
 const bcrypt = require('bcryptjs');
-const { store, saveStore } = require('../data/store');
+// Remove top-level require of store to break cycle
+// const { store, saveStore } = require('../data/store'); 
 const authConfig = require('../config/auth');
 
-// Initialiser le stockage des utilisateurs si nécessaire
-if (!store.users) {
-    store.users = [];
+// Helper function to get store module when needed
+function getStoreModule() {
+  return require('../data/store');
 }
+
+// Remove top-level initialization, moved into initializeDefaultUser
+// if (!store.users) {
+//     store.users = [];
+// }
 
 /**
  * Crée l'utilisateur admin par défaut s'il n'existe pas déjà.
@@ -26,6 +32,14 @@ if (!store.users) {
  * @returns {Promise<void>}
  */
 async function initializeDefaultUser() {
+    // Get store and saveStore when the function is called
+    const { store, saveStore } = getStoreModule(); 
+
+    // Initialize store.users if it doesn't exist yet
+    if (!store.users) {
+        store.users = [];
+    }
+
     if (store.users.length === 0) {
         const hashedPassword = await bcrypt.hash(authConfig.defaultUser.password, 10);
         store.users.push({
@@ -49,6 +63,8 @@ async function initializeDefaultUser() {
  * @returns {Promise<Object|null>} - Données utilisateur si valide, null sinon
  */
 async function validateCredentials(username, password) {
+    // Get store when the function is called
+    const { store } = getStoreModule(); 
     const user = store.users.find(u => u.username === username);
     if (!user) return null;
     
@@ -65,6 +81,8 @@ async function validateCredentials(username, password) {
  * @returns {Promise<boolean>} - True si succès, false si échec
  */
 async function changePassword(userId, newPassword) {
+    // Get store and saveStore when the function is called
+    const { store, saveStore } = getStoreModule(); 
     const user = store.users.find(u => u.id === userId);
     if (!user) return false;
 

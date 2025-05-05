@@ -26,22 +26,22 @@ const wsConnectionsGauge = new promClient.Gauge({
 });
 
 /**
- * Compteur pour le nombre de sujets.
- * @type {Counter}
+ * Jauge pour le nombre de sujets.
+ * @type {Gauge}
  */
-const topicsCounter = new promClient.Counter({
+const topicsCounter = new promClient.Gauge({
   name: 'topics_total',
-  help: 'Nombre total de sujets créés',
+  help: 'Nombre total de sujets actuels',
   registers: [register]
 });
 
 /**
- * Compteur pour le nombre de médias.
- * @type {Counter}
+ * Jauge pour le nombre de médias.
+ * @type {Gauge}
  */
-const mediaCounter = new promClient.Counter({
+const mediaCounter = new promClient.Gauge({
   name: 'media_total',
-  help: 'Nombre total de médias ajoutés',
+  help: 'Nombre total de médias actuels',
   registers: [register]
 });
 
@@ -63,7 +63,7 @@ const httpRequestDuration = new promClient.Histogram({
  */
 const memoryUsageGauge = new promClient.Gauge({
   name: 'app_memory_usage_bytes',
-  help: 'Utilisation mémoire de l\'application en bytes',
+  help: 'Utilisation mémoire de l\'application en bytes', // <-- Échappement de l'apostrophe
   registers: [register],
   collect() {
     const usage = process.memoryUsage();

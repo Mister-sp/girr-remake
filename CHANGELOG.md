@@ -27,6 +27,7 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
   - Compteurs pour les topics et médias
   - Métriques de performance HTTP
   - Logs structurés avec Morgan et Winston
+  - Gestion robuste des métriques Prometheus
 - Containerisation complète de l'application avec Docker :
   - Configuration multi-conteneurs avec docker-compose
   - Conteneur frontend avec support hot-reload
@@ -54,6 +55,7 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
   - Bouton de déconnexion dans la sidebar
   - Redirection automatique vers la page de connexion
   - Expiration des tokens configurable
+  - Authentification WebSocket améliorée
 - Chiffrement des données sensibles :
   - Module de chiffrement centralisé utilisant AES-256
   - Sécurisation des mots de passe OBS stockés
@@ -62,15 +64,28 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
   - API dédiée pour la gestion sécurisée des tokens `/api/tokens`
   - Masquage des informations sensibles dans les réponses API
   - Clé de chiffrement configurable via variable d'environnement
+- Tests d'intégration pour valider la compatibilité frontend/backend
+- Documentation d'API complète avec descriptions standardisées
+- Mécanisme de retry pour les appels API importants
+- Adaptateur pour standardiser le traitement des réponses API
+- Système de pagination côté frontend pour les grandes listes de données
+- Gestion du cache optimisée
 
 ### Fixed
 - Correction du mode sombre qui ne s'appliquait pas correctement sur la sidebar et la statusbar
 - Uniformisation de l'implémentation du mode sombre à travers l'application
 - Amélioration de la cohérence visuelle entre les différents composants en mode sombre
+- Correction des erreurs dans le module de filtrage (filtering.js) affectant les opérations de filtrage avancé:
+  - Amélioration de la robustesse des filtres pour les requêtes API
+  - Optimisation du traitement des filtres complexes
 
 ### Changed
 - Modification de la classe CSS pour le mode sombre de `dark-theme` à `dark` pour une meilleure cohérence
 - Optimisation des variables CSS pour le thème sombre
+- Mise à jour du composant ProgramList pour améliorer l'affichage et les performances
+- Standardisation des réponses d'API pour une meilleure cohérence et facilité d'utilisation
+- Implémentation de validation des réponses côté frontend
+- Traitement des réponses API paginées pour une meilleure expérience utilisateur
 
 ### Ajouts et améliorations
 - Ajout de l'import depuis l'ancien GIRR (à tester) :

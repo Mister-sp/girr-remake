@@ -12,6 +12,8 @@ const router = express.Router();
 const { validateCredentials, changePassword } = require('../models/users');
 const { loginLimiter, generateToken, authenticateToken } = require('../middleware/auth');
 const logger = require('../config/logger');
+const jwt = require('jsonwebtoken');
+const { jwtSecret, tokenExpiresIn } = require('../config/auth');
 
 /**
  * Route de connexion utilisateur.
@@ -100,6 +102,45 @@ router.post('/change-password', authenticateToken, async (req, res) => {
         logger.error('Erreur lors du changement de mot de passe:', err);
         res.status(500).json({ error: 'Erreur lors du changement de mot de passe' });
     }
+});
+
+/**
+ * @route POST /api/auth/refresh-token
+ * @desc Rafraîchit un token JWT avant qu'il n'expire
+ * @access Protégé
+ */
+router.post('/refresh-token', authenticateToken, (req, res) => {
+  try {
+    // L'utilisateur est déjà authentifié grâce au middleware
+    const user = req.user;
+
+    // Générer un nouveau token avec une nouvelle date d'expiration
+    const token = jwt.sign(
+      { 
+        id: user.id, 
+        username: user.username, 
+        role: user.role || 'user' 
+      },
+      jwtSecret,
+      { expiresIn: tokenExpiresIn }
+    );
+
+    logger.info(`Token rafraîchi pour l'utilisateur ${user.username}`);
+
+    // Renvoyer le nouveau token
+    res.json({ 
+      success: true, 
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        role: user.role || 'user'
+      }
+    });
+  } catch (error) {
+    logger.error(`Erreur lors du rafraîchissement du token: ${error.message}`);
+    res.status(500).json({ success: false, message: "Erreur lors du rafraîchissement du token" });
+  }
 });
 
 module.exports = router;

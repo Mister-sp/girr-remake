@@ -46,15 +46,29 @@ function initWebSocket(server) {
   io.use((socket, next) => {
     const token = socket.handshake.auth.token;
     if (!token) {
+      logger.warn(`Tentative de connexion WebSocket sans token (IP: ${socket.handshake.address})`);
       return next(new Error('Authentification requise'));
     }
 
     try {
       const user = jwt.verify(token, authConfig.jwtSecret);
+      
+      // Vérifier si le token est proche de l'expiration (moins de 5 minutes)
+      const currentTime = Math.floor(Date.now() / 1000);
+      if (user.exp && user.exp - currentTime < 300) {
+        logger.warn(`Token WebSocket proche de l'expiration pour ${user.username || 'utilisateur inconnu'}`);
+      }
+      
       socket.user = user;
       next();
     } catch (err) {
-      return next(new Error('Token invalide'));
+      if (err.name === 'TokenExpiredError') {
+        logger.warn(`Tentative de connexion WebSocket avec un token expiré (IP: ${socket.handshake.address})`);
+        return next(new Error('Token expiré'));
+      } else {
+        logger.warn(`Tentative de connexion WebSocket avec un token invalide: ${err.message}`);
+        return next(new Error('Token invalide'));
+      }
     }
   });
 

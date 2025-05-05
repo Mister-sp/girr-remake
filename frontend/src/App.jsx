@@ -14,6 +14,7 @@ import ObsTitrageOutput from './components/ObsTitrageOutput';
 import { KeyBindingsProvider } from './components/KeyBindingsContext';
 import { PerformanceProvider } from './components/PerformanceProvider';
 import './App.css';
+import NotificationSystem from './components/NotificationSystem';
 
 /**
  * Composant racine avec le routage et les providers.
@@ -78,6 +79,7 @@ export default function App() {
               element={<Navigate to="/" replace />}
             />
           </Routes>
+          <NotificationSystem />
         </BrowserRouter>
       </KeyBindingsProvider>
     </PerformanceProvider>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 // Importer les fonctions API pour les sujets
 import { getTopicsForEpisode, createTopic, deleteTopic, updateTopic } from '../services/api';
+import { extractDataArray } from '../services/adapters'; // Importer l'adaptateur
 import ConfirmModal from './ConfirmModal.jsx';
 import { useToast } from './ToastProvider.jsx';
 import { FaPencilAlt, FaCheck, FaTimes, FaPlus, FaTrash, FaArrowLeft } from 'react-icons/fa';
@@ -32,11 +33,14 @@ function TopicList({ programId: propProgramId, episodeId: propEpisodeId, episode
     try {
       setLoading(true);
       const response = await getTopicsForEpisode(programId, episodeId);
-      setTopics(response.data);
+      // Utiliser l'adaptateur pour extraire le tableau de topics, quelle que soit la structure
+      const topicsArray = extractDataArray(response);
+      setTopics(topicsArray);
       setError(null);
     } catch (err) {
       console.error(`Erreur lors de la récupération des sujets pour l'épisode ${episodeId}:`, err);
       setError('Impossible de charger les sujets.');
+      setTopics([]); // Initialiser à un tableau vide en cas d'erreur
     } finally {
       setLoading(false);
     }

@@ -4,6 +4,7 @@ import { useHotkeys } from 'react-hotkeys-hook';
 import ObsPreview from './ObsPreview';
 import { useKeyBindings } from './KeyBindingsContext';
 import { getEpisodeDetails, getTopicsForEpisode, getMediaForTopic } from '../services/api';
+import { extractDataArray } from '../services/adapters'; // Importer l'adaptateur
 import { connectWebSocket } from '../services/websocket';
 
 /**
@@ -46,18 +47,21 @@ export default function PresenterView() {
         setEpisode(episodeRes.data);
         
         const topicsRes = await getTopicsForEpisode(programId, episodeId);
-        setTopics(topicsRes.data);
+        // Utiliser l'adaptateur pour extraire le tableau des topics
+        const topicsArray = extractDataArray(topicsRes);
+        setTopics(topicsArray);
 
         const mediaObj = {};
-        for (const topic of topicsRes.data) {
+        for (const topic of topicsArray) {
           const mediaRes = await getMediaForTopic(programId, episodeId, topic.id);
-          mediaObj[topic.id] = mediaRes.data;
+          // Utiliser l'adaptateur pour extraire le tableau des médias
+          mediaObj[topic.id] = extractDataArray(mediaRes);
         }
         setMediaByTopic(mediaObj);
 
         // Initialiser les notes vides pour chaque sujet
         const initialNotes = {};
-        topicsRes.data.forEach(topic => {
+        topicsArray.forEach(topic => {
           initialNotes[topic.id] = '';
         });
         setNotes(initialNotes);

@@ -19,6 +19,7 @@ const multer = require('multer');
 const http = require('http');
 const { initWebSocket } = require('./websocket');
 const { authenticateToken } = require('./middleware/auth');
+const responseFormatter = require('./middleware/responseFormatter'); // Importer le middleware de formatage
 const { initializeDefaultUser } = require('./models/users');
 const port = process.env.PORT || 3001;
 
@@ -69,6 +70,7 @@ app.use(monitoring.measureRequestDuration);
 app.use(cors());
 app.use(express.json());
 app.use(compression()); // <-- Ajouté : Activer la compression pour toutes les routes
+app.use(responseFormatter); // Ajouter le middleware de formatage des réponses
 
 // Route de test
 app.get('/', (req, res) => {
@@ -98,13 +100,13 @@ app.get('/health', (req, res) => {
 
 // Importer les routes
 const authRoutes = require('./routes/auth');
-const programRoutes = require('./routes/programs');
-const episodeRoutes = require('./routes/episodes');
-const topicRoutes = require('./routes/topics');
-const mediaRoutes = require('./routes/media');
-const sceneRoutes = require('./routes/scene');
-const settingsRoutes = require('./routes/settings');
 const apiTokensRoutes = require('./routes/apiTokens');
+
+// Passer l'instance du cache aux routes qui en ont besoin
+const programRouter = require('./routes/programs')(cache); // <-- Modifié
+const episodeRouter = require('./routes/episodes')(/* si besoin du cache */); // <-- Potentiellement passer le cache ici aussi si nécessaire
+const topicRouter = require('./routes/topics')(/* si besoin du cache */);
+const mediaRouter = require('./routes/media')(/* si besoin du cache */);
 
 // Routes d'authentification (non protégées)
 app.use('/api/auth', authRoutes);
@@ -130,10 +132,10 @@ const cacheMiddleware = (req, res, next) => {
   }
 }; // <-- Ajouté
 
-app.use('/api/programs', authenticateToken, cacheMiddleware, programRoutes); // <-- Modifié: Ajout du middleware de cache
-app.use('/api/programs/:programId/episodes', authenticateToken, episodeRoutes);
-app.use('/api/programs/:programId/episodes/:episodeId/topics', authenticateToken, topicRoutes);
-app.use('/api/programs/:programId/episodes/:episodeId/topics/:topicId/media', authenticateToken, mediaRoutes);
+app.use('/api/programs', authenticateToken, cacheMiddleware, programRouter); // <-- Modifié: Utilise le routeur initialisé
+app.use('/api/programs/:programId/episodes', authenticateToken, episodeRouter);
+app.use('/api/programs/:programId/episodes/:episodeId/topics', authenticateToken, topicRouter);
+app.use('/api/programs/:programId/episodes/:episodeId/topics/:topicId/media', authenticateToken, mediaRouter);
 app.use('/api/scene', authenticateToken, sceneRoutes);
 app.use('/api/settings', authenticateToken, settingsRoutes);
 app.use('/api/tokens', apiTokensRoutes); // Route pour la gestion des tokens API externes

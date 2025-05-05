@@ -4,12 +4,15 @@
  */
 
 import { io } from 'socket.io-client';
-import { AuthService } from './auth';
+import AuthService from './auth';
+import TokenRefresher from './tokenRefresher';
 
 let socket;
 let clientId = null;
 const connectedClients = new Map();
 let broadcastChannel;
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 5;
 
 /**
  * Établit une connexion WebSocket avec le serveur.
@@ -17,14 +20,18 @@ let broadcastChannel;
  */
 export function connectWebSocket() {
   if (!socket) {
-    socket = io('http://localhost:3001', {
+    const getAuthObject = () => ({
+      // Récupérer le token à chaque tentative de connexion pour avoir le plus récent
+      token: AuthService.getToken()
+    });
+
+    socket = io({
       transports: ['polling', 'websocket'],
       reconnectionDelayMax: 10000,
-      reconnectionAttempts: 10,
+      reconnectionAttempts: MAX_RECONNECT_ATTEMPTS,
       path: '/socket.io',
-      auth: {
-        token: AuthService.getToken()
-      }
+      // Utiliser une fonction au lieu d'un objet statique pour que le token soit évalué à chaque reconnexion
+      auth: getAuthObject
     });
 
     // Initialiser le BroadcastChannel une seule fois
@@ -38,6 +45,9 @@ export function connectWebSocket() {
 
     socket.on('connect', () => {
       console.log('Connecté au WebSocket, id:', socket.id);
+      // Réinitialiser le compteur de tentatives après une connexion réussie
+      reconnectAttempts = 0;
+      
       // Envoyer le type de client basé sur le pathname
       socket.emit('register', { 
         pathname: window.location.pathname,
@@ -45,10 +55,61 @@ export function connectWebSocket() {
       });
     });
 
+    // Amélioration de la gestion des erreurs de connexion
     socket.on('connect_error', (error) => {
       console.log('Erreur de connexion WebSocket:', error);
-      if (error.message === 'Authentification requise' || error.message === 'Token invalide') {
-        AuthService.logout(); // Déconnexion si le token est invalide
+      reconnectAttempts++;
+      
+      if (error.message === 'Token expiré') {
+        // Tenter de rafraîchir le token immédiatement
+        TokenRefresher.refreshToken().then(success => {
+          if (!success && reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+            // Si le rafraîchissement échoue et qu'on a atteint le nombre max de tentatives
+            window.dispatchEvent(new CustomEvent('websocket-error', {
+              detail: { error: 'Session expirée. Impossible de maintenir la connexion en temps réel.' }
+            }));
+          }
+        });
+      } else if (error.message === 'Authentification requise' || error.message === 'Token invalide') {
+        if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+          // Notifier l'utilisateur après plusieurs échecs
+          window.dispatchEvent(new CustomEvent('websocket-error', {
+            detail: { error: 'Problème d\'authentification avec la connexion en temps réel.' }
+          }));
+        }
+      } else if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+        // Autres erreurs après plusieurs tentatives
+        window.dispatchEvent(new CustomEvent('websocket-error', {
+          detail: { error: `La connexion en temps réel a échoué: ${error.message}` }
+        }));
+      }
+    });
+
+    // Gestionnaire de déconnexion non prévue
+    socket.on('disconnect', (reason) => {
+      console.log('Déconnecté du WebSocket, raison:', reason);
+      
+      // Nettoyer les clients lors de la déconnexion
+      connectedClients.clear();
+      window.dispatchEvent(new CustomEvent('clientsUpdate', { 
+        detail: { count: 0, clients: [] } 
+      }));
+      
+      // Notifier l'utilisateur seulement si la déconnexion n'est pas intentionnelle
+      if (reason === 'io server disconnect' || reason === 'transport close') {
+        window.dispatchEvent(new CustomEvent('websocket-error', {
+          detail: { error: 'La connexion en temps réel a été perdue.' }
+        }));
+      }
+    });
+
+    // Écouter l'événement de reconnexion demandée par l'utilisateur
+    window.addEventListener('websocket-reconnect', () => {
+      console.log('Tentative de reconnexion WebSocket demandée par l\'utilisateur');
+      reconnectAttempts = 0;
+      if (socket) {
+        socket.disconnect();
+        socket.connect();
       }
     });
 
@@ -112,16 +173,8 @@ export function connectWebSocket() {
       // Déclencher un événement personnalisé pour la mise à jour
       window.dispatchEvent(new CustomEvent('obsUpdate', { detail: data }));
     });
-
-    socket.on('disconnect', () => {
-      console.log('Déconnecté du WebSocket');
-      // Nettoyer les clients lors de la déconnexion
-      connectedClients.clear();
-      window.dispatchEvent(new CustomEvent('clientsUpdate', { 
-        detail: { count: 0, clients: [] } 
-      }));
-    });
   }
+  
   return socket;
 }
 
@@ -181,4 +234,5 @@ export function cleanup() {
   }
   connectedClients.clear();
   clientId = null;
+  reconnectAttempts = 0;
 }

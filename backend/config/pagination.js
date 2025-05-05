@@ -3,6 +3,8 @@
  * @module config/pagination
  */
 
+const { filterData } = require('./filtering');
+
 /**
  * Paramètres de pagination par défaut.
  */
@@ -85,102 +87,122 @@ function updateConfig(newConfig) {
     paginationConfig.maxPageSize = newConfig.maxPageSize;
   }
   
-  return getConfig();
+  return { ...paginationConfig };
 }
 
 /**
- * Réinitialise la configuration à ses valeurs par défaut.
- * @returns {Object} Configuration par défaut
+ * Calcule les paramètres de pagination à partir des paramètres de requête.
+ * @param {Object} queryParams - Paramètres de requête HTTP
+ * @param {string} resourceType - Type de ressource (programs, episodes, topics, mediaItems)
+ * @returns {Object} Paramètres de pagination
  */
-function resetConfig() {
-  paginationConfig = { ...DEFAULT_CONFIG };
-  return getConfig();
-}
-
-/**
- * Utilitaire pour calculer les paramètres de pagination à partir de la requête.
- * @param {Object} options - Options de pagination
- * @param {number} [options.page=1] - Numéro de page (commence à 1)
- * @param {number} [options.pageSize] - Taille de la page
- * @param {string} [options.type='default'] - Type de donnée (programs, episodes, topics, mediaItems)
- * @param {string} [options.sortBy] - Champ de tri
- * @param {string} [options.sortDirection] - Direction de tri ('asc' ou 'desc')
- * @returns {Object} Paramètres de pagination calculés
- */
-function calculatePagination(options = {}) {
-  const type = options.type || 'default';
-  const typeConfig = paginationConfig[type] || {};
+function calculatePagination(queryParams, resourceType) {
+  const config = paginationConfig[resourceType] || {};
   
-  let pageSize = options.pageSize || typeConfig.pageSize || paginationConfig.defaultPageSize;
+  // Extraire et valider le numéro de page
+  const page = queryParams.page !== undefined ? parseInt(queryParams.page, 10) : 1;
   
-  // Appliquer les limites min/max
-  pageSize = Math.max(paginationConfig.minPageSize, Math.min(pageSize, paginationConfig.maxPageSize));
+  // Extraire et valider la taille de page
+  let pageSize = queryParams.pageSize !== undefined 
+    ? parseInt(queryParams.pageSize, 10)
+    : (config.pageSize || paginationConfig.defaultPageSize);
   
-  // Page commence à 1 (plus intuitif pour les utilisateurs)
-  const page = Math.max(1, options.page || 1);
-  const skip = (page - 1) * pageSize;
-  const limit = pageSize;
+  // Appliquer les limites de taille de page
+  pageSize = Math.min(
+    Math.max(pageSize, paginationConfig.minPageSize),
+    paginationConfig.maxPageSize
+  );
   
-  // Options de tri
-  const sortBy = options.sortBy || typeConfig.sortBy || 'id';
-  const sortDirection = options.sortDirection || typeConfig.sortDirection || 'asc';
+  // Extraire les paramètres de tri
+  const sortBy = queryParams.sortBy || config.sortBy || 'createdAt';
+  const sortDirection = queryParams.sortDirection || config.sortDirection || 'desc';
   
   return {
     page,
     pageSize,
-    skip,
-    limit,
     sortBy,
-    sortDirection
+    sortDirection,
+    skip: (page - 1) * pageSize,
+    limit: pageSize
   };
 }
 
 /**
- * Applique la pagination à un tableau de données.
- * @param {Array} data - Tableau de données complet
- * @param {Object} paginationOptions - Options de pagination (comme pour calculatePagination)
- * @returns {Object} Résultat paginé
+ * Trie et pagine un ensemble de données.
+ * @param {Array} data - Données à paginer
+ * @param {Object} paginationParams - Paramètres de pagination
+ * @param {Object} queryParams - Paramètres de requête pour le filtrage
+ * @param {string} resourceType - Type de ressource pour le filtrage
+ * @returns {Object} Données paginées avec métadonnées
  */
-function paginateData(data, paginationOptions = {}) {
-  const { skip, limit, sortBy, sortDirection } = calculatePagination(paginationOptions);
+function paginateData(data, paginationParams, queryParams = {}, resourceType = null) {
+  let filteredData = data;
+
+  // Appliquer les filtres si un resourceType est fourni
+  if (resourceType) {
+    filteredData = filterData(data, queryParams, resourceType);
+  }
   
-  // Créer une copie pour éviter de modifier le tableau original
-  const sortedData = [...data];
+  // Extraire les paramètres
+  const { page, pageSize, sortBy, sortDirection } = paginationParams;
+  const totalItems = filteredData.length;
+  const totalPages = Math.ceil(totalItems / pageSize);
   
-  // Trier les données
-  sortedData.sort((a, b) => {
-    const aValue = a[sortBy];
-    const bValue = b[sortBy];
-    
-    if (aValue === bValue) return 0;
-    
-    const comparison = aValue < bValue ? -1 : 1;
-    return sortDirection === 'asc' ? comparison : -comparison;
-  });
+  // Appliquer le tri
+  if (sortBy) {
+    filteredData.sort((a, b) => {
+      if (a[sortBy] === undefined || b[sortBy] === undefined) {
+        return 0;
+      }
+      
+      let comparison;
+      if (a[sortBy] instanceof Date && b[sortBy] instanceof Date) {
+        comparison = a[sortBy].getTime() - b[sortBy].getTime();
+      } else if (typeof a[sortBy] === 'string' && typeof b[sortBy] === 'string') {
+        comparison = a[sortBy].localeCompare(b[sortBy]);
+      } else {
+        comparison = a[sortBy] < b[sortBy] ? -1 : a[sortBy] > b[sortBy] ? 1 : 0;
+      }
+      
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }
   
-  // Appliquer pagination
-  const items = sortedData.slice(skip, skip + limit);
-  const total = data.length;
-  const totalPages = Math.ceil(total / limit);
-  const page = paginationOptions.page || 1;
+  // Extraire la page demandée
+  const startIndex = (page - 1) * pageSize;
+  const paginatedItems = filteredData.slice(startIndex, startIndex + pageSize);
   
+  // Retourner les données avec les métadonnées
   return {
-    items,
+    items: paginatedItems,
     meta: {
       page,
-      pageSize: limit,
-      total,
+      pageSize,
+      totalItems,
       totalPages,
-      hasNextPage: page < totalPages,
-      hasPrevPage: page > 1
+      sortBy,
+      sortDirection
     }
+  };
+}
+
+/**
+ * Crée un middleware Express pour gérer la pagination.
+ * @param {string} resourceType - Type de ressource
+ * @returns {Function} Middleware Express
+ */
+function createPaginationMiddleware(resourceType) {
+  return (req, res, next) => {
+    // Ajouter les paramètres de pagination à la requête
+    req.pagination = calculatePagination(req.query, resourceType);
+    next();
   };
 }
 
 module.exports = {
   getConfig,
   updateConfig,
-  resetConfig,
   calculatePagination,
-  paginateData
+  paginateData,
+  createPaginationMiddleware
 };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getPrograms, createProgram, deleteProgram, updateProgram } from '../services/api'; // Importer createProgram, deleteProgram et updateProgram
+import { getPrograms, createProgram, deleteProgram, updateProgram } from '../services/api';
+import { extractDataArray } from '../services/adapters'; // Importer l'adaptateur
 import defaultLogo from '../assets/default-logo.png';
 import styles from './ProgramList.module.css';
 import Modal from './Modal.jsx';
@@ -131,17 +132,27 @@ function ProgramList({ onSelectProgram }) {
   const loadPrograms = async () => {
     try {
       setLoading(true);
-      const response = await getPrograms();
-      setPrograms(response.data);
       setError(null);
+      const response = await getPrograms();
+      console.log('responseData reçu:', response);
+      
+      // Utiliser l'adaptateur pour extraire le tableau items peu importe le format
+      const programsArray = extractDataArray(response);
+      
+      if (programsArray.length > 0) {
+        console.log('Programmes chargés avec succès:', programsArray.length);
+        setPrograms(programsArray);
+      } else {
+        // S'il n'y a pas d'erreur mais que le tableau est vide, c'est juste qu'il n'y a pas de programmes
+        setPrograms([]);
+      }
     } catch (err) {
       console.error("Erreur lors de la récupération des programmes:", err);
-      setError('Impossible de charger les programmes.');
+      setError(`Impossible de charger les programmes: ${err.message || 'Erreur inconnue'}`);
+      setPrograms([]);
     } finally {
       setLoading(false);
     }
-
-
   };
 
   useEffect(() => {
@@ -519,11 +530,14 @@ function ProgramList({ onSelectProgram }) {
 // Sous-composant pour le formulaire d'ajout
 function ProgramForm({
   onSubmit, title, setTitle, logoFile, setLogoFile, logoPosition, setLogoPosition, logoSize, setLogoSize, logoEffect, setLogoEffect, logoEffectIntensity, setLogoEffectIntensity,
+  mediaAppearEffect, setMediaAppearEffect, mediaDisappearEffect, setMediaDisappearEffect, // Ajout des props manquantes ici
   ltFontFamily, setLtFontFamily, ltFontUrl, setLtFontUrl, ltFontSize, setLtFontSize,
   ltFontWeight, setLtFontWeight, ltFontStyle, setLtFontStyle, ltTextDecoration, setLtTextDecoration,
   ltTextColor, setLtTextColor, ltTextStrokeColor, setLtTextStrokeColor, ltTextStrokeWidth, setLtTextStrokeWidth,
   ltBackgroundColor, setLtBackgroundColor, ltBackgroundOpacity, setLtBackgroundOpacity,
-  ltLogoInLowerThird, setLtLogoInLowerThird, ltLogoPosition, setLtLogoPosition
+  ltLogoInLowerThird, setLtLogoInLowerThird, ltLogoPosition, setLtLogoPosition,
+  // Variables pour aperçu et mode édition
+  logoPreview, isEditMode, saving, ltTransitionIn, ltTransitionOut
 }) {
   return (
     <form onSubmit={onSubmit} style={{marginBottom:'20px', maxWidth:380}} encType="multipart/form-data">
@@ -1017,7 +1031,10 @@ function ProgramDisplay({ programs, onDelete, onSelect }) {
         />
       </Modal>
       <div className={styles.programsGrid} style={{clear:'both'}}>
-        {programs.length === 0 ? (
+        {/* Vérifier si programs est un tableau avant d'utiliser .map() */}
+        {!Array.isArray(programs) ? (
+          <p style={{textAlign:'center',color:'#888',fontSize:18,margin:'48px 0'}}>Chargement ou erreur lors de la récupération des programmes...</p>
+        ) : programs.length === 0 ? (
           <p style={{textAlign:'center',color:'#888',fontSize:18,margin:'48px 0'}}>Aucun programme trouvé.</p>
         ) : (
           programs.map((program) => {
