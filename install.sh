@@ -15,6 +15,25 @@ if ! command -v node &> /dev/null; then
 fi
 echo -e "${GREEN}✅ Node.js détecté: $(node --version)${NC}"
 
+# Demander les identifiants administrateur
+echo -e "\n${CYAN}👤 Configuration du compte administrateur${NC}"
+read -p "Entrez le nom d'utilisateur administrateur (defaut: admin): " admin_username
+admin_username=${admin_username:-admin}
+
+while true; do
+    read -s -p "Entrez le mot de passe administrateur (minimum 6 caractères): " admin_password
+    echo
+    if [ -n "$admin_password" ]; then
+        if [ ${#admin_password} -lt 6 ]; then
+            echo -e "${RED}❌ Le mot de passe doit faire au moins 6 caractères${NC}"
+            continue
+        fi
+        break
+    else
+        echo -e "${RED}❌ Le mot de passe ne peut pas être vide${NC}"
+    fi
+done
+
 # Création des dossiers nécessaires
 echo -e "\n${CYAN}📁 Création des dossiers...${NC}"
 folders=(
@@ -44,8 +63,12 @@ PORT=3001
 NODE_ENV=development
 MAX_BACKUPS=10
 BACKUP_INTERVAL_HOURS=1
+ADMIN_USERNAME=$admin_username
+ADMIN_PASSWORD=$admin_password
+JWT_SECRET=$(uuidgen || cat /proc/sys/kernel/random/uuid)
+JWT_EXPIRATION=24h
 EOL
-    echo -e "${GREEN}  ✓ Fichier .env créé${NC}"
+    echo -e "${GREEN}  ✓ Fichier .env créé avec les identifiants personnalisés${NC}"
 fi
 
 # Installation des dépendances frontend

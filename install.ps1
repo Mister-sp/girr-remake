@@ -10,6 +10,32 @@ try {
     exit 1
 }
 
+# Demander les identifiants administrateur
+Write-Host "`nConfiguration du compte administrateur" -ForegroundColor Cyan
+$adminUsername = Read-Host "Entrez le nom d'utilisateur administrateur (defaut: admin)"
+if ([string]::IsNullOrWhiteSpace($adminUsername)) {
+    $adminUsername = "admin"
+}
+
+while ($true) {
+    Write-Host "Entrez le mot de passe administrateur (minimum 6 caractères)" -NoNewline
+    $adminPassword = Read-Host -AsSecureString
+    $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($adminPassword)
+    $adminPasswordPlain = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+
+    if ([string]::IsNullOrWhiteSpace($adminPasswordPlain)) {
+        Write-Host "x Le mot de passe ne peut pas être vide" -ForegroundColor Red
+        continue
+    }
+    
+    if ($adminPasswordPlain.Length -lt 6) {
+        Write-Host "x Le mot de passe doit faire au moins 6 caractères" -ForegroundColor Red
+        continue
+    }
+    
+    break
+}
+
 # Creation des dossiers necessaires
 Write-Host "`nCreation des dossiers..." -ForegroundColor Cyan
 $folders = @(
@@ -41,8 +67,12 @@ PORT=3001
 NODE_ENV=development
 MAX_BACKUPS=10
 BACKUP_INTERVAL_HOURS=1
+ADMIN_USERNAME=$adminUsername
+ADMIN_PASSWORD=$adminPasswordPlain
+JWT_SECRET=$(New-Guid)
+JWT_EXPIRATION=24h
 "@ | Out-File -FilePath .env -Encoding UTF8
-    Write-Host "+ Fichier .env cree" -ForegroundColor Green
+    Write-Host "+ Fichier .env cree avec les identifiants personnalises" -ForegroundColor Green
 }
 
 # Installation des dependances frontend
